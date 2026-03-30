@@ -532,8 +532,8 @@ async function handleLogout(){await sb.auth.signOut();currentUser=null;currentPr
 async function loadUserProfile(){if(!currentUser)return;var r=await sb.from('profiles').select('*').eq('id',currentUser.id).single();if(!r.error&&r.data)currentProfile=r.data;}
 function loadProfile(){if(!currentProfile)return;document.getElementById('profileName').textContent=currentProfile.full_name||'ไม่ระบุ';document.getElementById('profileEmail').textContent=currentProfile.email||'';document.getElementById('profileAvatar').textContent=(currentProfile.full_name||'?')[0].toUpperCase();document.getElementById('editName').value=currentProfile.full_name||'';document.getElementById('editPhone').value=currentProfile.phone||'';}
 async function updateProfile(e){e.preventDefault();var btn=document.getElementById('updateProfileBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{await sb.from('profiles').update({full_name:document.getElementById('editName').value.trim(),phone:document.getElementById('editPhone').value.trim(),updated_at:new Date().toISOString()}).eq('id',currentUser.id);currentProfile.full_name=document.getElementById('editName').value.trim();showToast('บันทึกแล้ว','success');loadProfile();}catch(err){showToast(err.message,'error');}finally{btn.innerHTML='💾 บันทึก';btn.disabled=false;}}
-async function loadDashboard(){await loadUserProfile();if(!currentProfile)return;document.getElementById('dashBalance').textContent='$'+(currentProfile.balance||0).toFixed(2);try{var r=await sb.from('trades').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(!r.error&&r.data){var t=r.data,w=t.filter(function(x){return x.result==='win'}).length,l=t.filter(function(x){return x.result==='loss'}).length;document.getElementById('dashTotalTrades').textContent=t.length;document.getElementById('dashWins').textContent=w;document.getElementById('dashLosses').textContent=l;var tb=document.getElementById('dashTradeHistory');tb.innerHTML=t.length===0?'<tr><td colspan="5" class="text-center text-muted" style="padding:36px">ยังไม่มีประวัติ</td></tr>':t.slice(0,10).map(function(x){return '<tr><td class="mono" style="font-size:.8rem">'+new Date(x.created_at).toLocaleString('th-TH')+'</td><td style="font-weight:600">'+(x.asset||'-')+'</td><td><span class="badge '+(x.direction==='up'?'badge-green':'badge-red')+'">'+(x.direction==='up'?'📈':'📉')+'</span></td><td class="mono">$'+(x.amount||0).toFixed(2)+'</td><td><span class="badge '+(x.result==='win'?'badge-green':x.result==='loss'?'badge-red':'badge-blue')+'">'+(x.result==='win'?'✅':x.result==='loss'?'❌':'⏳')+'</span></td></tr>'}).join('');}}catch(err){console.error(err);}}
-function initTrading(){renderAssetTabs();selectAsset(0);updateTradingBalance();generateOrderBook();startCountdownUI();}
+async function loadDashboard(){await loadUserProfile();if(!currentProfile)return;document.getElementById('dashBalance').textContent='$'+(currentProfile.balance||0).toFixed(2);try{var schema=await detectTradeSchema();var r=await sb.from('trades').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(!r.error&&r.data){var t=r.data,w=t.filter(function(x){return (x[schema.result]||x.result)==='win'}).length,l=t.filter(function(x){return (x[schema.result]||x.result)==='loss'}).length;document.getElementById('dashTotalTrades').textContent=t.length;document.getElementById('dashWins').textContent=w;document.getElementById('dashLosses').textContent=l;var tb=document.getElementById('dashTradeHistory');tb.innerHTML=t.length===0?'<tr><td colspan="5" class="text-center text-muted" style="padding:36px">ยังไม่มีประวัติ</td></tr>':t.slice(0,10).map(function(x){var xAsset=x[schema.asset]||x.asset||'-';var xDir=x[schema.direction]||x.direction||'up';var xAmt=x[schema.amount]||x.amount||0;var xRes=x[schema.result]||x.result||'pending';return '<tr><td class="mono" style="font-size:.8rem">'+new Date(x.created_at).toLocaleString('th-TH')+'</td><td style="font-weight:600">'+xAsset+'</td><td><span class="badge '+(xDir==='up'?'badge-green':'badge-red')+'">'+(xDir==='up'?'📈':'📉')+'</span></td><td class="mono">$'+(parseFloat(xAmt)||0).toFixed(2)+'</td><td><span class="badge '+(xRes==='win'?'badge-green':xRes==='loss'?'badge-red':'badge-blue')+'">'+(xRes==='win'?'✅':xRes==='loss'?'❌':'⏳')+'</span></td></tr>'}).join('');}}catch(err){console.error(err);}}
+function initTrading(){renderAssetTabs();selectAsset(0);updateTradingBalance();generateOrderBook();startCountdownUI();detectTradeSchema();}
 function renderAssetTabs(){document.getElementById('assetTabs').innerHTML=ASSETS.map(function(a,i){return '<div class="asset-tab '+(i===selectedAsset?'active':'')+'" onclick="selectAsset('+i+')">'+a.symbol+'</div>'}).join('');}
 var currentTimeframe=5,candleData=[],tradeCooldown=false;
 function selectAsset(i){selectedAsset=i;document.getElementById('currentAssetName').textContent=ASSETS[i].symbol;document.querySelectorAll('.asset-tab').forEach(function(t,j){t.classList.toggle('active',j===i)});generateCandleData();updatePriceDisplay();startChart();generateOrderBook();}
@@ -569,6 +569,47 @@ function setTimer(el){document.querySelectorAll('.tv-timer-btn').forEach(functio
 function updateTradingBalance(){document.getElementById('tradingBalance').textContent='$'+(currentProfile?currentProfile.balance||0:0).toFixed(2);}
 document.addEventListener('DOMContentLoaded',function(){var inp=document.getElementById('tradeAmount');if(inp)inp.addEventListener('input',function(){document.getElementById('potentialProfit').textContent='$'+(parseFloat(this.value||0)*0.85).toFixed(2);});});
 
+/* ===== SCHEMA DETECTION ===== */
+var tradeSchema=null;
+async function detectTradeSchema(){
+  if(tradeSchema)return tradeSchema;
+  try{
+    /* Try to read one row to see which columns exist */
+    var r=await sb.from('trades').select('*').limit(1);
+    if(r.error){
+      /* Table might not exist, try to get column info from empty result */
+      console.warn('trades table query error:',r.error.message);
+      tradeSchema={amount:'amount',open_price:'open_price',close_price:'close_price',duration:'duration',direction:'direction',asset:'asset',result:'result',payout:'payout'};
+      return tradeSchema;
+    }
+    /* If we got data, detect columns from keys */
+    var cols=[];
+    if(r.data&&r.data.length>0){cols=Object.keys(r.data[0]);}
+    else{
+      /* No rows - try inserting with expected columns, if fails try alternatives */
+      tradeSchema={amount:'amount',open_price:'open_price',close_price:'close_price',duration:'duration',direction:'direction',asset:'asset',result:'result',payout:'payout'};
+      return tradeSchema;
+    }
+    tradeSchema={
+      amount:cols.indexOf('amount')!==-1?'amount':cols.indexOf('trade_amount')!==-1?'trade_amount':cols.indexOf('stake')!==-1?'stake':'amount',
+      open_price:cols.indexOf('open_price')!==-1?'open_price':cols.indexOf('entry_price')!==-1?'entry_price':'open_price',
+      close_price:cols.indexOf('close_price')!==-1?'close_price':cols.indexOf('exit_price')!==-1?'exit_price':'close_price',
+      duration:cols.indexOf('duration')!==-1?'duration':cols.indexOf('expiry')!==-1?'expiry':cols.indexOf('timer')!==-1?'timer':'duration',
+      direction:cols.indexOf('direction')!==-1?'direction':cols.indexOf('side')!==-1?'side':cols.indexOf('type')!==-1?'type':'direction',
+      asset:cols.indexOf('asset')!==-1?'asset':cols.indexOf('symbol')!==-1?'symbol':cols.indexOf('pair')!==-1?'pair':'asset',
+      result:cols.indexOf('result')!==-1?'result':cols.indexOf('status')!==-1?'status':cols.indexOf('outcome')!==-1?'outcome':'result',
+      payout:cols.indexOf('payout')!==-1?'payout':cols.indexOf('profit')!==-1?'profit':cols.indexOf('return')!==-1?'return':'payout',
+      _allCols:cols
+    };
+    console.log('Detected trade schema:',tradeSchema);
+    return tradeSchema;
+  }catch(e){
+    console.error('Schema detection failed:',e);
+    tradeSchema={amount:'amount',open_price:'open_price',close_price:'close_price',duration:'duration',direction:'direction',asset:'asset',result:'result',payout:'payout'};
+    return tradeSchema;
+  }
+}
+
 /* ===== REALISTIC PLACE TRADE ===== */
 async function placeTrade(){
   if(!currentUser)return showToast('กรุณาเข้าสู่ระบบ','error');
@@ -590,7 +631,25 @@ async function placeTrade(){
   try{
     await sb.from('profiles').update({balance:currentProfile.balance-amt}).eq('id',currentUser.id);
     currentProfile.balance-=amt;updateTradingBalance();
-    var tr=await sb.from('trades').insert({user_id:currentUser.id,asset:asset.symbol,direction:tradeDirection,amount:amt,open_price:op,duration:tradeTimer,result:'pending',created_at:new Date().toISOString()}).select().single();
+    
+    /* Detect schema and build insert object */
+    var schema=await detectTradeSchema();
+    var insertObj={user_id:currentUser.id,created_at:new Date().toISOString()};
+    insertObj[schema.asset]=asset.symbol;
+    insertObj[schema.direction]=tradeDirection;
+    insertObj[schema.amount]=amt;
+    insertObj[schema.open_price]=op;
+    insertObj[schema.duration]=tradeTimer;
+    insertObj[schema.result]='pending';
+    
+    /* Only include columns that exist in the table */
+    if(schema._allCols&&schema._allCols.length>0){
+      var filtered={};
+      for(var k in insertObj){if(schema._allCols.indexOf(k)!==-1||k==='user_id'||k==='created_at')filtered[k]=insertObj[k];}
+      insertObj=filtered;
+    }
+    
+    var tr=await sb.from('trades').insert(insertObj).select().single();
     if(tr.error)throw tr.error;
     activeTrades.push({id:tr.data.id,asset:asset.symbol,direction:tradeDirection,amount:amt,open_price:op,duration:tradeTimer,openTime:Date.now(),assetIndex:selectedAsset,decimals:dp});
     
@@ -598,7 +657,16 @@ async function placeTrade(){
     playSound('open');
     showToast((tradeDirection==='up'?'📈 BUY':'📉 SELL')+' '+asset.symbol+' | $'+amt.toFixed(2)+' | '+tradeTimer+'s','success');
     renderOpenTrades();
-  }catch(err){showToast(err.message,'error');}
+  }catch(err){
+    /* If insert failed, refund balance */
+    currentProfile.balance+=amt;
+    await sb.from('profiles').update({balance:currentProfile.balance}).eq('id',currentUser.id);
+    updateTradingBalance();
+    showToast('เกิดข้อผิดพลาด: '+err.message,'error');
+    console.error('Trade insert error:',err);
+    /* Reset schema cache to retry detection */
+    tradeSchema=null;
+  }
   finally{
     setTimeout(function(){
       btn.innerHTML=tradeDirection==='up'?'Buy / Long':'Sell / Short';
@@ -676,7 +744,18 @@ async function processActiveTrades(cp){
       var res=won?'win':'loss',pay=won?t.amount*1.85:0;
       var dp=t.decimals||2;
       try{
-        await sb.from('trades').update({result:res,close_price:cp,payout:pay}).eq('id',t.id);
+        var schema=await detectTradeSchema();
+        var updateObj={};
+        updateObj[schema.result]=res;
+        updateObj[schema.close_price]=cp;
+        if(schema._allCols&&schema._allCols.indexOf(schema.payout)!==-1){updateObj[schema.payout]=pay;}
+        /* Only include columns that exist */
+        if(schema._allCols&&schema._allCols.length>0){
+          var filtered={};
+          for(var k in updateObj){if(schema._allCols.indexOf(k)!==-1)filtered[k]=updateObj[k];}
+          updateObj=filtered;
+        }
+        await sb.from('trades').update(updateObj).eq('id',t.id);
         if(won){
           await loadUserProfile();
           await sb.from('profiles').update({balance:currentProfile.balance+pay}).eq('id',currentUser.id);
@@ -685,7 +764,7 @@ async function processActiveTrades(cp){
         /* Show result popup */
         showResultPopup(won,t,cp,pay,dp);
         playSound(won?'win':'loss');
-      }catch(err){console.error(err);}
+      }catch(err){console.error('Trade close error:',err);}
       resolved.push(t.id);
     }
   }
