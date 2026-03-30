@@ -850,6 +850,8 @@ async function tryInsertTrade(data){
 async function placeTrade(){
   if(!currentUser)return showToast('กรุณาเข้าสู่ระบบ','error');
   if(tradeCooldown)return showToast('กรุณารอสักครู่...','info');
+  /* Allow only 1 active trade at a time */
+  if(activeTrades.length>0)return showToast('⏳ รอ order ปัจจุบันปิดก่อน','info');
   var amt=parseFloat(document.getElementById('tradeAmount').value);
   if(!amt||amt<1)return showToast('ใส่จำนวนเงินขั้นต่ำ $1','error');
   if(amt>10000)return showToast('จำนวนเงินสูงสุด $10,000','error');
@@ -864,36 +866,25 @@ async function placeTrade(){
   var dp=asset.decimals||2;
   
   try{
-    /* Deduct balance */
     await sb.from('profiles').update({balance:currentProfile.balance-amt}).eq('id',currentUser.id);
     currentProfile.balance-=amt;updateTradingBalance();
     
     var tradeId='local_'+localTradeId++;
     
-    /* Try DB insert if not known-broken */
     if(tradeDbOk!==false){
       try{
         var tr=await tryInsertTrade({user_id:currentUser.id,asset:asset.symbol,direction:tradeDirection,amount:amt,open_price:op,duration:tradeTimer,result:'pending',created_at:new Date().toISOString()});
-        if(!tr.error&&tr.data){
-          tradeId=tr.data.id;
-          tradeDbOk=true;
-        }else{
-          tradeDbOk=false;
-          console.warn('DB insert failed, using local mode. Error:',tr.error?tr.error.message:'unknown');
-        }
-      }catch(dbErr){
-        tradeDbOk=false;
-        console.warn('DB insert exception, using local mode:',dbErr);
-      }
+        if(!tr.error&&tr.data){tradeId=tr.data.id;tradeDbOk=true;}
+        else{tradeDbOk=false;}
+      }catch(dbErr){tradeDbOk=false;}
     }
     
-    activeTrades.push({id:tradeId,asset:asset.symbol,direction:tradeDirection,amount:amt,open_price:op,duration:tradeTimer,openTime:Date.now(),assetIndex:selectedAsset,decimals:dp,dbSaved:tradeDbOk===true});
+    activeTrades.push({id:tradeId,asset:asset.symbol,direction:tradeDirection,amount:amt,open_price:op,duration:tradeTimer,openTime:Date.now(),assetIndex:selectedAsset,decimals:dp,dbSaved:tradeDbOk===true,resolving:false});
     
     playSound('open');
     showToast((tradeDirection==='up'?'📈 BUY':'📉 SELL')+' '+asset.symbol+' | $'+amt.toFixed(2)+' | '+tradeTimer+'s','success');
     renderOpenTrades();
   }catch(err){
-    /* Refund on complete failure */
     currentProfile.balance+=amt;
     try{await sb.from('profiles').update({balance:currentProfile.balance}).eq('id',currentUser.id);}catch(e){}
     updateTradingBalance();
@@ -966,50 +957,79 @@ function renderOpenTrades(){
   }).join('');
 }
 
-/* ===== PROCESS TRADES WITH RESULT POPUP ===== */
+/* ===== PROCESS TRADES — single execution lock ===== */
+var isProcessingTrade=false;
+
 async function processActiveTrades(cp){
-  var now=Date.now(),resolved=[];
+  if(isProcessingTrade)return; /* Prevent re-entry */
+  if(activeTrades.length===0){renderOpenTrades();return;}
+  
+  var now=Date.now();
+  var tradeToResolve=null;
+  
+  /* Find first trade that's expired and not already resolving */
   for(var i=0;i<activeTrades.length;i++){
-    var t=activeTrades[i],el=(now-t.openTime)/1000;
-    if(el>=t.duration){
-      var won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
-      var res=won?'win':'loss',pay=won?t.amount*1.85:0;
-      var dp=t.decimals||2;
-      
-      /* Try DB update only if trade was DB-saved */
-      if(t.dbSaved){
-        try{
-          await sb.from('trades').update({result:res,close_price:cp,payout:pay}).eq('id',t.id);
-        }catch(dbErr){
-          console.warn('Trade update failed:',dbErr);
-          /* Try without payout column */
-          try{await sb.from('trades').update({result:res,close_price:cp}).eq('id',t.id);}catch(e){
-            /* Try without close_price */
-            try{await sb.from('trades').update({result:res}).eq('id',t.id);}catch(e2){console.warn('All trade updates failed');}
-          }
-        }
-      }
-      
-      /* Update balance (works for both local and DB trades) */
-      if(won){
-        await loadUserProfile();
-        await sb.from('profiles').update({balance:currentProfile.balance+pay}).eq('id',currentUser.id);
-        currentProfile.balance+=pay;updateTradingBalance();
-      }
-      
-      showResultPopup(won,t,cp,pay,dp);
-      playSound(won?'win':'loss');
-      resolved.push(t.id);
+    var t=activeTrades[i];
+    var elapsed=(now-t.openTime)/1000;
+    if(elapsed>=t.duration&&!t.resolving){
+      tradeToResolve=t;
+      t.resolving=true; /* Mark as resolving immediately */
+      break;
     }
   }
-  if(resolved.length>0){
-    activeTrades=activeTrades.filter(function(t){return resolved.indexOf(t.id)===-1});
-    renderOpenTrades();await loadUserProfile();updateTradingBalance();
-  }else{renderOpenTrades();}
+  
+  if(!tradeToResolve){
+    renderOpenTrades();
+    return;
+  }
+  
+  /* Lock — prevent any other tick from processing */
+  isProcessingTrade=true;
+  
+  var t=tradeToResolve;
+  var won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
+  var res=won?'win':'loss';
+  var pay=won?t.amount*1.85:0;
+  var dp=t.decimals||2;
+  
+  /* DB update */
+  if(t.dbSaved){
+    try{
+      await sb.from('trades').update({result:res,close_price:cp,payout:pay}).eq('id',t.id);
+    }catch(dbErr){
+      try{await sb.from('trades').update({result:res}).eq('id',t.id);}catch(e){}
+    }
+  }
+  
+  /* Update balance */
+  if(won){
+    await loadUserProfile();
+    await sb.from('profiles').update({balance:currentProfile.balance+pay}).eq('id',currentUser.id);
+    currentProfile.balance+=pay;
+    updateTradingBalance();
+  }
+  
+  /* Remove from active trades BEFORE showing popup */
+  activeTrades=activeTrades.filter(function(x){return x.id!==t.id});
+  renderOpenTrades();
+  await loadUserProfile();
+  updateTradingBalance();
+  
+  /* Show result popup ONCE */
+  showResultPopup(won,t,cp,pay,dp);
+  playSound(won?'win':'loss');
+  
+  /* Unlock after a short delay */
+  setTimeout(function(){isProcessingTrade=false;},1500);
 }
 
-/* ===== RESULT POPUP ===== */
+/* ===== RESULT POPUP (single instance) ===== */
+var resultAutoCloseTimer=null;
+
 function showResultPopup(won,trade,closePrice,payout,dp){
+  /* Clear any existing auto-close timer */
+  if(resultAutoCloseTimer){clearTimeout(resultAutoCloseTimer);resultAutoCloseTimer=null;}
+  
   var overlay=document.getElementById('resultOverlay');
   var card=document.getElementById('resultCard');
   card.className='tv-result-card '+(won?'win':'loss');
@@ -1020,10 +1040,14 @@ function showResultPopup(won,trade,closePrice,payout,dp){
   document.getElementById('resultOpenPrice').textContent=trade.open_price.toFixed(dp);
   document.getElementById('resultClosePrice').textContent=closePrice.toFixed(dp);
   overlay.classList.add('show');
-  /* Auto close after 4s */
-  setTimeout(function(){closeResult()},4000);
+  
+  /* Auto close after 3.5s */
+  resultAutoCloseTimer=setTimeout(function(){closeResult();},3500);
 }
-function closeResult(){document.getElementById('resultOverlay').classList.remove('show');}
+function closeResult(){
+  if(resultAutoCloseTimer){clearTimeout(resultAutoCloseTimer);resultAutoCloseTimer=null;}
+  document.getElementById('resultOverlay').classList.remove('show');
+}
 
 /* ===== SOUND EFFECTS (Web Audio API) ===== */
 var audioCtx=null;
