@@ -710,34 +710,98 @@ function updatePriceDisplay(){var a=ASSETS[selectedAsset],last=candleData[candle
   var dot=document.getElementById('fhDot'),lbl=document.getElementById('fhLabel');
   if(dot&&lbl){var hasLive=getRealtimePrice()!==null;if(hasLive){dot.style.background='#38a169';lbl.textContent='LIVE';lbl.style.color='#38a169';}else if(tdConnected||binanceConnected){dot.style.background='#d4a437';lbl.textContent='CONNECTED';lbl.style.color='#d4a437';}else{dot.style.background='#666';lbl.textContent='OFFLINE';lbl.style.color='#666';}}
 }
-function startChart(){if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);var cv=document.getElementById('priceChart'),ctx=cv.getContext('2d');function resize(){cv.width=cv.parentElement.offsetWidth*2;cv.height=cv.parentElement.offsetHeight*2;ctx.scale(2,2);}resize();function tick(){var last=candleData[candleData.length-1];if(!last)return;
-  /* Try Finnhub realtime price first */
-  var realtimeP=getRealtimePrice();
-  var nc;
-  if(realtimeP&&realtimeP>0){
-    nc=realtimeP;
-  }else{
-    /* Fallback: small random walk from last price */
-    nc=last.c+(Math.random()-0.498)*last.c*0.0003;
+/* ===== SMOOTH CHART ENGINE ===== */
+var candleStartTime=0;
+var candleIntervalMs=5000; /* default 5s per candle for smooth display */
+
+function getCandleInterval(){
+  /* Map timeframe to candle duration in ms for smooth display */
+  /* Real timeframes: 1m=60s, 5m=300s, etc. but we show candles faster for smooth UX */
+  var map={'1':3000,'5':5000,'15':8000,'60':12000,'240':15000,'1440':20000};
+  return map[currentTimeframe.toString()]||5000;
+}
+
+function startChart(){
+  if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);
+  var cv=document.getElementById('priceChart'),ctx=cv.getContext('2d');
+  function resize(){cv.width=cv.parentElement.offsetWidth*2;cv.height=cv.parentElement.offsetHeight*2;ctx.scale(2,2);}
+  resize();
+  
+  candleIntervalMs=getCandleInterval();
+  candleStartTime=Date.now();
+  
+  function tick(){
+    var last=candleData[candleData.length-1];
+    if(!last)return;
+    
+    /* Get realtime price */
+    var realtimeP=getRealtimePrice();
+    var nc;
+    if(realtimeP&&realtimeP>0){
+      nc=realtimeP;
+    }else{
+      nc=last.c+(Math.random()-0.5)*last.c*0.00015;
+    }
+    
+    var now=Date.now();
+    var elapsed=now-candleStartTime;
+    
+    if(elapsed<candleIntervalMs){
+      /* UPDATE current candle (don't create new one) */
+      last.c=nc;
+      if(nc>last.h)last.h=nc;
+      if(nc<last.l)last.l=nc;
+      last.v+=Math.floor(Math.random()*10+1);
+    }else{
+      /* Time to create NEW candle */
+      candleStartTime=now;
+      candleData.push({o:last.c,h:Math.max(last.c,nc),l:Math.min(last.c,nc),c:nc,v:Math.floor(Math.random()*500+50)});
+      if(candleData.length>120)candleData.shift();
+    }
+    
+    priceHistory=candleData.map(function(c){return c.c});
+    ASSETS[selectedAsset].price=nc;
+    updatePriceDisplay();
+    drawCandlestick(ctx,cv.parentElement.offsetWidth,cv.parentElement.offsetHeight);
+    processActiveTrades(nc);
+    updateOrderBookPrices(nc);
+    
+    chartAnimFrame=requestAnimationFrame(function(){
+      setTimeout(function(){requestAnimationFrame(tick)},400);
+    });
   }
-  var no=last.c;var nh=Math.max(no,nc)+(Math.random()*Math.abs(nc-no)*0.2);var nl=Math.min(no,nc)-(Math.random()*Math.abs(nc-no)*0.2);candleData.push({o:no,h:nh,l:nl,c:nc,v:Math.floor(Math.random()*800+100)});if(candleData.length>120)candleData.shift();priceHistory=candleData.map(function(c){return c.c});ASSETS[selectedAsset].price=nc;updatePriceDisplay();drawCandlestick(ctx,cv.parentElement.offsetWidth,cv.parentElement.offsetHeight);processActiveTrades(nc);updateOrderBookPrices(nc);chartAnimFrame=requestAnimationFrame(function(){setTimeout(function(){requestAnimationFrame(tick)},900);});}tick();}
-function drawCandlestick(ctx,w,h){ctx.clearRect(0,0,w,h);var d=candleData,len=d.length;if(len<2)return;var allH=d.map(function(c){return c.h}),allL=d.map(function(c){return c.l});var mn=Math.min.apply(null,allL),mx=Math.max.apply(null,allH),rng=mx-mn||1;var padT=12,padB=30,padL=8,padR=60;var chartH=h-padT-padB,chartW=w-padL-padR;var cw=Math.max(3,Math.floor(chartW/len*0.7)),gap=Math.max(1,Math.floor(chartW/len*0.3));var totalW=(cw+gap)*len;var startX=padL+chartW-totalW;
+  tick();
+}
+function drawCandlestick(ctx,w,h){ctx.clearRect(0,0,w,h);var d=candleData,len=d.length;if(len<2)return;
+var a=ASSETS[selectedAsset],dp=a.decimals||2;
+var allH=d.map(function(c){return c.h}),allL=d.map(function(c){return c.l});
+var mn=Math.min.apply(null,allL),mx=Math.max.apply(null,allH),rng=mx-mn||1;
+/* Add 5% padding to price range */
+var padPrice=rng*0.05;mn-=padPrice;mx+=padPrice;rng=mx-mn;
+var padT=12,padB=30,padL=8,padR=65;
+var chartH=h-padT-padB,chartW=w-padL-padR;
+/* Candle sizing — thicker for fewer candles */
+var maxCW=Math.floor(chartW/len);
+var cw=Math.max(4,Math.floor(maxCW*0.65));
+var gap=maxCW-cw;
+var totalW=maxCW*len;
+var startX=padL+chartW-totalW;
 /* grid */
-ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='rgba(255,255,255,.25)';var steps=6;for(var i=0;i<=steps;i++){var y=padT+chartH*i/steps;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+5,y);ctx.stroke();var pv=mx-rng*i/steps;ctx.fillText(pv.toFixed(2),w-padR+8,y+4);}
+ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='rgba(255,255,255,.25)';var steps=6;for(var i=0;i<=steps;i++){var y=padT+chartH*i/steps;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+5,y);ctx.stroke();var pv=mx-rng*i/steps;ctx.fillText(pv.toFixed(dp),w-padR+8,y+4);}
 /* volume bars */
-var maxV=Math.max.apply(null,d.map(function(c){return c.v}))||1;var volH=chartH*0.15;for(var i=0;i<len;i++){var x=startX+i*(cw+gap);var vH=(d[i].v/maxV)*volH;var bull=d[i].c>=d[i].o;ctx.fillStyle=bull?'rgba(56,161,105,.12)':'rgba(229,62,62,.12)';ctx.fillRect(x,padT+chartH-vH,cw,vH);}
+var maxV=Math.max.apply(null,d.map(function(c){return c.v}))||1;var volH=chartH*0.12;for(var i=0;i<len;i++){var x=startX+i*maxCW+gap/2;var vH=(d[i].v/maxV)*volH;var bull=d[i].c>=d[i].o;ctx.fillStyle=bull?'rgba(56,161,105,.1)':'rgba(229,62,62,.1)';ctx.fillRect(x,padT+chartH-vH,cw,vH);}
 /* candles */
-for(var i=0;i<len;i++){var c=d[i],x=startX+i*(cw+gap),bull=c.c>=c.o;var yO=padT+(1-(c.o-mn)/rng)*chartH,yC=padT+(1-(c.c-mn)/rng)*chartH,yH=padT+(1-(c.h-mn)/rng)*chartH,yL=padT+(1-(c.l-mn)/rng)*chartH;
+for(var i=0;i<len;i++){var c=d[i],x=startX+i*maxCW+gap/2,bull=c.c>=c.o;var yO=padT+(1-(c.o-mn)/rng)*chartH,yC=padT+(1-(c.c-mn)/rng)*chartH,yH=padT+(1-(c.h-mn)/rng)*chartH,yL=padT+(1-(c.l-mn)/rng)*chartH;
 /* wick */
-ctx.strokeStyle=bull?'#38a169':'#e53e3e';ctx.lineWidth=1;var cx=x+cw/2;ctx.beginPath();ctx.moveTo(cx,yH);ctx.lineTo(cx,yL);ctx.stroke();
+ctx.strokeStyle=bull?'#38a169':'#e53e3e';ctx.lineWidth=1.5;var cx=x+cw/2;ctx.beginPath();ctx.moveTo(cx,yH);ctx.lineTo(cx,yL);ctx.stroke();
 /* body */
-var bodyTop=Math.min(yO,yC),bodyH=Math.max(Math.abs(yC-yO),1);ctx.fillStyle=bull?'#38a169':'#e53e3e';ctx.fillRect(x,bodyTop,cw,bodyH);}
+var bodyTop=Math.min(yO,yC),bodyH=Math.max(Math.abs(yC-yO),1.5);ctx.fillStyle=bull?'#38a169':'#e53e3e';ctx.fillRect(x,bodyTop,cw,bodyH);}
 /* entry lines for active trades */
 for(var ti=0;ti<activeTrades.length;ti++){var t=activeTrades[ti];if(t.assetIndex===selectedAsset){var yEntry=padT+(1-(t.open_price-mn)/rng)*chartH;ctx.setLineDash([6,4]);ctx.strokeStyle=t.direction==='up'?'rgba(56,161,105,.5)':'rgba(229,62,62,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,yEntry);ctx.lineTo(w-padR,yEntry);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=t.direction==='up'?'rgba(56,161,105,.7)':'rgba(229,62,62,.7)';ctx.font='bold 9px JetBrains Mono,monospace';ctx.fillText((t.direction==='up'?'▲ BUY ':'▼ SELL ')+t.open_price.toFixed(2),padL+4,yEntry-4);}}
 /* current price line */
-var lastC=d[len-1].c,yLast=padT+(1-(lastC-mn)/rng)*chartH;ctx.setLineDash([4,3]);ctx.strokeStyle=d[len-1].c>=d[len-1].o?'rgba(56,161,105,.6)':'rgba(229,62,62,.6)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,yLast);ctx.lineTo(w-padR,yLast);ctx.stroke();ctx.setLineDash([]);
+var lastC=d[len-1].c,yLast=padT+(1-(lastC-mn)/rng)*chartH;ctx.setLineDash([4,3]);ctx.strokeStyle=d[len-1].c>=d[len-1].o?'rgba(56,161,105,.5)':'rgba(229,62,62,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,yLast);ctx.lineTo(w-padR,yLast);ctx.stroke();ctx.setLineDash([]);
 /* price label */
-var lblColor=d[len-1].c>=d[len-1].o?'#38a169':'#e53e3e';ctx.fillStyle=lblColor;ctx.fillRect(w-padR,yLast-9,padR,18);ctx.fillStyle='#fff';ctx.font='bold 10px JetBrains Mono,monospace';ctx.fillText(lastC.toFixed(2),w-padR+4,yLast+4);}
+var lblColor=d[len-1].c>=d[len-1].o?'#38a169':'#e53e3e';ctx.fillStyle=lblColor;var lblW=padR-2;ctx.fillRect(w-padR,yLast-10,lblW,20);ctx.fillStyle='#fff';ctx.font='bold 10px JetBrains Mono,monospace';ctx.textAlign='center';ctx.fillText(lastC.toFixed(dp),w-padR+lblW/2,yLast+4);ctx.textAlign='left';}
 
 function generateOrderBook(){if(!candleData.length)return;var last=candleData[candleData.length-1].c;updateOrderBookPrices(last);}
 function updateOrderBookPrices(price){var a=ASSETS[selectedAsset],d=a.decimals||2;var spread=price*0.0002;var asks='',bids='',maxSize=0;var askData=[],bidData=[];for(var i=8;i>=1;i--){var p=price+spread*i*0.5+Math.random()*price*0.0001;var s=(Math.random()*5+0.1).toFixed(3);var t=(parseFloat(s)*p).toFixed(2);askData.push({p:p,s:s,t:t});if(parseFloat(s)>maxSize)maxSize=parseFloat(s);}for(var i=1;i<=8;i++){var p=price-spread*i*0.5-Math.random()*price*0.0001;var s=(Math.random()*5+0.1).toFixed(3);var t=(parseFloat(s)*p).toFixed(2);bidData.push({p:p,s:s,t:t});if(parseFloat(s)>maxSize)maxSize=parseFloat(s);}asks=askData.map(function(r){var w=(parseFloat(r.s)/maxSize*100).toFixed(0);return '<div class="tv-ob-row ask"><span class="price">'+r.p.toFixed(d)+'</span><span class="size">'+r.s+'</span><span class="total">'+r.t+'</span><div class="depth-bar" style="width:'+w+'%"></div></div>'}).join('');bids=bidData.map(function(r){var w=(parseFloat(r.s)/maxSize*100).toFixed(0);return '<div class="tv-ob-row bid"><span class="price">'+r.p.toFixed(d)+'</span><span class="size">'+r.s+'</span><span class="total">'+r.t+'</span><div class="depth-bar" style="width:'+w+'%"></div></div>'}).join('');document.getElementById('obAsks').innerHTML=asks;document.getElementById('obBids').innerHTML=bids;document.getElementById('obSpread').textContent=(spread).toFixed(d);}
