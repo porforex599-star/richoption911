@@ -2,324 +2,468 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>RichOption911 — Trading Platform</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💎</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
---bg:#06080f;--bg2:#0c1019;--bg3:#121827;--bg4:#1a2236;
---border:#1c2540;--border2:#263050;
---gold:#e8b94a;--gold2:#d4a430;--gold-g:rgba(232,185,74,.12);
---green:#00e676;--red:#ff5252;--blue:#448aff;
---t1:#eef0f6;--t2:#9aa3b8;--t3:#5c667a;--t4:#3a4458;
-}
+:root{--bg:#06080f;--bg2:#0c1019;--bg3:#121827;--bg4:#1a2236;--border:#1c2540;--border2:#263050;--gold:#e8b94a;--gold2:#d4a430;--gg:rgba(232,185,74,.12);--green:#00e676;--green2:#00c853;--red:#ff5252;--blue:#448aff;--purple:#b388ff;--cyan:#00e5ff;--t1:#eef0f6;--t2:#9aa3b8;--t3:#5c667a;--t4:#3a4458}
 body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--t2);min-height:100vh;overflow-x:hidden}
-a{color:var(--gold);text-decoration:none}
-a:hover{text-decoration:underline}
+a{color:var(--gold);text-decoration:none}a:hover{text-decoration:underline}
 button{font-family:inherit;cursor:pointer;border:none;outline:none}
 input,select,textarea{font-family:inherit;outline:none}
+.mono{font-family:'JetBrains Mono',monospace}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}input[type=number]{-moz-appearance:textfield}
 
-.page{display:none;min-height:100vh;animation:fadeIn .4s ease}
-.page.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* Pages */
+.page{display:none;min-height:100vh;animation:fadeIn .35s ease}.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-/* NAV */
-.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid rgba(28,37,64,.5)}
-.nav-logo{font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px}
-.nav-links{display:flex;gap:8px}
-.nav-btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;transition:all .2s}
-.nav-btn.outline{background:transparent;color:var(--gold);border:1px solid rgba(232,185,74,.3)}
-.nav-btn.outline:hover{border-color:var(--gold);background:var(--gold-g)}
-.nav-btn.solid{background:var(--gold);color:var(--bg);border:1px solid var(--gold)}
-.nav-btn.solid:hover{background:#f0c85a;transform:translateY(-1px)}
+/* Common */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid rgba(28,37,64,.5)}
+.nav-logo{font-size:17px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;cursor:pointer}
+.nav-links{display:flex;gap:8px;align-items:center}
+.nb{padding:7px 18px;border-radius:7px;font-size:12px;font-weight:600;transition:all .15s}
+.nb-o{background:0;color:var(--gold);border:1px solid rgba(232,185,74,.3)}.nb-o:hover{border-color:var(--gold);background:var(--gg)}
+.nb-s{background:var(--gold);color:var(--bg);border:1px solid var(--gold)}.nb-s:hover{background:#f0c85a}
+.nb-g{background:var(--bg3);color:var(--t2);border:1px solid var(--border)}.nb-g:hover{background:var(--bg4);color:var(--t1)}
 
-/* HERO */
-.landing-hero{min-height:100vh;display:flex;flex-direction:column;background:radial-gradient(ellipse at 30% 20%,rgba(232,185,74,.06) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(68,138,255,.04) 0%,transparent 50%),var(--bg)}
-.hero-content{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 32px}
-.hero-inner{max-width:680px;text-align:center}
-.hero-badge{display:inline-block;padding:6px 16px;border-radius:20px;background:var(--gold-g);border:1px solid rgba(232,185,74,.2);color:var(--gold);font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:24px}
-.hero-title{font-size:clamp(32px,6vw,56px);font-weight:900;color:var(--t1);line-height:1.1;margin-bottom:16px}
-.hero-title .gold{background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hero-sub{font-size:clamp(15px,2.5vw,18px);color:var(--t2);line-height:1.6;margin-bottom:36px;max-width:520px;margin-left:auto;margin-right:auto}
-.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.cta-btn{padding:14px 36px;border-radius:10px;font-size:15px;font-weight:700;transition:all .2s;letter-spacing:.3px}
-.cta-primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--bg);box-shadow:0 6px 30px rgba(232,185,74,.25)}
-.cta-primary:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(232,185,74,.35)}
-.cta-secondary{background:var(--bg3);color:var(--t1);border:1px solid var(--border2)}
-.cta-secondary:hover{border-color:var(--gold);background:var(--bg4)}
-.stats-bar{display:flex;justify-content:center;gap:40px;padding:32px;border-top:1px solid rgba(28,37,64,.5);flex-wrap:wrap}
-.stat{text-align:center}
-.stat-num{font-size:28px;font-weight:800;color:var(--t1);font-family:'JetBrains Mono',monospace}
-.stat-num .gold{background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.stat-label{font-size:12px;color:var(--t3);margin-top:4px;text-transform:uppercase;letter-spacing:.8px}
+/* Auth */
+.auth-pg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 30%,rgba(232,185,74,.04),transparent 60%),var(--bg)}
+.auth-c{width:100%;max-width:430px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:32px;box-shadow:0 16px 50px rgba(0,0,0,.4)}
+.auth-logo{text-align:center;margin-bottom:20px;font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-t{text-align:center;font-size:20px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.auth-st{text-align:center;font-size:12px;color:var(--t3);margin-bottom:24px}
+.fr{margin-bottom:12px}.fr.half{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fl{display:block;font-size:11px;color:var(--t3);margin-bottom:4px;font-weight:500}
+.fi{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--t1);font-size:12px;transition:border .2s}
+.fi:focus{border-color:var(--gold)}.fi::placeholder{color:var(--t4)}
+select.fi{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c667a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+textarea.fi{resize:vertical;min-height:50px}
+.fc{display:flex;align-items:flex-start;gap:7px;margin:14px 0}.fc input{margin-top:2px;accent-color:var(--gold)}.fc label{font-size:11px;color:var(--t3);line-height:1.3}
+.ab{width:100%;padding:11px;border-radius:7px;font-size:13px;font-weight:700;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--gold2));box-shadow:0 4px 18px rgba(232,185,74,.2);transition:all .2s;margin-top:6px}
+.ab:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(232,185,74,.3)}.ab:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.adiv{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--t4);font-size:11px}.adiv::before,.adiv::after{content:'';flex:1;height:1px;background:var(--border)}
+.gbtn{width:100%;padding:10px;border-radius:7px;font-size:12px;font-weight:600;color:var(--t1);background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.gbtn:hover{border-color:var(--border2);background:var(--bg4)}.gbtn svg{width:16px;height:16px}
+.af{text-align:center;margin-top:16px;font-size:12px;color:var(--t3)}
+.abk{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);cursor:pointer;margin-bottom:16px}.abk:hover{color:var(--gold)}
+.ferr{color:var(--red);font-size:10px;margin-top:3px;display:none}
+.fok{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:var(--green);border-radius:7px;padding:10px;text-align:center;font-size:12px;margin-bottom:14px;display:none}
+.pws{height:3px;border-radius:2px;background:var(--border);margin-top:4px;overflow:hidden}.pws .bar{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
+.phr{display:flex;gap:6px}.phc{width:85px;flex-shrink:0}
 
-/* FEATURES */
-.features{padding:60px 32px;background:var(--bg2);border-top:1px solid var(--border)}
-.features-title{text-align:center;font-size:28px;font-weight:800;color:var(--t1);margin-bottom:40px}
-.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;max-width:900px;margin:0 auto}
-.feat-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:24px;transition:all .2s}
-.feat-card:hover{border-color:rgba(232,185,74,.3);transform:translateY(-2px)}
-.feat-icon{font-size:28px;margin-bottom:12px}
-.feat-title{font-size:16px;font-weight:700;color:var(--t1);margin-bottom:6px}
-.feat-desc{font-size:13px;color:var(--t3);line-height:1.5}
-.footer{padding:24px 32px;text-align:center;border-top:1px solid var(--border);font-size:12px;color:var(--t4)}
+/* Dashboard layout */
+.dash{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);padding:16px 0;display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:0 16px 16px;font-size:15px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent;border-bottom:1px solid var(--border);margin-bottom:8px;cursor:pointer}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--t3);cursor:pointer;transition:all .12s;border-left:3px solid transparent}
+.sb-item:hover{color:var(--t1);background:var(--bg3)}
+.sb-item.active{color:var(--gold);background:var(--gg);border-left-color:var(--gold);font-weight:600}
+.sb-item .ico{font-size:16px;width:22px;text-align:center}
+.sb-bottom{margin-top:auto;padding:8px 16px;border-top:1px solid var(--border)}
+.sb-user{font-size:12px;color:var(--t2);font-weight:600;margin-bottom:2px}
+.sb-email{font-size:10px;color:var(--t4)}
+.dash-main{flex:1;overflow-y:auto;background:var(--bg)}
+.dash-header{padding:20px 28px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.dash-title{font-size:20px;font-weight:700;color:var(--t1)}
+.dash-sub{font-size:12px;color:var(--t3);margin-top:2px}
+.dash-body{padding:24px 28px}
 
-/* AUTH */
-.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 30%,rgba(232,185,74,.04) 0%,transparent 60%),var(--bg)}
-.auth-card{width:100%;max-width:440px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:36px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-.auth-logo{text-align:center;margin-bottom:24px}
-.auth-logo span{font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.auth-title{text-align:center;font-size:22px;font-weight:700;color:var(--t1);margin-bottom:6px}
-.auth-subtitle{text-align:center;font-size:13px;color:var(--t3);margin-bottom:28px}
-.form-row{margin-bottom:14px}
-.form-row.half{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.form-label{display:block;font-size:12px;color:var(--t3);margin-bottom:5px;font-weight:500}
-.form-input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--t1);font-size:13px;transition:border .2s}
-.form-input:focus{border-color:var(--gold)}
-.form-input::placeholder{color:var(--t4)}
-select.form-input{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c667a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-textarea.form-input{resize:vertical;min-height:60px}
-.form-check{display:flex;align-items:flex-start;gap:8px;margin:16px 0}
-.form-check input[type=checkbox]{margin-top:3px;accent-color:var(--gold)}
-.form-check label{font-size:12px;color:var(--t3);line-height:1.4}
-.auth-btn{width:100%;padding:12px;border-radius:8px;font-size:14px;font-weight:700;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--gold2));box-shadow:0 4px 20px rgba(232,185,74,.2);transition:all .2s;margin-top:8px;letter-spacing:.3px}
-.auth-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(232,185,74,.3)}
-.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--t4);font-size:12px}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
-.google-btn{width:100%;padding:11px;border-radius:8px;font-size:13px;font-weight:600;color:var(--t1);background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s}
-.google-btn:hover{border-color:var(--border2);background:var(--bg4)}
-.google-btn svg{width:18px;height:18px}
-.auth-footer{text-align:center;margin-top:20px;font-size:13px;color:var(--t3)}
-.auth-back{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--t3);cursor:pointer;transition:color .15s;margin-bottom:20px}
-.auth-back:hover{color:var(--gold)}
-.form-error{color:var(--red);font-size:11px;margin-top:4px;display:none}
-.form-success{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:var(--green);border-radius:8px;padding:12px;text-align:center;font-size:13px;margin-bottom:16px;display:none}
-.pw-str{height:3px;border-radius:2px;background:var(--border);margin-top:6px;overflow:hidden}
-.pw-str .bar{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
-.phone-row{display:flex;gap:8px}
-.phone-code{width:90px;flex-shrink:0}
-.toast{position:fixed;top:16px;right:16px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:slideIn .3s ease;pointer-events:none}
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.card-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.card-val{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.card-sub{font-size:11px;color:var(--t3);margin-top:4px}
+
+/* Tables */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
+.tbl th{padding:8px 10px;text-align:left;font-weight:500;background:var(--bg3);color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.tbl td{padding:7px 10px;border-bottom:1px solid rgba(28,37,64,.4)}
+.tbl .empty{text-align:center;color:var(--t4);padding:24px!important}
+
+/* Profile form */
+.pf-form{max-width:500px}.pf-form .fr{margin-bottom:14px}
+.pf-save{padding:10px 28px;border-radius:7px;font-size:13px;font-weight:700;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--gold2));margin-top:8px;transition:all .15s}
+.pf-save:hover{transform:translateY(-1px)}
+
+/* Referral */
+.ref-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.ref-code{font-size:24px;font-weight:800;color:var(--gold);font-family:'JetBrains Mono',monospace;margin:8px 0}
+.ref-copy{padding:8px 20px;border-radius:6px;font-size:12px;font-weight:600;color:var(--bg);background:var(--gold);transition:all .15s}
+.ref-copy:hover{background:#f0c85a}
+
+/* Deposit/Withdraw */
+.dw-btn{padding:9px 24px;border-radius:7px;font-size:12px;font-weight:700;margin-right:8px;margin-bottom:12px;transition:all .15s}
+.dw-dep{background:var(--green);color:var(--bg)}.dw-dep:hover{filter:brightness(1.1)}
+.dw-wit{background:var(--bg3);color:var(--red);border:1px solid rgba(255,82,82,.3)}.dw-wit:hover{background:rgba(255,82,82,.1)}
+.dw-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:999;display:none}
+.dw-modal.show{display:flex}
+.dw-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:380px}
+.dw-card h3{font-size:16px;color:var(--t1);margin-bottom:16px}
+
+/* Trading (embedded) */
+.trade-frame{width:100%;height:calc(100vh - 52px);border:none;background:var(--bg)}
+
+/* Toast */
+.toast{position:fixed;top:14px;right:14px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.3);animation:slideIn .3s ease;pointer-events:none}
 .toast.success{background:var(--bg3);border:1px solid rgba(0,230,118,.3);color:var(--green)}
 .toast.error{background:var(--bg3);border:1px solid rgba(255,82,82,.3);color:var(--red)}
-@keyframes slideIn{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideIn{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
 
-@media(max-width:600px){
-  .nav{padding:12px 16px}.hero-content{padding:24px 16px}
-  .hero-cta{flex-direction:column;align-items:center}
-  .stats-bar{gap:24px}.features{padding:40px 16px}
-  .auth-card{padding:24px 20px}.form-row.half{grid-template-columns:1fr}
+/* Landing */
+.hero{min-height:100vh;display:flex;flex-direction:column;background:radial-gradient(ellipse at 30% 20%,rgba(232,185,74,.06),transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(68,138,255,.04),transparent 50%),var(--bg)}
+.hero-ct{flex:1;display:flex;align-items:center;justify-content:center;padding:36px 28px}
+.hero-in{max-width:640px;text-align:center}
+.hero-badge{display:inline-block;padding:5px 14px;border-radius:18px;background:var(--gg);border:1px solid rgba(232,185,74,.2);color:var(--gold);font-size:11px;font-weight:600;margin-bottom:20px}
+.hero-title{font-size:clamp(28px,5.5vw,50px);font-weight:900;color:var(--t1);line-height:1.1;margin-bottom:14px}.hero-title .gd{background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:clamp(14px,2.2vw,16px);color:var(--t2);line-height:1.6;margin-bottom:30px;max-width:480px;margin-left:auto;margin-right:auto}
+.hero-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.cta{padding:12px 32px;border-radius:9px;font-size:14px;font-weight:700;transition:all .2s}
+.cta-p{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--bg);box-shadow:0 5px 24px rgba(232,185,74,.25)}.cta-p:hover{transform:translateY(-2px)}
+.cta-s{background:var(--bg3);color:var(--t1);border:1px solid var(--border2)}.cta-s:hover{border-color:var(--gold)}
+.stats{display:flex;justify-content:center;gap:36px;padding:28px;border-top:1px solid rgba(28,37,64,.5);flex-wrap:wrap}
+.stat{text-align:center}.stat-n{font-size:24px;font-weight:800;color:var(--t1);font-family:'JetBrains Mono',monospace}.stat-n .gd{background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-l{font-size:11px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.6px}
+.feats{padding:50px 28px;background:var(--bg2);border-top:1px solid var(--border)}
+.feats-t{text-align:center;font-size:24px;font-weight:800;color:var(--t1);margin-bottom:32px}
+.feats-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;max-width:860px;margin:0 auto}
+.fc2{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;transition:all .2s}.fc2:hover{border-color:rgba(232,185,74,.3);transform:translateY(-2px)}
+.fc2-i{font-size:24px;margin-bottom:10px}.fc2-t{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px}.fc2-d{font-size:12px;color:var(--t3);line-height:1.4}
+.foot{padding:20px 28px;text-align:center;border-top:1px solid var(--border);font-size:11px;color:var(--t4)}
+
+/* Responsive */
+@media(max-width:768px){
+.sidebar{position:fixed;left:-260px;z-index:99;height:100vh;transition:left .3s;width:240px}.sidebar.open{left:0}
+.mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:98;display:none}.mob-overlay.show{display:block}
+.dash-header{padding:16px 20px}.dash-body{padding:16px 20px}
+.mob-menu{display:block!important;font-size:20px;background:0;color:var(--t2);padding:4px 8px}
+.nav{padding:12px 16px}.hero-ct{padding:20px 16px}.hero-cta{flex-direction:column;align-items:center}
+.auth-c{padding:24px 18px}.fr.half{grid-template-columns:1fr}
 }
+@media(min-width:769px){.mob-menu{display:none!important}.mob-overlay{display:none!important}}
 </style>
 </head>
 <body>
 
 <!-- ===== LANDING ===== -->
-<div class="page active" id="pageLanding">
-<div class="landing-hero">
-  <nav class="nav">
-    <div class="nav-logo">💎 RICHOPTION911</div>
-    <div class="nav-links">
-      <button class="nav-btn outline" onclick="showPage('pageLogin')">เข้าสู่ระบบ</button>
-      <button class="nav-btn solid" onclick="showPage('pageRegister')">สมัครสมาชิก</button>
-    </div>
-  </nav>
-  <div class="hero-content"><div class="hero-inner">
+<div class="page active" id="pgLand">
+<div class="hero">
+  <nav class="nav"><div class="nav-logo" onclick="go('pgLand')">💎 RICHOPTION911</div><div class="nav-links"><button class="nb nb-o" onclick="go('pgLogin')">เข้าสู่ระบบ</button><button class="nb nb-s" onclick="go('pgReg')">สมัครสมาชิก</button></div></nav>
+  <div class="hero-ct"><div class="hero-in">
     <div class="hero-badge">🔥 แพลตฟอร์มเทรดอันดับ 1</div>
-    <h1 class="hero-title">เทรดทุกสินทรัพย์<br>ในที่เดียว <span class="gold">ง่ายและเร็ว</span></h1>
-    <p class="hero-sub">เทรด Gold, Forex, Crypto, หุ้นสหรัฐ พร้อมกราฟระดับมืออาชีพ Indicators ครบ และระบบจัดการพอร์ตอัจฉริยะ</p>
-    <div class="hero-cta">
-      <button class="cta-btn cta-primary" onclick="showPage('pageRegister')">เปิดบัญชีฟรี →</button>
-      <button class="cta-btn cta-secondary" onclick="showPage('pageLogin')">เข้าสู่ระบบ</button>
-    </div>
+    <h1 class="hero-title">เทรดทุกสินทรัพย์ ในที่เดียว<br><span class="gd">ง่ายและเร็ว</span></h1>
+    <p class="hero-sub">เทรด Gold, Forex, Crypto, หุ้นสหรัฐ พร้อมกราฟระดับมืออาชีพ และระบบจัดการพอร์ตอัจฉริยะ</p>
+    <div class="hero-cta"><button class="cta cta-p" onclick="go('pgReg')">เปิดบัญชีฟรี →</button><button class="cta cta-s" onclick="go('pgLogin')">เข้าสู่ระบบ</button></div>
   </div></div>
-  <div class="stats-bar">
-    <div class="stat"><div class="stat-num"><span class="gold">9+</span></div><div class="stat-label">สินทรัพย์</div></div>
-    <div class="stat"><div class="stat-num"><span class="gold">$100K</span></div><div class="stat-label">เงินทดลอง</div></div>
-    <div class="stat"><div class="stat-num"><span class="gold">0.0</span></div><div class="stat-label">ค่าคอมมิชชั่น</div></div>
-    <div class="stat"><div class="stat-num"><span class="gold">24/7</span></div><div class="stat-label">เทรดได้ตลอด</div></div>
-  </div>
+  <div class="stats"><div class="stat"><div class="stat-n"><span class="gd">9+</span></div><div class="stat-l">สินทรัพย์</div></div><div class="stat"><div class="stat-n"><span class="gd">$100K</span></div><div class="stat-l">เงินทดลอง</div></div><div class="stat"><div class="stat-n"><span class="gd">0.0</span></div><div class="stat-l">ค่าคอมมิชชั่น</div></div><div class="stat"><div class="stat-n"><span class="gd">24/7</span></div><div class="stat-l">เทรดตลอด</div></div></div>
 </div>
-<div class="features">
-  <h2 class="features-title">ทำไมต้อง RichOption911?</h2>
-  <div class="features-grid">
-    <div class="feat-card"><div class="feat-icon">📊</div><div class="feat-title">กราฟระดับมืออาชีพ</div><div class="feat-desc">กราฟแท่งเทียน Real-time พร้อม Indicators ครบ — MA, RSI, MACD</div></div>
-    <div class="feat-card"><div class="feat-icon">⚡</div><div class="feat-title">เทรดได้ทุกสินทรัพย์</div><div class="feat-desc">Gold, EUR/USD, Bitcoin, Ethereum, Apple, Tesla, Nvidia ในที่เดียว</div></div>
-    <div class="feat-card"><div class="feat-icon">🛡️</div><div class="feat-title">ปลอดภัย 100%</div><div class="feat-desc">ระบบเข้ารหัสข้อมูลทุกชั้น ปกป้องข้อมูลและเงินทุนของคุณ</div></div>
-    <div class="feat-card"><div class="feat-icon">🎁</div><div class="feat-title">แนะนำเพื่อน รับโบนัส</div><div class="feat-desc">ระบบ Referral — แนะนำเพื่อนสมัคร รับโบนัสเข้าบัญชีทันที</div></div>
-    <div class="feat-card"><div class="feat-icon">📱</div><div class="feat-title">ใช้ได้ทุกอุปกรณ์</div><div class="feat-desc">เปิดผ่าน Browser ได้เลย ไม่ต้องดาวน์โหลดแอป ใช้ได้ทั้งมือถือและคอม</div></div>
-    <div class="feat-card"><div class="feat-icon">💰</div><div class="feat-title">เริ่มต้นฟรี $100,000</div><div class="feat-desc">ทดลองเทรดด้วยเงินจำลอง ไม่มีความเสี่ยง เรียนรู้ได้เต็มที่</div></div>
-  </div>
-</div>
-<div class="footer">© 2026 RichOption911. All rights reserved.</div>
+<div class="feats"><h2 class="feats-t">ทำไมต้อง RichOption911?</h2><div class="feats-g">
+  <div class="fc2"><div class="fc2-i">📊</div><div class="fc2-t">กราฟระดับมืออาชีพ</div><div class="fc2-d">แท่งเทียน Real-time พร้อม MA, RSI, MACD</div></div>
+  <div class="fc2"><div class="fc2-i">⚡</div><div class="fc2-t">เทรดได้ทุกสินทรัพย์</div><div class="fc2-d">Gold, Forex, Bitcoin, หุ้นสหรัฐ ในที่เดียว</div></div>
+  <div class="fc2"><div class="fc2-i">🛡️</div><div class="fc2-t">ปลอดภัย 100%</div><div class="fc2-d">เข้ารหัสข้อมูลทุกชั้น ปกป้องเงินทุน</div></div>
+  <div class="fc2"><div class="fc2-i">🎁</div><div class="fc2-t">แนะนำเพื่อน รับโบนัส</div><div class="fc2-d">ระบบ Referral รับโบนัสเข้าบัญชีทันที</div></div>
+  <div class="fc2"><div class="fc2-i">📱</div><div class="fc2-t">ใช้ได้ทุกอุปกรณ์</div><div class="fc2-d">เปิดผ่าน Browser ไม่ต้องดาวน์โหลดแอป</div></div>
+  <div class="fc2"><div class="fc2-i">💰</div><div class="fc2-t">เริ่มต้นฟรี $100K</div><div class="fc2-d">เงินทดลอง ไม่มีความเสี่ยง เรียนรู้เต็มที่</div></div>
+</div></div>
+<div class="foot">© 2026 RichOption911. All rights reserved.</div>
 </div>
 
 <!-- ===== REGISTER ===== -->
-<div class="page" id="pageRegister">
-<div class="auth-page"><div class="auth-card">
-  <div class="auth-back" onclick="showPage('pageLanding')">← กลับหน้าหลัก</div>
-  <div class="auth-logo"><span>💎 RICHOPTION911</span></div>
-  <div class="auth-title">สมัครสมาชิก</div>
-  <div class="auth-subtitle">เปิดบัญชีฟรี เริ่มเทรดได้ทันที</div>
-  <div class="form-success" id="regOk">✅ สมัครสำเร็จ! กำลังพาไปหน้า Login...</div>
-
-  <form id="regForm" onsubmit="doRegister(event)">
-    <div class="form-row half">
-      <div><label class="form-label">ชื่อ *</label><input class="form-input" id="rFn" placeholder="ชื่อจริง" required></div>
-      <div><label class="form-label">นามสกุล *</label><input class="form-input" id="rLn" placeholder="นามสกุล" required></div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">อีเมล *</label>
-      <input class="form-input" type="email" id="rEm" placeholder="your@email.com" required>
-      <div class="form-error" id="emErr">อีเมลนี้ถูกใช้งานแล้ว</div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">เบอร์โทรศัพท์ *</label>
-      <div class="phone-row">
-        <select class="form-input phone-code" id="rPc"><option value="+66">🇹🇭 +66</option><option value="+1">🇺🇸 +1</option><option value="+44">🇬🇧 +44</option><option value="+81">🇯🇵 +81</option></select>
-        <input class="form-input" type="tel" id="rPh" placeholder="081-234-5678" required>
-      </div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">รหัสผ่าน * (อย่างน้อย 8 ตัว)</label>
-      <input class="form-input" type="password" id="rPw" placeholder="อย่างน้อย 8 ตัวอักษร" required minlength="8" oninput="chkPw(this.value)">
-      <div class="pw-str"><div class="bar" id="pwBar"></div></div>
-      <div style="font-size:10px;color:var(--t4);margin-top:3px" id="pwTxt"></div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">ยืนยันรหัสผ่าน *</label>
-      <input class="form-input" type="password" id="rPwc" placeholder="พิมพ์รหัสผ่านอีกครั้ง" required>
-      <div class="form-error" id="pwErr">รหัสผ่านไม่ตรงกัน</div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">ที่อยู่</label>
-      <textarea class="form-input" id="rAddr" placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด" rows="2"></textarea>
-    </div>
-    <div class="form-row">
-      <label class="form-label">รหัส Referral (ถ้ามี)</label>
-      <input class="form-input" id="rRef" placeholder="เช่น REF-ABC123">
-    </div>
-    <div class="form-check">
-      <input type="checkbox" id="rTerm" required>
-      <label for="rTerm">ข้าพเจ้ายอมรับ <a href="#">ข้อตกลงและเงื่อนไข</a> และ <a href="#">นโยบายความเป็นส่วนตัว</a></label>
-    </div>
-    <button type="submit" class="auth-btn" id="regBtn">สมัครสมาชิก</button>
+<div class="page" id="pgReg">
+<div class="auth-pg"><div class="auth-c">
+  <div class="abk" onclick="go('pgLand')">← กลับหน้าหลัก</div>
+  <div class="auth-logo">💎 RICHOPTION911</div>
+  <div class="auth-t">สมัครสมาชิก</div>
+  <div class="auth-st">เปิดบัญชีฟรี เริ่มเทรดได้ทันที</div>
+  <div class="fok" id="regOk">✅ สมัครสำเร็จ!</div>
+  <form onsubmit="doReg(event)">
+    <div class="fr half"><div><label class="fl">ชื่อ *</label><input class="fi" id="rFn" placeholder="ชื่อจริง" required></div><div><label class="fl">นามสกุล *</label><input class="fi" id="rLn" placeholder="นามสกุล" required></div></div>
+    <div class="fr"><label class="fl">อีเมล *</label><input class="fi" type="email" id="rEm" placeholder="your@email.com" required><div class="ferr" id="emE">อีเมลนี้ถูกใช้แล้ว</div></div>
+    <div class="fr"><label class="fl">เบอร์โทรศัพท์ *</label><div class="phr"><select class="fi phc" id="rPc"><option>🇹🇭 +66</option><option>🇺🇸 +1</option><option>🇬🇧 +44</option></select><input class="fi" type="tel" id="rPh" placeholder="081-234-5678" required></div></div>
+    <div class="fr"><label class="fl">รหัสผ่าน * (อย่างน้อย 8 ตัว)</label><input class="fi" type="password" id="rPw" placeholder="รหัสผ่าน" required minlength="8" oninput="chkPw(this.value)"><div class="pws"><div class="bar" id="pwB"></div></div></div>
+    <div class="fr"><label class="fl">ยืนยันรหัสผ่าน *</label><input class="fi" type="password" id="rPwc" placeholder="พิมพ์อีกครั้ง" required><div class="ferr" id="pwE">รหัสผ่านไม่ตรงกัน</div></div>
+    <div class="fr"><label class="fl">ที่อยู่</label><textarea class="fi" id="rAd" placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด" rows="2"></textarea></div>
+    <div class="fr"><label class="fl">รหัส Referral (ถ้ามี)</label><input class="fi" id="rRf" placeholder="REF-XXXXXX"></div>
+    <div class="fc"><input type="checkbox" id="rTm" required><label for="rTm">ยอมรับ <a href="#">ข้อตกลงและเงื่อนไข</a></label></div>
+    <button type="submit" class="ab" id="regB">สมัครสมาชิก</button>
   </form>
-
-  <div class="auth-divider">หรือ</div>
-  <button class="google-btn" onclick="gLogin()">
-    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-    สมัครด้วย Google
-  </button>
-  <div class="auth-footer">มีบัญชีแล้ว? <a href="#" onclick="showPage('pageLogin');return false">เข้าสู่ระบบ</a></div>
-</div></div>
-</div>
+  <div class="adiv">หรือ</div>
+  <button class="gbtn" onclick="toast('Google Login จะพร้อมใน Step 3','error')"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>สมัครด้วย Google</button>
+  <div class="af">มีบัญชีแล้ว? <a href="#" onclick="go('pgLogin');return false">เข้าสู่ระบบ</a></div>
+</div></div></div>
 
 <!-- ===== LOGIN ===== -->
-<div class="page" id="pageLogin">
-<div class="auth-page"><div class="auth-card">
-  <div class="auth-back" onclick="showPage('pageLanding')">← กลับหน้าหลัก</div>
-  <div class="auth-logo"><span>💎 RICHOPTION911</span></div>
-  <div class="auth-title">เข้าสู่ระบบ</div>
-  <div class="auth-subtitle">ยินดีต้อนรับกลับ! เข้าสู่ระบบเพื่อเริ่มเทรด</div>
-  <div class="form-success" id="logOk">✅ เข้าสู่ระบบสำเร็จ! กำลังโหลด...</div>
-
-  <form id="logForm" onsubmit="doLogin(event)">
-    <div class="form-row">
-      <label class="form-label">อีเมล</label>
-      <input class="form-input" type="email" id="lEm" placeholder="your@email.com" required>
-    </div>
-    <div class="form-row">
-      <label class="form-label">รหัสผ่าน</label>
-      <input class="form-input" type="password" id="lPw" placeholder="รหัสผ่านของคุณ" required>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3);cursor:pointer">
-        <input type="checkbox" style="accent-color:var(--gold)"> จดจำฉัน
-      </label>
-      <a href="#" style="font-size:12px" onclick="toast('ระบบกู้รหัสผ่านจะเปิดใช้งานเร็วๆ นี้','error');return false">ลืมรหัสผ่าน?</a>
-    </div>
-    <div class="form-error" id="logErr" style="text-align:center;margin-bottom:12px">อีเมลหรือรหัสผ่านไม่ถูกต้อง</div>
-    <button type="submit" class="auth-btn" id="logBtn">เข้าสู่ระบบ</button>
+<div class="page" id="pgLogin">
+<div class="auth-pg"><div class="auth-c">
+  <div class="abk" onclick="go('pgLand')">← กลับหน้าหลัก</div>
+  <div class="auth-logo">💎 RICHOPTION911</div>
+  <div class="auth-t">เข้าสู่ระบบ</div>
+  <div class="auth-st">ยินดีต้อนรับกลับ!</div>
+  <div class="fok" id="logOk">✅ เข้าสู่ระบบสำเร็จ!</div>
+  <form onsubmit="doLog(event)">
+    <div class="fr"><label class="fl">อีเมล</label><input class="fi" type="email" id="lEm" placeholder="your@email.com" required></div>
+    <div class="fr"><label class="fl">รหัสผ่าน</label><input class="fi" type="password" id="lPw" placeholder="รหัสผ่าน" required></div>
+    <div class="ferr" id="logE" style="text-align:center;margin-bottom:10px">อีเมลหรือรหัสผ่านไม่ถูกต้อง</div>
+    <button type="submit" class="ab" id="logB">เข้าสู่ระบบ</button>
   </form>
+  <div class="adiv">หรือ</div>
+  <button class="gbtn" onclick="toast('Google Login จะพร้อมใน Step 3','error')"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>เข้าสู่ระบบด้วย Google</button>
+  <div class="af">ยังไม่มีบัญชี? <a href="#" onclick="go('pgReg');return false">สมัครสมาชิก</a></div>
+</div></div></div>
 
-  <div class="auth-divider">หรือ</div>
-  <button class="google-btn" onclick="gLogin()">
-    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-    เข้าสู่ระบบด้วย Google
-  </button>
-  <div class="auth-footer">ยังไม่มีบัญชี? <a href="#" onclick="showPage('pageRegister');return false">สมัครสมาชิก</a></div>
-</div></div>
+<!-- ===== DASHBOARD SHELL ===== -->
+<div class="page" id="pgDash">
+<div class="dash">
+  <div class="mob-overlay" id="mobOv" onclick="toggleSb()"></div>
+  <aside class="sidebar" id="sb">
+    <div class="sb-logo" onclick="go('pgLand')">💎 RICHOPTION911</div>
+    <div class="sb-item active" data-sec="secDash" onclick="switchSec(this)"><span class="ico">📊</span>Dashboard</div>
+    <div class="sb-item" data-sec="secTrade" onclick="switchSec(this)"><span class="ico">📈</span>เทรด</div>
+    <div class="sb-item" data-sec="secProfile" onclick="switchSec(this)"><span class="ico">👤</span>โปรไฟล์</div>
+    <div class="sb-item" data-sec="secDeposit" onclick="switchSec(this)"><span class="ico">💳</span>ฝาก-ถอน</div>
+    <div class="sb-item" data-sec="secRef" onclick="switchSec(this)"><span class="ico">🎁</span>แนะนำเพื่อน</div>
+    <div class="sb-item" onclick="doLogout()"><span class="ico">🚪</span>ออกจากระบบ</div>
+    <div class="sb-bottom"><div class="sb-user" id="sbUser">—</div><div class="sb-email" id="sbEmail">—</div></div>
+  </aside>
+  <main class="dash-main">
+    <div class="nav" style="border-bottom:1px solid var(--border)">
+      <button class="mob-menu" onclick="toggleSb()">☰</button>
+      <div class="nav-logo" onclick="go('pgLand')">💎 RICHOPTION911</div>
+      <div class="nav-links"><button class="nb nb-g" onclick="switchSecByName('secTrade')">📈 เปิดเทรด</button></div>
+    </div>
+
+    <!-- SEC: Dashboard -->
+    <div class="dash-sec active" id="secDash">
+      <div class="dash-header"><div class="dash-title" id="dashWelcome">สวัสดี!</div><div class="dash-sub">ภาพรวมบัญชีของคุณ</div></div>
+      <div class="dash-body">
+        <div class="cards">
+          <div class="card"><div class="card-label">ยอดเงินคงเหลือ</div><div class="card-val" style="color:var(--t1)" id="dBal">$100,000</div><div class="card-sub">Demo Account</div></div>
+          <div class="card"><div class="card-label">กำไร/ขาดทุนวันนี้</div><div class="card-val" style="color:var(--green)" id="dPnl">$0.00</div><div class="card-sub">วันนี้</div></div>
+          <div class="card"><div class="card-label">จำนวนเทรด</div><div class="card-val" style="color:var(--blue)" id="dTrades">0</div><div class="card-sub">ทั้งหมด</div></div>
+          <div class="card"><div class="card-label">เพื่อนที่แนะนำ</div><div class="card-val" style="color:var(--purple)" id="dRefs">0</div><div class="card-sub">คน</div></div>
+        </div>
+        <h3 style="color:var(--t1);font-size:15px;margin-bottom:8px">ประวัติเทรดล่าสุด</h3>
+        <table class="tbl"><thead><tr><th>สินทรัพย์</th><th>ประเภท</th><th>Lots</th><th>กำไร/ขาดทุน</th><th>เวลา</th></tr></thead><tbody id="dHistory"><tr><td colspan="5" class="empty">ยังไม่มีประวัติเทรด</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- SEC: Trading -->
+    <div class="dash-sec" id="secTrade" style="display:none">
+      <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:14px;font-weight:700;color:var(--t1)">📈 Trading Platform</span>
+        <span style="font-size:11px;color:var(--t3)">เงินจำลอง $100,000</span>
+      </div>
+      <div id="tradeContainer" style="height:calc(100vh - 100px);overflow:hidden;position:relative">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--t3);font-size:14px" id="tradeLoading">กำลังโหลดหน้าเทรด...</div>
+      </div>
+    </div>
+
+    <!-- SEC: Profile -->
+    <div class="dash-sec" id="secProfile" style="display:none">
+      <div class="dash-header"><div class="dash-title">👤 โปรไฟล์</div><div class="dash-sub">แก้ไขข้อมูลส่วนตัว</div></div>
+      <div class="dash-body"><div class="pf-form">
+        <div class="fr half"><div><label class="fl">ชื่อ</label><input class="fi" id="pFn"></div><div><label class="fl">นามสกุล</label><input class="fi" id="pLn"></div></div>
+        <div class="fr"><label class="fl">อีเมล (เปลี่ยนไม่ได้)</label><input class="fi" id="pEm" disabled style="opacity:.6"></div>
+        <div class="fr"><label class="fl">เบอร์โทรศัพท์</label><input class="fi" id="pPh"></div>
+        <div class="fr"><label class="fl">ที่อยู่</label><textarea class="fi" id="pAd" rows="2"></textarea></div>
+        <div class="fr"><label class="fl">สมัครเมื่อ</label><input class="fi" id="pDate" disabled style="opacity:.6"></div>
+        <button class="pf-save" onclick="saveProfile()">💾 บันทึกข้อมูล</button>
+      </div></div>
+    </div>
+
+    <!-- SEC: Deposit/Withdraw -->
+    <div class="dash-sec" id="secDeposit" style="display:none">
+      <div class="dash-header"><div class="dash-title">💳 ฝาก-ถอนเงิน</div><div class="dash-sub">จัดการเงินในบัญชี</div></div>
+      <div class="dash-body">
+        <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+          <div class="card"><div class="card-label">ยอดคงเหลือ</div><div class="card-val" style="color:var(--t1)" id="dwBal">$100,000</div></div>
+          <div class="card"><div class="card-label">ฝากรวม</div><div class="card-val" style="color:var(--green)" id="dwDep">$0</div></div>
+          <div class="card"><div class="card-label">ถอนรวม</div><div class="card-val" style="color:var(--red)" id="dwWit">$0</div></div>
+        </div>
+        <button class="dw-btn dw-dep" onclick="showDW('deposit')">➕ ฝากเงิน</button>
+        <button class="dw-btn dw-wit" onclick="showDW('withdraw')">➖ ถอนเงิน</button>
+        <h3 style="color:var(--t1);font-size:14px;margin:16px 0 8px">ประวัติฝาก-ถอน</h3>
+        <table class="tbl"><thead><tr><th>ประเภท</th><th>จำนวน</th><th>สถานะ</th><th>เวลา</th></tr></thead><tbody id="dwHist"><tr><td colspan="4" class="empty">ยังไม่มีประวัติ</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- SEC: Referral -->
+    <div class="dash-sec" id="secRef" style="display:none">
+      <div class="dash-header"><div class="dash-title">🎁 แนะนำเพื่อน</div><div class="dash-sub">แชร์รหัสของคุณ รับโบนัสทุกครั้งที่เพื่อนสมัคร</div></div>
+      <div class="dash-body">
+        <div class="ref-box">
+          <div style="font-size:13px;color:var(--t2)">รหัสแนะนำของคุณ</div>
+          <div class="ref-code" id="refCode">REF-XXXXXX</div>
+          <button class="ref-copy" onclick="copyRef()">📋 คัดลอกรหัส</button>
+        </div>
+        <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+          <div class="card"><div class="card-label">เพื่อนที่สมัครแล้ว</div><div class="card-val" style="color:var(--green)" id="refCount">0</div></div>
+          <div class="card"><div class="card-label">โบนัสรวม</div><div class="card-val" style="color:var(--gold)" id="refBonus">$0</div></div>
+        </div>
+        <div class="ref-box" style="margin-top:16px">
+          <div style="font-size:13px;color:var(--t1);font-weight:600;margin-bottom:8px">วิธีรับโบนัส</div>
+          <div style="font-size:12px;color:var(--t3);line-height:1.6">
+            1. แชร์รหัส Referral ของคุณให้เพื่อน<br>
+            2. เพื่อนสมัครสมาชิกโดยกรอกรหัสของคุณ<br>
+            3. ทั้งคุณและเพื่อนจะได้รับโบนัส $500 เข้าบัญชีทันที!
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- Deposit/Withdraw Modal -->
+<div class="dw-modal" id="dwModal">
+<div class="dw-card">
+  <h3 id="dwTitle">ฝากเงิน</h3>
+  <div class="fr"><label class="fl">จำนวนเงิน ($)</label><input class="fi mono" type="number" id="dwAmt" placeholder="1000" min="1"></div>
+  <div class="fr"><label class="fl">วิธีการ</label><select class="fi" id="dwMethod"><option>ธนาคารไทย</option><option>PromptPay</option><option>USDT (TRC-20)</option><option>บัตรเครดิต</option></select></div>
+  <div style="display:flex;gap:8px;margin-top:14px">
+    <button class="ab" style="flex:1" onclick="doDW()">ยืนยัน</button>
+    <button class="nb nb-g" style="flex:1" onclick="closeDW()">ยกเลิก</button>
+  </div>
+</div>
 </div>
 
 <script>
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+// ====== STATE ======
+let curUser=null, dwType='deposit';
 
-// Storage (will be replaced by Supabase in Step 3)
-function getU(){try{return JSON.parse(localStorage.getItem('ro911_u')||'[]')}catch{return[]}}
-function saveU(u){localStorage.setItem('ro911_u',JSON.stringify(u))}
-function setCur(u){localStorage.setItem('ro911_cur',JSON.stringify(u))}
-function getCur(){try{return JSON.parse(localStorage.getItem('ro911_cur'))}catch{return null}}
+// ====== NAV ======
+function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='pgDash')loadDash()}
 
-// Register
-function doRegister(e){
+// ====== STORAGE ======
+function getU(){try{return JSON.parse(localStorage.getItem('ro_u')||'[]')}catch{return[]}}
+function saveU(u){localStorage.setItem('ro_u',JSON.stringify(u))}
+function setCur(u){localStorage.setItem('ro_cur',JSON.stringify(u));curUser=u}
+function getCur(){try{curUser=JSON.parse(localStorage.getItem('ro_cur'));return curUser}catch{return null}}
+
+// ====== REGISTER ======
+function doReg(e){
   e.preventDefault();
-  const pw=document.getElementById('rPw').value,pwc=document.getElementById('rPwc').value;
-  const email=document.getElementById('rEm').value.trim().toLowerCase();
-  if(pw!==pwc){document.getElementById('pwErr').style.display='block';return}
-  document.getElementById('pwErr').style.display='none';
-  const users=getU();
-  if(users.find(u=>u.email===email)){document.getElementById('emErr').style.display='block';return}
-  document.getElementById('emErr').style.display='none';
-
+  const pw=document.getElementById('rPw').value,pwc=document.getElementById('rPwc').value,email=document.getElementById('rEm').value.trim().toLowerCase();
+  if(pw!==pwc){document.getElementById('pwE').style.display='block';return}document.getElementById('pwE').style.display='none';
+  const us=getU();if(us.find(u=>u.email===email)){document.getElementById('emE').style.display='block';return}document.getElementById('emE').style.display='none';
   const ref='REF-'+Math.random().toString(36).substr(2,6).toUpperCase();
-  const user={id:Date.now(),fn:document.getElementById('rFn').value.trim(),ln:document.getElementById('rLn').value.trim(),email,pw,pc:document.getElementById('rPc').value,ph:document.getElementById('rPh').value.trim(),addr:document.getElementById('rAddr').value.trim(),ref,refBy:document.getElementById('rRef').value.trim()||null,bal:100000,created:new Date().toISOString(),deposits:[],withdrawals:[]};
-  users.push(user);saveU(users);
+  const refBy=document.getElementById('rRf').value.trim()||null;
+  const user={id:Date.now(),fn:document.getElementById('rFn').value.trim(),ln:document.getElementById('rLn').value.trim(),email,pw,pc:document.getElementById('rPc').value,ph:document.getElementById('rPh').value.trim(),addr:document.getElementById('rAd').value.trim(),ref,refBy,bal:100000,created:new Date().toISOString(),deps:[],wits:[],trades:[]};
 
-  const btn=document.getElementById('regBtn');btn.disabled=true;btn.textContent='กำลังสร้างบัญชี...';
-  document.getElementById('regOk').style.display='block';
-  setTimeout(()=>{btn.disabled=false;btn.textContent='สมัครสมาชิก';document.getElementById('regOk').style.display='none';document.getElementById('regForm').reset();showPage('pageLogin');toast('สมัครสำเร็จ! กรุณาเข้าสู่ระบบ','success')},1500);
+  // Handle referral bonus
+  if(refBy){const referrer=us.find(u=>u.ref===refBy);if(referrer){referrer.bal+=500;user.bal+=500;if(!referrer.referrals)referrer.referrals=[];referrer.referrals.push({name:user.fn,date:new Date().toISOString()})}}
+  us.push(user);saveU(us);
+  document.getElementById('regB').disabled=true;document.getElementById('regOk').style.display='block';
+  setTimeout(()=>{document.getElementById('regB').disabled=false;document.getElementById('regOk').style.display='none';e.target.reset();go('pgLogin');toast('สมัครสำเร็จ! กรุณาเข้าสู่ระบบ','success')},1200);
 }
 
-// Login
-function doLogin(e){
+// ====== LOGIN ======
+function doLog(e){
   e.preventDefault();
-  const email=document.getElementById('lEm').value.trim().toLowerCase();
-  const pw=document.getElementById('lPw').value;
-  const users=getU();const user=users.find(u=>u.email===email&&u.pw===pw);
-  if(!user){document.getElementById('logErr').style.display='block';return}
-  document.getElementById('logErr').style.display='none';
-
-  const btn=document.getElementById('logBtn');btn.disabled=true;btn.textContent='กำลังเข้าสู่ระบบ...';
-  document.getElementById('logOk').style.display='block';
+  const email=document.getElementById('lEm').value.trim().toLowerCase(),pw=document.getElementById('lPw').value;
+  const us=getU(),user=us.find(u=>u.email===email&&u.pw===pw);
+  if(!user){document.getElementById('logE').style.display='block';return}document.getElementById('logE').style.display='none';
+  document.getElementById('logB').disabled=true;document.getElementById('logOk').style.display='block';
   setCur(user);
-
-  setTimeout(()=>{
-    // Try redirect to trading page
-    if(document.getElementById('pageDashboard')){showPage('pageDashboard')}
-    else{
-      toast('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ '+user.fn,'success');
-      btn.disabled=false;btn.textContent='เข้าสู่ระบบ';
-      document.getElementById('logOk').style.display='none';
-    }
-  },1500);
+  setTimeout(()=>{document.getElementById('logB').disabled=false;document.getElementById('logOk').style.display='none';go('pgDash');toast('ยินดีต้อนรับ '+user.fn+'!','success')},1000);
 }
 
-// Google (placeholder)
-function gLogin(){toast('Google Login จะพร้อมใช้เมื่อเชื่อม Supabase (Step 3)','error')}
+function doLogout(){localStorage.removeItem('ro_cur');curUser=null;go('pgLand');toast('ออกจากระบบแล้ว','success')}
 
-// Password strength
-function chkPw(pw){
-  const bar=document.getElementById('pwBar'),txt=document.getElementById('pwTxt');
-  let s=0;if(pw.length>=8)s++;if(pw.length>=12)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
-  const l=[{w:'0%',c:'var(--border)',t:''},{w:'20%',c:'var(--red)',t:'อ่อนมาก'},{w:'40%',c:'#ff9800',t:'อ่อน'},{w:'60%',c:'var(--gold)',t:'ปานกลาง'},{w:'80%',c:'#8bc34a',t:'แข็งแรง'},{w:'100%',c:'var(--green)',t:'แข็งแรงมาก'}][Math.min(s,5)];
-  bar.style.width=l.w;bar.style.background=l.c;txt.textContent=l.t;txt.style.color=l.c;
+// ====== DASHBOARD ======
+function loadDash(){
+  const u=getCur();if(!u)return go('pgLand');
+  document.getElementById('sbUser').textContent=u.fn+' '+u.ln;
+  document.getElementById('sbEmail').textContent=u.email;
+  document.getElementById('dashWelcome').textContent='สวัสดี, '+u.fn+'! 👋';
+  document.getElementById('dBal').textContent='$'+u.bal.toLocaleString();
+  const totalPnl=(u.trades||[]).reduce((s,t)=>s+(t.pnl||0),0);
+  const dPnl=document.getElementById('dPnl');dPnl.textContent='$'+totalPnl.toFixed(2);dPnl.style.color=totalPnl>=0?'var(--green)':'var(--red)';
+  document.getElementById('dTrades').textContent=(u.trades||[]).length;
+  document.getElementById('dRefs').textContent=(u.referrals||[]).length;
+
+  // Trade history
+  const hist=document.getElementById('dHistory');
+  if(!u.trades||!u.trades.length){hist.innerHTML='<tr><td colspan="5" class="empty">ยังไม่มีประวัติเทรด — <a href="#" onclick="switchSecByName(\'secTrade\');return false">เริ่มเทรดเลย!</a></td></tr>'}
+  else{hist.innerHTML=u.trades.slice(-5).reverse().map(t=>`<tr><td class="mono">${t.sym||'XAUUSD'}</td><td style="color:${t.type==='buy'?'var(--green)':'var(--red)'}">${(t.type||'buy').toUpperCase()}</td><td>${t.lots||0.1}</td><td class="mono" style="color:${(t.pnl||0)>=0?'var(--green)':'var(--red)'}">$${(t.pnl||0).toFixed(2)}</td><td style="color:var(--t4)">${new Date(t.time||Date.now()).toLocaleString('th-TH')}</td></tr>`).join('')}
+
+  // Profile
+  document.getElementById('pFn').value=u.fn;document.getElementById('pLn').value=u.ln;
+  document.getElementById('pEm').value=u.email;document.getElementById('pPh').value=u.ph;
+  document.getElementById('pAd').value=u.addr;document.getElementById('pDate').value=new Date(u.created).toLocaleString('th-TH');
+
+  // Deposit/Withdraw
+  document.getElementById('dwBal').textContent='$'+u.bal.toLocaleString();
+  const totalDep=(u.deps||[]).reduce((s,d)=>s+d.amt,0);
+  const totalWit=(u.wits||[]).reduce((s,d)=>s+d.amt,0);
+  document.getElementById('dwDep').textContent='$'+totalDep.toLocaleString();
+  document.getElementById('dwWit').textContent='$'+totalWit.toLocaleString();
+  const dwH=document.getElementById('dwHist');
+  const allTx=[...(u.deps||[]).map(d=>({...d,type:'ฝาก'})),...(u.wits||[]).map(d=>({...d,type:'ถอน'}))].sort((a,b)=>b.time-a.time);
+  if(!allTx.length)dwH.innerHTML='<tr><td colspan="4" class="empty">ยังไม่มีประวัติ</td></tr>';
+  else dwH.innerHTML=allTx.map(t=>`<tr><td style="color:${t.type==='ฝาก'?'var(--green)':'var(--red)'};font-weight:600">${t.type}</td><td class="mono">$${t.amt.toLocaleString()}</td><td style="color:var(--green)">สำเร็จ</td><td style="color:var(--t4)">${new Date(t.time).toLocaleString('th-TH')}</td></tr>`).join('');
+
+  // Referral
+  document.getElementById('refCode').textContent=u.ref;
+  document.getElementById('refCount').textContent=(u.referrals||[]).length;
+  document.getElementById('refBonus').textContent='$'+((u.referrals||[]).length*500);
 }
 
-// Toast
-function toast(m,t='success'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),3500)}
+function saveProfile(){
+  const u=getCur();if(!u)return;
+  u.fn=document.getElementById('pFn').value.trim();u.ln=document.getElementById('pLn').value.trim();
+  u.ph=document.getElementById('pPh').value.trim();u.addr=document.getElementById('pAd').value.trim();
+  const us=getU();const idx=us.findIndex(x=>x.id===u.id);if(idx>=0)us[idx]=u;saveU(us);setCur(u);
+  loadDash();toast('บันทึกข้อมูลเรียบร้อย!','success');
+}
+
+// ====== SIDEBAR ======
+function switchSec(el){
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));el.classList.add('active');
+  const sec=el.dataset.sec;document.querySelectorAll('.dash-sec').forEach(s=>s.style.display='none');
+  document.getElementById(sec).style.display='block';
+  if(sec==='secTrade')loadTrading();
+  if(window.innerWidth<769)toggleSb();
+}
+function switchSecByName(name){const el=document.querySelector(`[data-sec="${name}"]`);if(el)switchSec(el)}
+function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('mobOv').classList.toggle('show')}
+
+// ====== DEPOSIT/WITHDRAW ======
+function showDW(type){dwType=type;document.getElementById('dwTitle').textContent=type==='deposit'?'➕ ฝากเงิน':'➖ ถอนเงิน';document.getElementById('dwAmt').value='';document.getElementById('dwModal').classList.add('show')}
+function closeDW(){document.getElementById('dwModal').classList.remove('show')}
+function doDW(){
+  const amt=+document.getElementById('dwAmt').value;if(!amt||amt<=0)return toast('กรุณากรอกจำนวนเงิน','error');
+  const u=getCur();if(!u)return;
+  if(dwType==='withdraw'&&amt>u.bal)return toast('ยอดเงินไม่เพียงพอ','error');
+  const method=document.getElementById('dwMethod').value;
+  if(dwType==='deposit'){u.bal+=amt;if(!u.deps)u.deps=[];u.deps.push({amt,method,time:Date.now()})}
+  else{u.bal-=amt;if(!u.wits)u.wits=[];u.wits.push({amt,method,time:Date.now()})}
+  const us=getU();const idx=us.findIndex(x=>x.id===u.id);if(idx>=0)us[idx]=u;saveU(us);setCur(u);
+  closeDW();loadDash();toast(`${dwType==='deposit'?'ฝาก':'ถอน'}เงิน $${amt.toLocaleString()} สำเร็จ!`,'success');
+}
+
+function copyRef(){const code=document.getElementById('refCode').textContent;navigator.clipboard.writeText(code).then(()=>toast('คัดลอกรหัสแล้ว!','success')).catch(()=>{const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('คัดลอกรหัสแล้ว!','success')})}
+
+// ====== TRADING (inline) ======
+function loadTrading(){
+  const c=document.getElementById('tradeContainer');
+  if(c.dataset.loaded)return;c.dataset.loaded='1';
+  c.innerHTML='<div style="padding:20px;text-align:center;color:var(--t2)"><p style="font-size:16px;margin-bottom:12px">📈 หน้าเทรดพร้อมใช้งาน!</p><p style="font-size:13px;color:var(--t3);margin-bottom:16px">หน้าเทรดจะถูกโหลดเป็น version เต็มใน Step ถัดไป<br>ตอนนี้สามารถใช้ฟีเจอร์อื่นได้ก่อน (Dashboard, ฝาก-ถอน, Referral)</p><button class="nb nb-s" onclick="toast(\'หน้าเทรดจะพร้อมเต็มรูปแบบใน Step ถัดไป\',\'success\')">🔄 รอการอัปเดต</button></div>';
+}
+
+// ====== PASSWORD STRENGTH ======
+function chkPw(pw){const b=document.getElementById('pwB');let s=0;if(pw.length>=8)s++;if(pw.length>=12)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;const l=[{w:'0%',c:'var(--border)'},{w:'20%',c:'var(--red)'},{w:'40%',c:'#ff9800'},{w:'60%',c:'var(--gold)'},{w:'80%',c:'#8bc34a'},{w:'100%',c:'var(--green)'}][Math.min(s,5)];b.style.width=l.w;b.style.background=l.c}
+
+// ====== TOAST ======
+function toast(m,t='success'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),3000)}
+
+// ====== AUTO LOGIN ======
+(function(){const u=getCur();if(u){curUser=u}})();
 </script>
 </body>
 </html>
