@@ -409,6 +409,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
         </div>
       </div>
       <div class="tv-ohlc-bar" id="ohlcBar">
+        <span id="finnhubStatus" style="display:flex;align-items:center;gap:4px;margin-right:8px"><span style="width:6px;height:6px;border-radius:50%;background:#666" id="fhDot"></span><span style="font-size:.65rem;color:#666" id="fhLabel">OFFLINE</span></span>
         <span><span class="lbl">O</span> <span class="val-up" id="ohlcO">0</span></span>
         <span><span class="lbl">H</span> <span class="val-up" id="ohlcH">0</span></span>
         <span><span class="lbl">L</span> <span class="val-down" id="ohlcL">0</span></span>
@@ -520,7 +521,111 @@ var SUPABASE_URL='https://ixuznqiptfgcdykmdlkg.supabase.co';
 var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4dXpucWlwdGZnY2R5a21kbGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODA3MDIsImV4cCI6MjA5MDQ1NjcwMn0.EAN4SXdaJTTCeH4FnclIHpRp2nOgta-nKPxZJXkAuck';
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
-var ASSETS=[{symbol:'BTC/USD',name:'Bitcoin',price:67450,color:'#f7931a'},{symbol:'ETH/USD',name:'Ethereum',price:3520,color:'#627eea'},{symbol:'BNB/USD',name:'BNB',price:608,color:'#f0b90b'},{symbol:'XAU/USD',name:'Gold',price:2345,color:'#d4a437'},{symbol:'EUR/USD',name:'Euro/Dollar',price:1.0862,color:'#0052b4'},{symbol:'GBP/USD',name:'Pound/Dollar',price:1.2643,color:'#c8102e'},{symbol:'USD/JPY',name:'Dollar/Yen',price:154.32,color:'#bc002d'},{symbol:'SPX500',name:'S&P 500',price:5248,color:'#00c805'},{symbol:'NAS100',name:'NASDAQ 100',price:18420,color:'#0072c6'}];
+var ASSETS=[{symbol:'BTC/USD',name:'Bitcoin',price:67450,color:'#f7931a',fhSymbol:'BINANCE:BTCUSDT',fhCandle:'BTCUSDT',exchange:'crypto',decimals:2},{symbol:'ETH/USD',name:'Ethereum',price:3520,color:'#627eea',fhSymbol:'BINANCE:ETHUSDT',fhCandle:'ETHUSDT',exchange:'crypto',decimals:2},{symbol:'BNB/USD',name:'BNB',price:608,color:'#f0b90b',fhSymbol:'BINANCE:BNBUSDT',fhCandle:'BNBUSDT',exchange:'crypto',decimals:2},{symbol:'XAU/USD',name:'Gold',price:2345,color:'#d4a437',fhSymbol:'OANDA:XAU_USD',fhCandle:'OANDA:XAU_USD',exchange:'forex',decimals:2},{symbol:'EUR/USD',name:'Euro/Dollar',price:1.0862,color:'#0052b4',fhSymbol:'OANDA:EUR_USD',fhCandle:'OANDA:EUR_USD',exchange:'forex',decimals:4},{symbol:'GBP/USD',name:'Pound/Dollar',price:1.2643,color:'#c8102e',fhSymbol:'OANDA:GBP_USD',fhCandle:'OANDA:GBP_USD',exchange:'forex',decimals:4},{symbol:'USD/JPY',name:'Dollar/Yen',price:154.32,color:'#bc002d',fhSymbol:'OANDA:USD_JPY',fhCandle:'OANDA:USD_JPY',exchange:'forex',decimals:3},{symbol:'SPX500',name:'S&P 500',price:5248,color:'#00c805',fhSymbol:'^GSPC',fhCandle:'^GSPC',exchange:'index',decimals:2},{symbol:'NAS100',name:'NASDAQ 100',price:18420,color:'#0072c6',fhSymbol:'^NDX',fhCandle:'^NDX',exchange:'index',decimals:2}];
+
+/* ===== FINNHUB API ===== */
+var FINNHUB_KEY='d75b5d1r01qk56kc400gd75b5d1r01qk56kc4010';
+var finnhubWs=null;
+var finnhubLastPrices={};
+var finnhubConnected=false;
+
+/* Fetch historical candles from Finnhub REST */
+async function fetchFinnhubCandles(asset,resolution){
+  var res=resolution||'5';
+  var now=Math.floor(Date.now()/1000);
+  var from=now-86400*2; /* 2 days back */
+  var sym=asset.fhCandle;
+  var url='https://finnhub.io/api/v1/';
+  
+  if(asset.exchange==='crypto'){
+    url+='crypto/candle?symbol='+encodeURIComponent(sym)+'&resolution='+res+'&from='+from+'&to='+now+'&token='+FINNHUB_KEY;
+  }else if(asset.exchange==='forex'){
+    url+='forex/candle?symbol='+encodeURIComponent(sym)+'&resolution='+res+'&from='+from+'&to='+now+'&token='+FINNHUB_KEY;
+  }else{
+    url+='stock/candle?symbol='+encodeURIComponent(sym)+'&resolution='+res+'&from='+from+'&to='+now+'&token='+FINNHUB_KEY;
+  }
+  
+  try{
+    var r=await fetch(url);
+    var d=await r.json();
+    if(d.s==='ok'&&d.c&&d.c.length>0){
+      var candles=[];
+      for(var i=0;i<d.c.length;i++){
+        candles.push({o:d.o[i],h:d.h[i],l:d.l[i],c:d.c[i],v:d.v?d.v[i]:Math.floor(Math.random()*1000),t:d.t?d.t[i]:0});
+      }
+      /* Update asset base price */
+      asset.price=candles[candles.length-1].c;
+      console.log('Finnhub candles loaded:',asset.symbol,candles.length,'candles');
+      return candles;
+    }
+    console.warn('Finnhub no candle data for',asset.symbol,'response:',d.s);
+    return null;
+  }catch(err){
+    console.warn('Finnhub candle fetch error:',err);
+    return null;
+  }
+}
+
+/* Fetch current quote from Finnhub REST */
+async function fetchFinnhubQuote(asset){
+  var url='https://finnhub.io/api/v1/quote?symbol='+encodeURIComponent(asset.fhCandle)+'&token='+FINNHUB_KEY;
+  try{
+    var r=await fetch(url);
+    var d=await r.json();
+    if(d.c&&d.c>0){
+      asset.price=d.c;
+      return d.c;
+    }
+    return null;
+  }catch(err){return null;}
+}
+
+/* Connect Finnhub WebSocket for realtime prices */
+function connectFinnhubWs(){
+  if(finnhubWs)try{finnhubWs.close();}catch(e){}
+  
+  finnhubWs=new WebSocket('wss://ws.finnhub.io?token='+FINNHUB_KEY);
+  
+  finnhubWs.onopen=function(){
+    finnhubConnected=true;
+    console.log('Finnhub WebSocket connected');
+    /* Subscribe to all assets */
+    ASSETS.forEach(function(a){
+      if(a.fhSymbol){
+        finnhubWs.send(JSON.stringify({type:'subscribe',symbol:a.fhSymbol}));
+      }
+    });
+  };
+  
+  finnhubWs.onmessage=function(e){
+    try{
+      var msg=JSON.parse(e.data);
+      if(msg.type==='trade'&&msg.data&&msg.data.length>0){
+        msg.data.forEach(function(trade){
+          finnhubLastPrices[trade.s]=trade.p;
+        });
+      }
+    }catch(err){}
+  };
+  
+  finnhubWs.onclose=function(){
+    finnhubConnected=false;
+    console.log('Finnhub WebSocket closed, reconnecting in 5s...');
+    setTimeout(connectFinnhubWs,5000);
+  };
+  
+  finnhubWs.onerror=function(err){
+    console.warn('Finnhub WebSocket error:',err);
+  };
+}
+
+/* Get latest realtime price for current asset */
+function getFinnhubRealtimePrice(){
+  var a=ASSETS[selectedAsset];
+  var p=finnhubLastPrices[a.fhSymbol];
+  if(p&&p>0)return p;
+  return null;
+}
 function navigate(p){var a=['dashboard','trading','wallet','referral','profile'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(p==='dashboard')loadDashboard();if(p==='trading')initTrading();if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();}
 function updateNav(){var n=document.getElementById('navLinks');if(currentUser){n.innerHTML='<a href="#" class="'+(currentPage==='dashboard'?'active':'')+'" onclick="navigate(\'dashboard\')">📊 แดชบอร์ด</a><a href="#" class="'+(currentPage==='trading'?'active':'')+'" onclick="navigate(\'trading\')">📈 เทรด</a><a href="#" class="'+(currentPage==='wallet'?'active':'')+'" onclick="navigate(\'wallet\')">💰 กระเป๋าเงิน</a><a href="#" class="'+(currentPage==='referral'?'active':'')+'" onclick="navigate(\'referral\')">🎁 แนะนำเพื่อน</a><a href="#" class="'+(currentPage==='profile'?'active':'')+'" onclick="navigate(\'profile\')">👤 โปรไฟล์</a><button onclick="handleLogout()" style="color:var(--red)">🚪 ออก</button>';}else{n.innerHTML='<a href="#" class="'+(currentPage==='login'?'active':'')+'" onclick="navigate(\'login\')">เข้าสู่ระบบ</a><button class="btn btn-gold btn-sm" onclick="navigate(\'register\')">สมัครสมาชิก</button>';}}
 function toggleMobileMenu(){document.getElementById('navLinks').classList.toggle('open')}function closeMobileMenu(){document.getElementById('navLinks').classList.remove('open')}
@@ -528,21 +633,67 @@ function showToast(m,t){t=t||'info';var e=document.createElement('div');e.classN
 function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
 async function handleRegister(e){e.preventDefault();var btn=document.getElementById('regBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signUp({email:document.getElementById('regEmail').value.trim(),password:document.getElementById('regPassword').value});if(r.error)throw r.error;if(r.data.user){var rc='RO'+r.data.user.id.substring(0,8).toUpperCase();await sb.from('profiles').upsert({id:r.data.user.id,full_name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),balance:0,referral_code:rc,referred_by:document.getElementById('regReferral').value.trim()||null,created_at:new Date().toISOString()});}showToast('สมัครสำเร็จ!','success');navigate('login');}catch(err){showToast(err.message||'เกิดข้อผิดพลาด','error');}finally{btn.innerHTML='สมัครสมาชิก';btn.disabled=false;}}
 async function handleLogin(e){e.preventDefault();var btn=document.getElementById('loginBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signInWithPassword({email:document.getElementById('loginEmail').value.trim(),password:document.getElementById('loginPassword').value});if(r.error)throw r.error;currentUser=r.data.user;await loadUserProfile();showToast('ยินดีต้อนรับ!','success');navigate('dashboard');}catch(err){showToast(err.message||'ผิดพลาด','error');}finally{btn.innerHTML='เข้าสู่ระบบ';btn.disabled=false;}}
-async function handleLogout(){await sb.auth.signOut();currentUser=null;currentProfile=null;activeTrades=[];if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);showToast('ออกจากระบบแล้ว','info');navigate('landing');}
+async function handleLogout(){await sb.auth.signOut();currentUser=null;currentProfile=null;activeTrades=[];if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);if(finnhubWs)try{finnhubWs.close();}catch(e){}finnhubConnected=false;showToast('ออกจากระบบแล้ว','info');navigate('landing');}
 async function loadUserProfile(){if(!currentUser)return;var r=await sb.from('profiles').select('*').eq('id',currentUser.id).single();if(!r.error&&r.data)currentProfile=r.data;}
 function loadProfile(){if(!currentProfile)return;document.getElementById('profileName').textContent=currentProfile.full_name||'ไม่ระบุ';document.getElementById('profileEmail').textContent=currentProfile.email||'';document.getElementById('profileAvatar').textContent=(currentProfile.full_name||'?')[0].toUpperCase();document.getElementById('editName').value=currentProfile.full_name||'';document.getElementById('editPhone').value=currentProfile.phone||'';}
 async function updateProfile(e){e.preventDefault();var btn=document.getElementById('updateProfileBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{await sb.from('profiles').update({full_name:document.getElementById('editName').value.trim(),phone:document.getElementById('editPhone').value.trim(),updated_at:new Date().toISOString()}).eq('id',currentUser.id);currentProfile.full_name=document.getElementById('editName').value.trim();showToast('บันทึกแล้ว','success');loadProfile();}catch(err){showToast(err.message,'error');}finally{btn.innerHTML='💾 บันทึก';btn.disabled=false;}}
 async function loadDashboard(){await loadUserProfile();if(!currentProfile)return;document.getElementById('dashBalance').textContent='$'+(currentProfile.balance||0).toFixed(2);try{var r=await sb.from('trades').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(!r.error&&r.data){var t=r.data;var w=t.filter(function(x){return (x.result||x.status||x.outcome)==='win'}).length;var l=t.filter(function(x){return (x.result||x.status||x.outcome)==='loss'}).length;document.getElementById('dashTotalTrades').textContent=t.length;document.getElementById('dashWins').textContent=w;document.getElementById('dashLosses').textContent=l;var tb=document.getElementById('dashTradeHistory');tb.innerHTML=t.length===0?'<tr><td colspan="5" class="text-center text-muted" style="padding:36px">ยังไม่มีประวัติ</td></tr>':t.slice(0,10).map(function(x){var xAsset=x.asset||x.symbol||x.pair||'-';var xDir=x.direction||x.side||'up';var xAmt=x.amount||x.trade_amount||x.stake||0;var xRes=x.result||x.status||x.outcome||'pending';return '<tr><td class="mono" style="font-size:.8rem">'+new Date(x.created_at).toLocaleString('th-TH')+'</td><td style="font-weight:600">'+xAsset+'</td><td><span class="badge '+(xDir==='up'?'badge-green':'badge-red')+'">'+(xDir==='up'?'📈':'📉')+'</span></td><td class="mono">$'+(parseFloat(xAmt)||0).toFixed(2)+'</td><td><span class="badge '+(xRes==='win'?'badge-green':xRes==='loss'?'badge-red':'badge-blue')+'">'+(xRes==='win'?'✅':xRes==='loss'?'❌':'⏳')+'</span></td></tr>'}).join('');}else{console.warn('trades query error:',r.error?r.error.message:'no data');}}catch(err){console.error('loadDashboard error:',err);}}
-function initTrading(){renderAssetTabs();selectAsset(0);updateTradingBalance();generateOrderBook();startCountdownUI();}
+function initTrading(){renderAssetTabs();connectFinnhubWs();selectAsset(0);updateTradingBalance();generateOrderBook();startCountdownUI();}
 function renderAssetTabs(){document.getElementById('assetTabs').innerHTML=ASSETS.map(function(a,i){return '<div class="asset-tab '+(i===selectedAsset?'active':'')+'" onclick="selectAsset('+i+')">'+a.symbol+'</div>'}).join('');}
 var currentTimeframe=5,candleData=[],tradeCooldown=false;
-function selectAsset(i){selectedAsset=i;document.getElementById('currentAssetName').textContent=ASSETS[i].symbol;document.querySelectorAll('.asset-tab').forEach(function(t,j){t.classList.toggle('active',j===i)});generateCandleData();updatePriceDisplay();startChart();generateOrderBook();}
+var finnhubLoading=false;
+
+async function selectAsset(i){
+  selectedAsset=i;
+  var a=ASSETS[i];
+  document.getElementById('currentAssetName').textContent=a.symbol;
+  document.querySelectorAll('.asset-tab').forEach(function(t,j){t.classList.toggle('active',j===i)});
+  
+  /* Show loading state */
+  finnhubLoading=true;
+  
+  /* Try to load real candle data from Finnhub */
+  var tfMap={'1':'1','5':'5','15':'15','60':'60','240':'D','1440':'D'};
+  var res=tfMap[currentTimeframe.toString()]||'5';
+  var realCandles=await fetchFinnhubCandles(a,res);
+  
+  if(realCandles&&realCandles.length>10){
+    candleData=realCandles.slice(-80);
+    priceHistory=candleData.map(function(c){return c.c});
+    showToast('📡 โหลดข้อมูล '+a.symbol+' จากตลาดจริง','success');
+  }else{
+    /* Fallback: try quote first, then generate fake data */
+    await fetchFinnhubQuote(a);
+    generateCandleData();
+    showToast('⚠️ ใช้ข้อมูลจำลองสำหรับ '+a.symbol,'info');
+  }
+  
+  finnhubLoading=false;
+  updatePriceDisplay();
+  startChart();
+  generateOrderBook();
+}
+
 function generateCandleData(){candleData=[];var a=ASSETS[selectedAsset],base=a.price;for(var k=0;k<80;k++){var o=base+(Math.random()-0.5)*base*0.008;var c=o+(Math.random()-0.5)*base*0.006;var h=Math.max(o,c)+(Math.random()*base*0.003);var l=Math.min(o,c)-(Math.random()*base*0.003);var v=Math.floor(Math.random()*1000+100);candleData.push({o:o,h:h,l:l,c:c,v:v});base=c;}priceHistory=candleData.map(function(c){return c.c});}
-function setTimeframe(el){document.querySelectorAll('.tv-tf-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');currentTimeframe=parseInt(el.dataset.tf);generateCandleData();startChart();}
+function setTimeframe(el){document.querySelectorAll('.tv-tf-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');currentTimeframe=parseInt(el.dataset.tf);selectAsset(selectedAsset);}
 function switchSidebarTab(tab,el){document.querySelectorAll('.tv-sidebar-tab').forEach(function(t){t.classList.remove('active')});el.classList.add('active');document.querySelectorAll('.tv-tab-panel').forEach(function(p){p.classList.remove('active')});document.getElementById(tab==='trade'?'tabTrade':'tabOrderbook').classList.add('active');}
 function setAmount(v){document.getElementById('tradeAmount').value=v;document.getElementById('potentialProfit').textContent='$'+(v*0.85).toFixed(2);}
-function updatePriceDisplay(){var a=ASSETS[selectedAsset],last=candleData[candleData.length-1];if(!last)return;var c=last.c,p=candleData.length>1?candleData[candleData.length-2].c:c,ch=((c-p)/p*100),fx=a.symbol.indexOf('/')!==-1&&a.symbol.indexOf('XAU')===-1,d=fx?4:2;var priceEl=document.getElementById('currentPrice');priceEl.textContent=(fx?'':'$')+c.toFixed(d);priceEl.className='tv-symbol-price '+(ch>=0?'up':'down');var chEl=document.getElementById('priceChange');chEl.textContent=(ch>=0?'+':'')+ch.toFixed(3)+'%';chEl.className='tv-symbol-change '+(ch>=0?'up':'down');document.getElementById('ohlcO').textContent=last.o.toFixed(d);document.getElementById('ohlcH').textContent=last.h.toFixed(d);document.getElementById('ohlcL').textContent=last.l.toFixed(d);document.getElementById('ohlcC').textContent=last.c.toFixed(d);document.getElementById('ohlcV').textContent=last.v;}
-function startChart(){if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);var cv=document.getElementById('priceChart'),ctx=cv.getContext('2d');function resize(){cv.width=cv.parentElement.offsetWidth*2;cv.height=cv.parentElement.offsetHeight*2;ctx.scale(2,2);}resize();function tick(){var last=candleData[candleData.length-1];var nc=last.c+(Math.random()-0.498)*last.c*0.001;var no=last.c;var nh=Math.max(no,nc)+(Math.random()*last.c*0.0005);var nl=Math.min(no,nc)-(Math.random()*last.c*0.0005);candleData.push({o:no,h:nh,l:nl,c:nc,v:Math.floor(Math.random()*800+100)});if(candleData.length>120)candleData.shift();priceHistory=candleData.map(function(c){return c.c});updatePriceDisplay();drawCandlestick(ctx,cv.parentElement.offsetWidth,cv.parentElement.offsetHeight);processActiveTrades(nc);updateOrderBookPrices(nc);chartAnimFrame=requestAnimationFrame(function(){setTimeout(function(){requestAnimationFrame(tick)},900);});}tick();}
+function updatePriceDisplay(){var a=ASSETS[selectedAsset],last=candleData[candleData.length-1];if(!last)return;var c=last.c,p=candleData.length>1?candleData[candleData.length-2].c:c,ch=((c-p)/p*100),d=a.decimals||2;var priceEl=document.getElementById('currentPrice');priceEl.textContent=(d>=4?'':'$')+c.toFixed(d);priceEl.className='tv-symbol-price '+(ch>=0?'up':'down');var chEl=document.getElementById('priceChange');chEl.textContent=(ch>=0?'+':'')+ch.toFixed(3)+'%';chEl.className='tv-symbol-change '+(ch>=0?'up':'down');document.getElementById('ohlcO').textContent=last.o.toFixed(d);document.getElementById('ohlcH').textContent=last.h.toFixed(d);document.getElementById('ohlcL').textContent=last.l.toFixed(d);document.getElementById('ohlcC').textContent=last.c.toFixed(d);document.getElementById('ohlcV').textContent=last.v;
+  /* Update Finnhub status */
+  var dot=document.getElementById('fhDot'),lbl=document.getElementById('fhLabel');
+  if(dot&&lbl){var hasLive=getFinnhubRealtimePrice()!==null;if(hasLive){dot.style.background='#38a169';lbl.textContent='LIVE';lbl.style.color='#38a169';}else if(finnhubConnected){dot.style.background='#d4a437';lbl.textContent='CONNECTED';lbl.style.color='#d4a437';}else{dot.style.background='#666';lbl.textContent='OFFLINE';lbl.style.color='#666';}}
+}
+function startChart(){if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);var cv=document.getElementById('priceChart'),ctx=cv.getContext('2d');function resize(){cv.width=cv.parentElement.offsetWidth*2;cv.height=cv.parentElement.offsetHeight*2;ctx.scale(2,2);}resize();function tick(){var last=candleData[candleData.length-1];if(!last)return;
+  /* Try Finnhub realtime price first */
+  var realtimeP=getFinnhubRealtimePrice();
+  var nc;
+  if(realtimeP&&realtimeP>0){
+    nc=realtimeP;
+  }else{
+    /* Fallback: small random walk from last price */
+    nc=last.c+(Math.random()-0.498)*last.c*0.0003;
+  }
+  var no=last.c;var nh=Math.max(no,nc)+(Math.random()*Math.abs(nc-no)*0.2);var nl=Math.min(no,nc)-(Math.random()*Math.abs(nc-no)*0.2);candleData.push({o:no,h:nh,l:nl,c:nc,v:Math.floor(Math.random()*800+100)});if(candleData.length>120)candleData.shift();priceHistory=candleData.map(function(c){return c.c});ASSETS[selectedAsset].price=nc;updatePriceDisplay();drawCandlestick(ctx,cv.parentElement.offsetWidth,cv.parentElement.offsetHeight);processActiveTrades(nc);updateOrderBookPrices(nc);chartAnimFrame=requestAnimationFrame(function(){setTimeout(function(){requestAnimationFrame(tick)},900);});}tick();}
 function drawCandlestick(ctx,w,h){ctx.clearRect(0,0,w,h);var d=candleData,len=d.length;if(len<2)return;var allH=d.map(function(c){return c.h}),allL=d.map(function(c){return c.l});var mn=Math.min.apply(null,allL),mx=Math.max.apply(null,allH),rng=mx-mn||1;var padT=12,padB=30,padL=8,padR=60;var chartH=h-padT-padB,chartW=w-padL-padR;var cw=Math.max(3,Math.floor(chartW/len*0.7)),gap=Math.max(1,Math.floor(chartW/len*0.3));var totalW=(cw+gap)*len;var startX=padL+chartW-totalW;
 /* grid */
 ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='rgba(255,255,255,.25)';var steps=6;for(var i=0;i<=steps;i++){var y=padT+chartH*i/steps;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+5,y);ctx.stroke();var pv=mx-rng*i/steps;ctx.fillText(pv.toFixed(2),w-padR+8,y+4);}
@@ -562,7 +713,7 @@ var lastC=d[len-1].c,yLast=padT+(1-(lastC-mn)/rng)*chartH;ctx.setLineDash([4,3])
 var lblColor=d[len-1].c>=d[len-1].o?'#38a169':'#e53e3e';ctx.fillStyle=lblColor;ctx.fillRect(w-padR,yLast-9,padR,18);ctx.fillStyle='#fff';ctx.font='bold 10px JetBrains Mono,monospace';ctx.fillText(lastC.toFixed(2),w-padR+4,yLast+4);}
 
 function generateOrderBook(){if(!candleData.length)return;var last=candleData[candleData.length-1].c;updateOrderBookPrices(last);}
-function updateOrderBookPrices(price){var a=ASSETS[selectedAsset],fx=a.symbol.indexOf('/')!==-1&&a.symbol.indexOf('XAU')===-1,d=fx?4:2;var spread=price*0.0002;var asks='',bids='',maxSize=0;var askData=[],bidData=[];for(var i=8;i>=1;i--){var p=price+spread*i*0.5+Math.random()*price*0.0001;var s=(Math.random()*5+0.1).toFixed(3);var t=(parseFloat(s)*p).toFixed(2);askData.push({p:p,s:s,t:t});if(parseFloat(s)>maxSize)maxSize=parseFloat(s);}for(var i=1;i<=8;i++){var p=price-spread*i*0.5-Math.random()*price*0.0001;var s=(Math.random()*5+0.1).toFixed(3);var t=(parseFloat(s)*p).toFixed(2);bidData.push({p:p,s:s,t:t});if(parseFloat(s)>maxSize)maxSize=parseFloat(s);}asks=askData.map(function(r){var w=(parseFloat(r.s)/maxSize*100).toFixed(0);return '<div class="tv-ob-row ask"><span class="price">'+r.p.toFixed(d)+'</span><span class="size">'+r.s+'</span><span class="total">'+r.t+'</span><div class="depth-bar" style="width:'+w+'%"></div></div>'}).join('');bids=bidData.map(function(r){var w=(parseFloat(r.s)/maxSize*100).toFixed(0);return '<div class="tv-ob-row bid"><span class="price">'+r.p.toFixed(d)+'</span><span class="size">'+r.s+'</span><span class="total">'+r.t+'</span><div class="depth-bar" style="width:'+w+'%"></div></div>'}).join('');document.getElementById('obAsks').innerHTML=asks;document.getElementById('obBids').innerHTML=bids;document.getElementById('obSpread').textContent=(spread).toFixed(d);}
+function updateOrderBookPrices(price){var a=ASSETS[selectedAsset],d=a.decimals||2;var spread=price*0.0002;var asks='',bids='',maxSize=0;var askData=[],bidData=[];for(var i=8;i>=1;i--){var p=price+spread*i*0.5+Math.random()*price*0.0001;var s=(Math.random()*5+0.1).toFixed(3);var t=(parseFloat(s)*p).toFixed(2);askData.push({p:p,s:s,t:t});if(parseFloat(s)>maxSize)maxSize=parseFloat(s);}for(var i=1;i<=8;i++){var p=price-spread*i*0.5-Math.random()*price*0.0001;var s=(Math.random()*5+0.1).toFixed(3);var t=(parseFloat(s)*p).toFixed(2);bidData.push({p:p,s:s,t:t});if(parseFloat(s)>maxSize)maxSize=parseFloat(s);}asks=askData.map(function(r){var w=(parseFloat(r.s)/maxSize*100).toFixed(0);return '<div class="tv-ob-row ask"><span class="price">'+r.p.toFixed(d)+'</span><span class="size">'+r.s+'</span><span class="total">'+r.t+'</span><div class="depth-bar" style="width:'+w+'%"></div></div>'}).join('');bids=bidData.map(function(r){var w=(parseFloat(r.s)/maxSize*100).toFixed(0);return '<div class="tv-ob-row bid"><span class="price">'+r.p.toFixed(d)+'</span><span class="size">'+r.s+'</span><span class="total">'+r.t+'</span><div class="depth-bar" style="width:'+w+'%"></div></div>'}).join('');document.getElementById('obAsks').innerHTML=asks;document.getElementById('obBids').innerHTML=bids;document.getElementById('obSpread').textContent=(spread).toFixed(d);}
 
 function setTradeDirection(dir){tradeDirection=dir;document.getElementById('btnUp').className='tv-buy-btn '+(dir==='up'?'active':'');document.getElementById('btnDown').className='tv-sell-btn '+(dir==='down'?'active':'');var btn=document.getElementById('placeTradeBtn');if(dir==='up'){btn.className='tv-place-btn buy';btn.textContent='Buy / Long';}else{btn.className='tv-place-btn sell';btn.textContent='Sell / Short';}}
 function setTimer(el){document.querySelectorAll('.tv-timer-btn').forEach(function(o){o.classList.remove('active')});el.classList.add('active');tradeTimer=parseInt(el.dataset.time);}
@@ -619,7 +770,7 @@ async function placeTrade(){
   btn.innerHTML='<span class="spinner"></span> กำลังเปิด...';btn.disabled=true;
   
   var asset=ASSETS[selectedAsset],op=priceHistory[priceHistory.length-1];
-  var fx=asset.symbol.indexOf('/')!==-1&&asset.symbol.indexOf('XAU')===-1,dp=fx?4:2;
+  var dp=asset.decimals||2;
   
   try{
     /* Deduct balance */
