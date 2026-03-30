@@ -8,462 +8,493 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#06080f;--bg2:#0c1019;--bg3:#121827;--bg4:#1a2236;--border:#1c2540;--border2:#263050;--gold:#e8b94a;--gold2:#d4a430;--gg:rgba(232,185,74,.12);--green:#00e676;--green2:#00c853;--red:#ff5252;--blue:#448aff;--purple:#b388ff;--cyan:#00e5ff;--t1:#eef0f6;--t2:#9aa3b8;--t3:#5c667a;--t4:#3a4458}
+:root{--bg:#06080f;--bg2:#0c1019;--bg3:#121827;--bg4:#1a2236;--bd:#1c2540;--bd2:#263050;--gold:#e8b94a;--gold2:#d4a430;--gg:rgba(232,185,74,.12);--grn:#00e676;--grn2:#00c853;--red:#ff5252;--blu:#448aff;--pur:#b388ff;--t1:#eef0f6;--t2:#9aa3b8;--t3:#5c667a;--t4:#3a4458}
 body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--t2);min-height:100vh;overflow-x:hidden}
 a{color:var(--gold);text-decoration:none}a:hover{text-decoration:underline}
 button{font-family:inherit;cursor:pointer;border:none;outline:none}
 input,select,textarea{font-family:inherit;outline:none}
 .mono{font-family:'JetBrains Mono',monospace}
-::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}input[type=number]{-moz-appearance:textfield}
+.page{display:none;min-height:100vh;animation:fi .3s ease}.page.active{display:block}
+@keyframes fi{from{opacity:0}to{opacity:1}}
 
-/* Pages */
-.page{display:none;min-height:100vh;animation:fadeIn .35s ease}.page.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-/* Common */
-.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid rgba(28,37,64,.5)}
-.nav-logo{font-size:17px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;cursor:pointer}
-.nav-links{display:flex;gap:8px;align-items:center}
-.nb{padding:7px 18px;border-radius:7px;font-size:12px;font-weight:600;transition:all .15s}
+/* ---- Shared ---- */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid rgba(28,37,64,.5)}
+.logo{font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;cursor:pointer}
+.nb{padding:7px 16px;border-radius:6px;font-size:11px;font-weight:600;transition:all .15s}
 .nb-o{background:0;color:var(--gold);border:1px solid rgba(232,185,74,.3)}.nb-o:hover{border-color:var(--gold);background:var(--gg)}
-.nb-s{background:var(--gold);color:var(--bg);border:1px solid var(--gold)}.nb-s:hover{background:#f0c85a}
-.nb-g{background:var(--bg3);color:var(--t2);border:1px solid var(--border)}.nb-g:hover{background:var(--bg4);color:var(--t1)}
+.nb-s{background:var(--gold);color:var(--bg)}.nb-s:hover{background:#f0c85a}
+.nb-g{background:var(--bg3);color:var(--t2);border:1px solid var(--bd)}.nb-g:hover{background:var(--bg4);color:var(--t1)}
 
 /* Auth */
-.auth-pg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 30%,rgba(232,185,74,.04),transparent 60%),var(--bg)}
-.auth-c{width:100%;max-width:430px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:32px;box-shadow:0 16px 50px rgba(0,0,0,.4)}
-.auth-logo{text-align:center;margin-bottom:20px;font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.auth-t{text-align:center;font-size:20px;font-weight:700;color:var(--t1);margin-bottom:4px}
-.auth-st{text-align:center;font-size:12px;color:var(--t3);margin-bottom:24px}
-.fr{margin-bottom:12px}.fr.half{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.fl{display:block;font-size:11px;color:var(--t3);margin-bottom:4px;font-weight:500}
-.fi{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--t1);font-size:12px;transition:border .2s}
+.apg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 50% 30%,rgba(232,185,74,.04),transparent 60%),var(--bg)}
+.ac{width:100%;max-width:420px;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.at{text-align:center;font-size:18px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.as{text-align:center;font-size:11px;color:var(--t3);margin-bottom:20px}
+.fr{margin-bottom:10px}.fr.h{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fl{display:block;font-size:10px;color:var(--t3);margin-bottom:3px;font-weight:500}
+.fi{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--t1);font-size:12px;transition:border .2s}
 .fi:focus{border-color:var(--gold)}.fi::placeholder{color:var(--t4)}
-select.fi{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c667a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
-textarea.fi{resize:vertical;min-height:50px}
-.fc{display:flex;align-items:flex-start;gap:7px;margin:14px 0}.fc input{margin-top:2px;accent-color:var(--gold)}.fc label{font-size:11px;color:var(--t3);line-height:1.3}
-.ab{width:100%;padding:11px;border-radius:7px;font-size:13px;font-weight:700;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--gold2));box-shadow:0 4px 18px rgba(232,185,74,.2);transition:all .2s;margin-top:6px}
-.ab:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(232,185,74,.3)}.ab:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.adiv{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--t4);font-size:11px}.adiv::before,.adiv::after{content:'';flex:1;height:1px;background:var(--border)}
-.gbtn{width:100%;padding:10px;border-radius:7px;font-size:12px;font-weight:600;color:var(--t1);background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
-.gbtn:hover{border-color:var(--border2);background:var(--bg4)}.gbtn svg{width:16px;height:16px}
-.af{text-align:center;margin-top:16px;font-size:12px;color:var(--t3)}
-.abk{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);cursor:pointer;margin-bottom:16px}.abk:hover{color:var(--gold)}
-.ferr{color:var(--red);font-size:10px;margin-top:3px;display:none}
-.fok{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:var(--green);border-radius:7px;padding:10px;text-align:center;font-size:12px;margin-bottom:14px;display:none}
-.pws{height:3px;border-radius:2px;background:var(--border);margin-top:4px;overflow:hidden}.pws .bar{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
-.phr{display:flex;gap:6px}.phc{width:85px;flex-shrink:0}
+select.fi{-webkit-appearance:none;appearance:none}
+textarea.fi{resize:vertical;min-height:44px}
+.ab{width:100%;padding:10px;border-radius:6px;font-size:12px;font-weight:700;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--gold2));margin-top:6px;transition:all .15s}
+.ab:hover{transform:translateY(-1px)}.ab:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.adv{display:flex;align-items:center;gap:8px;margin:14px 0;color:var(--t4);font-size:10px}.adv::before,.adv::after{content:'';flex:1;height:1px;background:var(--bd)}
+.gb{width:100%;padding:9px;border-radius:6px;font-size:11px;font-weight:600;color:var(--t1);background:var(--bg3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.gb:hover{background:var(--bg4)}.gb svg{width:14px;height:14px}
+.aft{text-align:center;margin-top:14px;font-size:11px;color:var(--t3)}
+.bk{font-size:10px;color:var(--t3);cursor:pointer;margin-bottom:14px;display:inline-block}.bk:hover{color:var(--gold)}
+.fe{color:var(--red);font-size:9px;margin-top:2px;display:none}
+.fok{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:var(--grn);border-radius:6px;padding:8px;text-align:center;font-size:11px;margin-bottom:10px;display:none}
+.pws{height:2px;border-radius:1px;background:var(--bd);margin-top:3px;overflow:hidden}.pws .bar{height:100%;transition:width .3s,background .3s;width:0}
 
-/* Dashboard layout */
+/* Dashboard */
 .dash{display:flex;min-height:100vh}
-.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);padding:16px 0;display:flex;flex-direction:column;flex-shrink:0}
-.sb-logo{padding:0 16px 16px;font-size:15px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent;border-bottom:1px solid var(--border);margin-bottom:8px;cursor:pointer}
-.sb-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--t3);cursor:pointer;transition:all .12s;border-left:3px solid transparent}
-.sb-item:hover{color:var(--t1);background:var(--bg3)}
-.sb-item.active{color:var(--gold);background:var(--gg);border-left-color:var(--gold);font-weight:600}
-.sb-item .ico{font-size:16px;width:22px;text-align:center}
-.sb-bottom{margin-top:auto;padding:8px 16px;border-top:1px solid var(--border)}
-.sb-user{font-size:12px;color:var(--t2);font-weight:600;margin-bottom:2px}
-.sb-email{font-size:10px;color:var(--t4)}
-.dash-main{flex:1;overflow-y:auto;background:var(--bg)}
-.dash-header{padding:20px 28px;border-bottom:1px solid var(--border);background:var(--bg2)}
-.dash-title{font-size:20px;font-weight:700;color:var(--t1)}
-.dash-sub{font-size:12px;color:var(--t3);margin-top:2px}
-.dash-body{padding:24px 28px}
+.sb{width:200px;background:var(--bg2);border-right:1px solid var(--bd);padding:14px 0;display:flex;flex-direction:column;flex-shrink:0}
+.sb-l{padding:0 14px 12px;font-size:14px;font-weight:800;background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent;border-bottom:1px solid var(--bd);margin-bottom:6px;cursor:pointer}
+.si{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;color:var(--t3);cursor:pointer;transition:all .1s;border-left:3px solid transparent}
+.si:hover{color:var(--t1);background:var(--bg3)}
+.si.on{color:var(--gold);background:var(--gg);border-left-color:var(--gold);font-weight:600}
+.si .ic{font-size:14px;width:20px;text-align:center}
+.sb-bt{margin-top:auto;padding:6px 14px;border-top:1px solid var(--bd)}
+.sb-u{font-size:11px;color:var(--t2);font-weight:600}.sb-e{font-size:9px;color:var(--t4)}
+.dm{flex:1;overflow-y:auto;background:var(--bg)}
+.dh{padding:16px 24px;border-bottom:1px solid var(--bd);background:var(--bg2)}
+.dt{font-size:18px;font-weight:700;color:var(--t1)}.ds{font-size:11px;color:var(--t3);margin-top:2px}
+.db{padding:20px 24px}
+.cds{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.cd{background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:14px}
+.cd-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.cd-v{font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.cd-s{font-size:10px;color:var(--t3);margin-top:2px}
+.tbl{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+.tbl th{padding:6px 8px;text-align:left;font-weight:500;background:var(--bg3);color:var(--t3);font-size:9px;text-transform:uppercase;letter-spacing:.4px}
+.tbl td{padding:5px 8px;border-bottom:1px solid rgba(28,37,64,.4)}
+.tbl .mt{text-align:center;color:var(--t4);padding:20px!important}
+.pf{max-width:460px}
+.pf-sv{padding:8px 24px;border-radius:6px;font-size:12px;font-weight:700;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--gold2));margin-top:6px}
+.rb{background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:16px;margin-bottom:12px}
+.rc{font-size:22px;font-weight:800;color:var(--gold);font-family:'JetBrains Mono',monospace;margin:6px 0}
+.rcp{padding:6px 16px;border-radius:5px;font-size:11px;font-weight:600;color:var(--bg);background:var(--gold)}
+.dwb{padding:8px 20px;border-radius:6px;font-size:11px;font-weight:700;margin-right:6px;margin-bottom:10px}
+.dwd{background:var(--grn);color:var(--bg)}.dww{background:var(--bg3);color:var(--red);border:1px solid rgba(255,82,82,.3)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:999}
+.modal.show{display:flex}
+.mc{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:24px;width:100%;max-width:360px}
+.mc h3{font-size:14px;color:var(--t1);margin-bottom:14px}
 
-/* Cards */
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
-.card-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
-.card-val{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace}
-.card-sub{font-size:11px;color:var(--t3);margin-top:4px}
+/* ---- TRADING ---- */
+.tp-bar{display:flex;align-items:center;gap:0;padding:0 6px;height:32px;background:var(--bg2);border-bottom:1px solid var(--bd);overflow-x:auto;flex-shrink:0}
+.tp-tab{padding:4px 10px;font-size:10px;color:var(--t3);background:0;border-bottom:2px solid transparent;white-space:nowrap;font-weight:500;transition:all .15s}
+.tp-tab:hover{color:var(--t2)}.tp-tab.on{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.tp-tab .pr{font-family:'JetBrains Mono',monospace;margin-left:4px;font-size:9px}
+.tp-tab .up{color:var(--grn)}.tp-tab .dn{color:var(--red)}
+.tp-wrap{display:flex;flex:1;overflow:hidden}
+.tp-chart{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.tp-tb{display:flex;align-items:center;justify-content:space-between;padding:3px 10px;background:var(--bg2);border-bottom:1px solid var(--bd)}
+.tp-tbg{display:flex;gap:2px}
+.tb{padding:2px 7px;font-size:9px;color:var(--t3);background:0;border:1px solid transparent;border-radius:3px;font-weight:500;transition:all .1s}
+.tb:hover{color:var(--t2);border-color:var(--bd)}.tb.on{color:var(--gold);background:var(--gg);border-color:rgba(232,185,74,.2)}
+.tb.io{color:var(--blu);background:rgba(68,138,255,.08);border-color:rgba(68,138,255,.2)}
+.cw{flex:1;position:relative;background:var(--bg);min-height:60px}
+.cw canvas{display:block;width:100%;height:100%}
+.ci{position:absolute;top:4px;left:8px;z-index:5;font-size:10px;font-family:'JetBrains Mono',monospace}
+.ip{border-top:1px solid var(--bd);position:relative;flex-shrink:0;background:var(--bg)}
+.il{position:absolute;top:2px;left:8px;font-size:8px;color:var(--t3);z-index:2;text-transform:uppercase;letter-spacing:.4px}
+.bp{height:140px;border-top:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0}
+.bpt{display:flex;background:var(--bg2);border-bottom:1px solid var(--bd)}
+.bptb{padding:4px 12px;font-size:10px;color:var(--t3);background:0;border-bottom:2px solid transparent;font-weight:500}
+.bptb.on{color:var(--gold);border-bottom-color:var(--gold)}
+.bpc{flex:1;overflow:auto}
+.tp-sb{width:230px;background:var(--bg2);border-left:1px solid var(--bd);display:flex;flex-direction:column;gap:6px;padding:6px;overflow-y:auto;flex-shrink:0}
+.tp-cd{background:var(--bg3);border-radius:8px;padding:8px 10px;border:1px solid rgba(28,37,64,.6)}
+.tp-ct{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;font-weight:600}
+.ba{display:flex;justify-content:space-between;align-items:center}
+.bp2{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.spb{background:var(--bg);border-radius:3px;padding:1px 6px;color:var(--t3);font-size:9px}
+.otg{display:flex;gap:3px;margin-bottom:6px}
+.ob,.os{flex:1;padding:6px;border-radius:5px;font-weight:700;font-size:12px;transition:all .1s}
+.ob{background:0;color:var(--grn);border:1px solid var(--grn)}.ob.on{background:var(--grn);color:var(--bg)}
+.os{background:0;color:var(--red);border:1px solid var(--red)}.os.on{background:var(--red);color:#fff}
+.li{width:100%;padding:6px 8px;background:var(--bg);border:1px solid var(--bd);border-radius:5px;color:var(--t1);font-size:11px;font-family:'JetBrains Mono',monospace;text-align:center}
+.li:focus{border-color:var(--gold)}
+.lr{display:flex;gap:3px;align-items:center}
+.sb2{background:var(--bg);border:1px solid var(--bd);border-radius:3px;color:var(--t2);width:24px;height:24px;font-size:12px;display:flex;align-items:center;justify-content:center}
+.sb2:hover{border-color:var(--gold);color:var(--gold)}
+.pr2{display:flex;gap:2px;margin-top:3px}
+.pb{flex:1;background:var(--bg);border:1px solid var(--bd);border-radius:2px;color:var(--t3);padding:1px;font-size:8px;font-family:'JetBrains Mono',monospace}
+.pb.on{background:var(--bg4);color:var(--blu);border-color:rgba(68,138,255,.3)}
+.slr{display:flex;gap:4px;margin:4px 0 6px}
+.slr>div{flex:1}
+.sll{font-size:9px;margin-bottom:2px}
+.eb{width:100%;padding:8px;border-radius:6px;color:#fff;font-weight:800;font-size:12px;letter-spacing:.3px;transition:all .15s}
+.eb.buy{background:linear-gradient(135deg,var(--grn),var(--grn2));box-shadow:0 3px 16px rgba(0,230,118,.2)}
+.eb.sell{background:linear-gradient(135deg,var(--red),#ff1744);box-shadow:0 3px 16px rgba(255,82,82,.2)}
+.eb:hover{transform:translateY(-1px)}
+.oi{color:var(--t4);font-size:8px;text-align:center;margin-top:3px}
+.sr{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(28,37,64,.4)}
+.sr:last-child{border:none}
+.sl2{font-size:9px;color:var(--t3)}.sv{font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.clb{background:rgba(255,82,82,.08);color:var(--red);border:1px solid rgba(255,82,82,.15);border-radius:3px;padding:1px 8px;font-size:8px;font-family:inherit}
+.clb:hover{background:var(--red);color:#fff}
 
-/* Tables */
-.tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
-.tbl th{padding:8px 10px;text-align:left;font-weight:500;background:var(--bg3);color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
-.tbl td{padding:7px 10px;border-bottom:1px solid rgba(28,37,64,.4)}
-.tbl .empty{text-align:center;color:var(--t4);padding:24px!important}
-
-/* Profile form */
-.pf-form{max-width:500px}.pf-form .fr{margin-bottom:14px}
-.pf-save{padding:10px 28px;border-radius:7px;font-size:13px;font-weight:700;color:var(--bg);background:linear-gradient(135deg,var(--gold),var(--gold2));margin-top:8px;transition:all .15s}
-.pf-save:hover{transform:translateY(-1px)}
-
-/* Referral */
-.ref-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
-.ref-code{font-size:24px;font-weight:800;color:var(--gold);font-family:'JetBrains Mono',monospace;margin:8px 0}
-.ref-copy{padding:8px 20px;border-radius:6px;font-size:12px;font-weight:600;color:var(--bg);background:var(--gold);transition:all .15s}
-.ref-copy:hover{background:#f0c85a}
-
-/* Deposit/Withdraw */
-.dw-btn{padding:9px 24px;border-radius:7px;font-size:12px;font-weight:700;margin-right:8px;margin-bottom:12px;transition:all .15s}
-.dw-dep{background:var(--green);color:var(--bg)}.dw-dep:hover{filter:brightness(1.1)}
-.dw-wit{background:var(--bg3);color:var(--red);border:1px solid rgba(255,82,82,.3)}.dw-wit:hover{background:rgba(255,82,82,.1)}
-.dw-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:999;display:none}
-.dw-modal.show{display:flex}
-.dw-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:380px}
-.dw-card h3{font-size:16px;color:var(--t1);margin-bottom:16px}
-
-/* Trading (embedded) */
-.trade-frame{width:100%;height:calc(100vh - 52px);border:none;background:var(--bg)}
+/* News */
+.ni{padding:6px 0;border-bottom:1px solid var(--bd)}.ni:last-child{border:none}
+.nt{font-size:8px;color:var(--t4)}.nn{font-size:10px;color:var(--t1);font-weight:500;line-height:1.3}
+.tg{display:inline-block;padding:0 4px;border-radius:2px;font-size:7px;font-weight:700;margin-right:3px}
+.tg-b{background:rgba(0,230,118,.08);color:var(--grn)}.tg-r{background:rgba(255,82,82,.08);color:var(--red)}.tg-n{background:rgba(68,138,255,.08);color:var(--blu)}
 
 /* Toast */
-.toast{position:fixed;top:14px;right:14px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.3);animation:slideIn .3s ease;pointer-events:none}
-.toast.success{background:var(--bg3);border:1px solid rgba(0,230,118,.3);color:var(--green)}
-.toast.error{background:var(--bg3);border:1px solid rgba(255,82,82,.3);color:var(--red)}
-@keyframes slideIn{from{transform:translateX(60px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast{position:fixed;top:12px;right:12px;z-index:9999;padding:8px 16px;border-radius:7px;font-size:11px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.3);animation:si .3s ease;pointer-events:none}
+.toast.s{background:var(--bg3);border:1px solid rgba(0,230,118,.3);color:var(--grn)}
+.toast.e{background:var(--bg3);border:1px solid rgba(255,82,82,.3);color:var(--red)}
+@keyframes si{from{transform:translateX(50px);opacity:0}to{transform:translateX(0);opacity:1}}
 
-/* Landing */
-.hero{min-height:100vh;display:flex;flex-direction:column;background:radial-gradient(ellipse at 30% 20%,rgba(232,185,74,.06),transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(68,138,255,.04),transparent 50%),var(--bg)}
-.hero-ct{flex:1;display:flex;align-items:center;justify-content:center;padding:36px 28px}
-.hero-in{max-width:640px;text-align:center}
-.hero-badge{display:inline-block;padding:5px 14px;border-radius:18px;background:var(--gg);border:1px solid rgba(232,185,74,.2);color:var(--gold);font-size:11px;font-weight:600;margin-bottom:20px}
-.hero-title{font-size:clamp(28px,5.5vw,50px);font-weight:900;color:var(--t1);line-height:1.1;margin-bottom:14px}.hero-title .gd{background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hero-sub{font-size:clamp(14px,2.2vw,16px);color:var(--t2);line-height:1.6;margin-bottom:30px;max-width:480px;margin-left:auto;margin-right:auto}
-.hero-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.cta{padding:12px 32px;border-radius:9px;font-size:14px;font-weight:700;transition:all .2s}
-.cta-p{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--bg);box-shadow:0 5px 24px rgba(232,185,74,.25)}.cta-p:hover{transform:translateY(-2px)}
-.cta-s{background:var(--bg3);color:var(--t1);border:1px solid var(--border2)}.cta-s:hover{border-color:var(--gold)}
-.stats{display:flex;justify-content:center;gap:36px;padding:28px;border-top:1px solid rgba(28,37,64,.5);flex-wrap:wrap}
-.stat{text-align:center}.stat-n{font-size:24px;font-weight:800;color:var(--t1);font-family:'JetBrains Mono',monospace}.stat-n .gd{background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.stat-l{font-size:11px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.6px}
-.feats{padding:50px 28px;background:var(--bg2);border-top:1px solid var(--border)}
-.feats-t{text-align:center;font-size:24px;font-weight:800;color:var(--t1);margin-bottom:32px}
-.feats-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;max-width:860px;margin:0 auto}
-.fc2{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;transition:all .2s}.fc2:hover{border-color:rgba(232,185,74,.3);transform:translateY(-2px)}
-.fc2-i{font-size:24px;margin-bottom:10px}.fc2-t{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px}.fc2-d{font-size:12px;color:var(--t3);line-height:1.4}
-.foot{padding:20px 28px;text-align:center;border-top:1px solid var(--border);font-size:11px;color:var(--t4)}
+/* Hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;background:radial-gradient(ellipse at 30% 20%,rgba(232,185,74,.06),transparent 50%),var(--bg)}
+.hc{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 24px}
+.hi{max-width:600px;text-align:center}
+.hb{display:inline-block;padding:4px 12px;border-radius:16px;background:var(--gg);border:1px solid rgba(232,185,74,.2);color:var(--gold);font-size:10px;font-weight:600;margin-bottom:18px}
+.ht{font-size:clamp(26px,5vw,44px);font-weight:900;color:var(--t1);line-height:1.1;margin-bottom:12px}
+.ht .gd{background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hss{font-size:clamp(13px,2vw,15px);color:var(--t2);line-height:1.5;margin-bottom:28px;max-width:450px;margin-left:auto;margin-right:auto}
+.hca{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ct{padding:11px 28px;border-radius:8px;font-size:13px;font-weight:700;transition:all .2s}
+.ct-p{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--bg);box-shadow:0 4px 20px rgba(232,185,74,.25)}.ct-p:hover{transform:translateY(-2px)}
+.ct-s{background:var(--bg3);color:var(--t1);border:1px solid var(--bd2)}.ct-s:hover{border-color:var(--gold)}
+.sts{display:flex;justify-content:center;gap:28px;padding:24px;border-top:1px solid rgba(28,37,64,.5);flex-wrap:wrap}
+.st{text-align:center}.sn{font-size:20px;font-weight:800;color:var(--t1);font-family:'JetBrains Mono',monospace}.sn .gd{background:linear-gradient(135deg,var(--gold),#f0d078);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sla{font-size:10px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.fts{padding:40px 24px;background:var(--bg2);border-top:1px solid var(--bd)}
+.ftt{text-align:center;font-size:20px;font-weight:800;color:var(--t1);margin-bottom:28px}
+.ftg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;max-width:780px;margin:0 auto}
+.ftc{background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:16px;transition:all .15s}.ftc:hover{border-color:rgba(232,185,74,.3);transform:translateY(-1px)}
+.fti{font-size:20px;margin-bottom:8px}.ftl{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:3px}.ftd{font-size:11px;color:var(--t3);line-height:1.4}
+.foot{padding:16px;text-align:center;border-top:1px solid var(--bd);font-size:10px;color:var(--t4)}
 
-/* Responsive */
 @media(max-width:768px){
-.sidebar{position:fixed;left:-260px;z-index:99;height:100vh;transition:left .3s;width:240px}.sidebar.open{left:0}
-.mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:98;display:none}.mob-overlay.show{display:block}
-.dash-header{padding:16px 20px}.dash-body{padding:16px 20px}
-.mob-menu{display:block!important;font-size:20px;background:0;color:var(--t2);padding:4px 8px}
-.nav{padding:12px 16px}.hero-ct{padding:20px 16px}.hero-cta{flex-direction:column;align-items:center}
-.auth-c{padding:24px 18px}.fr.half{grid-template-columns:1fr}
+.sb{position:fixed;left:-240px;z-index:99;height:100vh;transition:left .25s;width:220px}.sb.open{left:0}
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:98;display:none}.mov.show{display:block}
+.mm{display:block!important;font-size:18px;background:0;color:var(--t2);padding:2px 6px}
+.tp-sb{width:100%;border-left:none;border-top:1px solid var(--bd);max-height:240px;flex-direction:row;flex-wrap:wrap}
+.tp-sb .tp-cd{flex:1;min-width:200px}
+.tp-wrap{flex-direction:column}
+.hca{flex-direction:column;align-items:center}
+.fr.h{grid-template-columns:1fr}
 }
-@media(min-width:769px){.mob-menu{display:none!important}.mob-overlay{display:none!important}}
+@media(min-width:769px){.mm{display:none!important}.mov{display:none!important}}
 </style>
 </head>
 <body>
 
-<!-- ===== LANDING ===== -->
-<div class="page active" id="pgLand">
+<!-- LANDING -->
+<div class="page active" id="pgL">
 <div class="hero">
-  <nav class="nav"><div class="nav-logo" onclick="go('pgLand')">💎 RICHOPTION911</div><div class="nav-links"><button class="nb nb-o" onclick="go('pgLogin')">เข้าสู่ระบบ</button><button class="nb nb-s" onclick="go('pgReg')">สมัครสมาชิก</button></div></nav>
-  <div class="hero-ct"><div class="hero-in">
-    <div class="hero-badge">🔥 แพลตฟอร์มเทรดอันดับ 1</div>
-    <h1 class="hero-title">เทรดทุกสินทรัพย์ ในที่เดียว<br><span class="gd">ง่ายและเร็ว</span></h1>
-    <p class="hero-sub">เทรด Gold, Forex, Crypto, หุ้นสหรัฐ พร้อมกราฟระดับมืออาชีพ และระบบจัดการพอร์ตอัจฉริยะ</p>
-    <div class="hero-cta"><button class="cta cta-p" onclick="go('pgReg')">เปิดบัญชีฟรี →</button><button class="cta cta-s" onclick="go('pgLogin')">เข้าสู่ระบบ</button></div>
-  </div></div>
-  <div class="stats"><div class="stat"><div class="stat-n"><span class="gd">9+</span></div><div class="stat-l">สินทรัพย์</div></div><div class="stat"><div class="stat-n"><span class="gd">$100K</span></div><div class="stat-l">เงินทดลอง</div></div><div class="stat"><div class="stat-n"><span class="gd">0.0</span></div><div class="stat-l">ค่าคอมมิชชั่น</div></div><div class="stat"><div class="stat-n"><span class="gd">24/7</span></div><div class="stat-l">เทรดตลอด</div></div></div>
+<nav class="nav"><div class="logo">💎 RICHOPTION911</div><div style="display:flex;gap:6px"><button class="nb nb-o" onclick="go('pgLi')">เข้าสู่ระบบ</button><button class="nb nb-s" onclick="go('pgR')">สมัครสมาชิก</button></div></nav>
+<div class="hc"><div class="hi">
+<div class="hb">🔥 แพลตฟอร์มเทรดอันดับ 1</div>
+<h1 class="ht">เทรดทุกสินทรัพย์ ในที่เดียว<br><span class="gd">ง่ายและเร็ว</span></h1>
+<p class="hss">Gold, Forex, Crypto, หุ้นสหรัฐ พร้อมกราฟมืออาชีพ และระบบจัดการพอร์ตอัจฉริยะ</p>
+<div class="hca"><button class="ct ct-p" onclick="go('pgR')">เปิดบัญชีฟรี →</button><button class="ct ct-s" onclick="go('pgLi')">เข้าสู่ระบบ</button></div>
+</div></div>
+<div class="sts"><div class="st"><div class="sn"><span class="gd">9+</span></div><div class="sla">สินทรัพย์</div></div><div class="st"><div class="sn"><span class="gd">$100K</span></div><div class="sla">ทดลอง</div></div><div class="st"><div class="sn"><span class="gd">0.0</span></div><div class="sla">ค่าคอม</div></div><div class="st"><div class="sn"><span class="gd">24/7</span></div><div class="sla">เทรดตลอด</div></div></div>
 </div>
-<div class="feats"><h2 class="feats-t">ทำไมต้อง RichOption911?</h2><div class="feats-g">
-  <div class="fc2"><div class="fc2-i">📊</div><div class="fc2-t">กราฟระดับมืออาชีพ</div><div class="fc2-d">แท่งเทียน Real-time พร้อม MA, RSI, MACD</div></div>
-  <div class="fc2"><div class="fc2-i">⚡</div><div class="fc2-t">เทรดได้ทุกสินทรัพย์</div><div class="fc2-d">Gold, Forex, Bitcoin, หุ้นสหรัฐ ในที่เดียว</div></div>
-  <div class="fc2"><div class="fc2-i">🛡️</div><div class="fc2-t">ปลอดภัย 100%</div><div class="fc2-d">เข้ารหัสข้อมูลทุกชั้น ปกป้องเงินทุน</div></div>
-  <div class="fc2"><div class="fc2-i">🎁</div><div class="fc2-t">แนะนำเพื่อน รับโบนัส</div><div class="fc2-d">ระบบ Referral รับโบนัสเข้าบัญชีทันที</div></div>
-  <div class="fc2"><div class="fc2-i">📱</div><div class="fc2-t">ใช้ได้ทุกอุปกรณ์</div><div class="fc2-d">เปิดผ่าน Browser ไม่ต้องดาวน์โหลดแอป</div></div>
-  <div class="fc2"><div class="fc2-i">💰</div><div class="fc2-t">เริ่มต้นฟรี $100K</div><div class="fc2-d">เงินทดลอง ไม่มีความเสี่ยง เรียนรู้เต็มที่</div></div>
+<div class="fts"><h2 class="ftt">ทำไมต้อง RichOption911?</h2><div class="ftg">
+<div class="ftc"><div class="fti">📊</div><div class="ftl">กราฟมืออาชีพ</div><div class="ftd">แท่งเทียน Real-time + MA, RSI, MACD</div></div>
+<div class="ftc"><div class="fti">⚡</div><div class="ftl">9 สินทรัพย์</div><div class="ftd">Gold, Forex, BTC, ETH, AAPL, TSLA, NVDA</div></div>
+<div class="ftc"><div class="fti">🛡️</div><div class="ftl">ปลอดภัย</div><div class="ftd">เข้ารหัสข้อมูลทุกชั้น</div></div>
+<div class="ftc"><div class="fti">🎁</div><div class="ftl">Referral</div><div class="ftd">แนะนำเพื่อน รับโบนัส $500</div></div>
+<div class="ftc"><div class="fti">📱</div><div class="ftl">ทุกอุปกรณ์</div><div class="ftd">ไม่ต้องโหลดแอป ใช้ผ่าน Browser</div></div>
+<div class="ftc"><div class="fti">💰</div><div class="ftl">ฟรี $100K</div><div class="ftd">เงินทดลอง ไม่มีความเสี่ยง</div></div>
 </div></div>
 <div class="foot">© 2026 RichOption911. All rights reserved.</div>
 </div>
 
-<!-- ===== REGISTER ===== -->
-<div class="page" id="pgReg">
-<div class="auth-pg"><div class="auth-c">
-  <div class="abk" onclick="go('pgLand')">← กลับหน้าหลัก</div>
-  <div class="auth-logo">💎 RICHOPTION911</div>
-  <div class="auth-t">สมัครสมาชิก</div>
-  <div class="auth-st">เปิดบัญชีฟรี เริ่มเทรดได้ทันที</div>
-  <div class="fok" id="regOk">✅ สมัครสำเร็จ!</div>
-  <form onsubmit="doReg(event)">
-    <div class="fr half"><div><label class="fl">ชื่อ *</label><input class="fi" id="rFn" placeholder="ชื่อจริง" required></div><div><label class="fl">นามสกุล *</label><input class="fi" id="rLn" placeholder="นามสกุล" required></div></div>
-    <div class="fr"><label class="fl">อีเมล *</label><input class="fi" type="email" id="rEm" placeholder="your@email.com" required><div class="ferr" id="emE">อีเมลนี้ถูกใช้แล้ว</div></div>
-    <div class="fr"><label class="fl">เบอร์โทรศัพท์ *</label><div class="phr"><select class="fi phc" id="rPc"><option>🇹🇭 +66</option><option>🇺🇸 +1</option><option>🇬🇧 +44</option></select><input class="fi" type="tel" id="rPh" placeholder="081-234-5678" required></div></div>
-    <div class="fr"><label class="fl">รหัสผ่าน * (อย่างน้อย 8 ตัว)</label><input class="fi" type="password" id="rPw" placeholder="รหัสผ่าน" required minlength="8" oninput="chkPw(this.value)"><div class="pws"><div class="bar" id="pwB"></div></div></div>
-    <div class="fr"><label class="fl">ยืนยันรหัสผ่าน *</label><input class="fi" type="password" id="rPwc" placeholder="พิมพ์อีกครั้ง" required><div class="ferr" id="pwE">รหัสผ่านไม่ตรงกัน</div></div>
-    <div class="fr"><label class="fl">ที่อยู่</label><textarea class="fi" id="rAd" placeholder="บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด" rows="2"></textarea></div>
-    <div class="fr"><label class="fl">รหัส Referral (ถ้ามี)</label><input class="fi" id="rRf" placeholder="REF-XXXXXX"></div>
-    <div class="fc"><input type="checkbox" id="rTm" required><label for="rTm">ยอมรับ <a href="#">ข้อตกลงและเงื่อนไข</a></label></div>
-    <button type="submit" class="ab" id="regB">สมัครสมาชิก</button>
-  </form>
-  <div class="adiv">หรือ</div>
-  <button class="gbtn" onclick="toast('Google Login จะพร้อมใน Step 3','error')"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>สมัครด้วย Google</button>
-  <div class="af">มีบัญชีแล้ว? <a href="#" onclick="go('pgLogin');return false">เข้าสู่ระบบ</a></div>
+<!-- REGISTER -->
+<div class="page" id="pgR"><div class="apg"><div class="ac">
+<div class="bk" onclick="go('pgL')">← กลับ</div>
+<div style="text-align:center;margin-bottom:14px"><span class="logo">💎 RICHOPTION911</span></div>
+<div class="at">สมัครสมาชิก</div><div class="as">เปิดบัญชีฟรี เริ่มเทรดทันที</div>
+<div class="fok" id="rOk">✅ สมัครสำเร็จ!</div>
+<form onsubmit="doReg(event)">
+<div class="fr h"><div><label class="fl">ชื่อ *</label><input class="fi" id="rF" required placeholder="ชื่อ"></div><div><label class="fl">นามสกุล *</label><input class="fi" id="rL" required placeholder="นามสกุล"></div></div>
+<div class="fr"><label class="fl">อีเมล *</label><input class="fi" type="email" id="rE" required placeholder="your@email.com"><div class="fe" id="eE">อีเมลซ้ำ</div></div>
+<div class="fr"><label class="fl">เบอร์โทร *</label><input class="fi" type="tel" id="rP" required placeholder="081-234-5678"></div>
+<div class="fr"><label class="fl">รหัสผ่าน * (8+ ตัว)</label><input class="fi" type="password" id="rW" required minlength="8" placeholder="รหัสผ่าน" oninput="ckP(this.value)"><div class="pws"><div class="bar" id="pwB"></div></div></div>
+<div class="fr"><label class="fl">ยืนยันรหัสผ่าน *</label><input class="fi" type="password" id="rWc" required placeholder="พิมพ์อีกครั้ง"><div class="fe" id="pE">ไม่ตรงกัน</div></div>
+<div class="fr"><label class="fl">ที่อยู่</label><textarea class="fi" id="rA" placeholder="ที่อยู่" rows="2"></textarea></div>
+<div class="fr"><label class="fl">รหัส Referral</label><input class="fi" id="rRf" placeholder="REF-XXXXXX"></div>
+<div style="display:flex;align-items:flex-start;gap:6px;margin:10px 0"><input type="checkbox" required style="margin-top:2px;accent-color:var(--gold)"><label style="font-size:10px;color:var(--t3)">ยอมรับ <a href="#">ข้อตกลง</a></label></div>
+<button type="submit" class="ab" id="rB">สมัครสมาชิก</button>
+</form>
+<div class="adv">หรือ</div>
+<button class="gb" onclick="T('Google Login พร้อมใน Step 4','e')"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>สมัครด้วย Google</button>
+<div class="aft">มีบัญชีแล้ว? <a href="#" onclick="go('pgLi');return false">เข้าสู่ระบบ</a></div>
 </div></div></div>
 
-<!-- ===== LOGIN ===== -->
-<div class="page" id="pgLogin">
-<div class="auth-pg"><div class="auth-c">
-  <div class="abk" onclick="go('pgLand')">← กลับหน้าหลัก</div>
-  <div class="auth-logo">💎 RICHOPTION911</div>
-  <div class="auth-t">เข้าสู่ระบบ</div>
-  <div class="auth-st">ยินดีต้อนรับกลับ!</div>
-  <div class="fok" id="logOk">✅ เข้าสู่ระบบสำเร็จ!</div>
-  <form onsubmit="doLog(event)">
-    <div class="fr"><label class="fl">อีเมล</label><input class="fi" type="email" id="lEm" placeholder="your@email.com" required></div>
-    <div class="fr"><label class="fl">รหัสผ่าน</label><input class="fi" type="password" id="lPw" placeholder="รหัสผ่าน" required></div>
-    <div class="ferr" id="logE" style="text-align:center;margin-bottom:10px">อีเมลหรือรหัสผ่านไม่ถูกต้อง</div>
-    <button type="submit" class="ab" id="logB">เข้าสู่ระบบ</button>
-  </form>
-  <div class="adiv">หรือ</div>
-  <button class="gbtn" onclick="toast('Google Login จะพร้อมใน Step 3','error')"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>เข้าสู่ระบบด้วย Google</button>
-  <div class="af">ยังไม่มีบัญชี? <a href="#" onclick="go('pgReg');return false">สมัครสมาชิก</a></div>
+<!-- LOGIN -->
+<div class="page" id="pgLi"><div class="apg"><div class="ac">
+<div class="bk" onclick="go('pgL')">← กลับ</div>
+<div style="text-align:center;margin-bottom:14px"><span class="logo">💎 RICHOPTION911</span></div>
+<div class="at">เข้าสู่ระบบ</div><div class="as">ยินดีต้อนรับกลับ!</div>
+<div class="fok" id="lOk">✅ สำเร็จ!</div>
+<form onsubmit="doLog(event)">
+<div class="fr"><label class="fl">อีเมล</label><input class="fi" type="email" id="lE" required placeholder="your@email.com"></div>
+<div class="fr"><label class="fl">รหัสผ่าน</label><input class="fi" type="password" id="lW" required placeholder="รหัสผ่าน"></div>
+<div class="fe" id="lEr" style="text-align:center;margin-bottom:8px">อีเมลหรือรหัสผ่านผิด</div>
+<button type="submit" class="ab" id="lB">เข้าสู่ระบบ</button>
+</form>
+<div class="adv">หรือ</div>
+<button class="gb" onclick="T('Google Login พร้อมใน Step 4','e')"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>เข้าด้วย Google</button>
+<div class="aft">ไม่มีบัญชี? <a href="#" onclick="go('pgR');return false">สมัคร</a></div>
 </div></div></div>
 
-<!-- ===== DASHBOARD SHELL ===== -->
-<div class="page" id="pgDash">
+<!-- DASHBOARD -->
+<div class="page" id="pgD">
 <div class="dash">
-  <div class="mob-overlay" id="mobOv" onclick="toggleSb()"></div>
-  <aside class="sidebar" id="sb">
-    <div class="sb-logo" onclick="go('pgLand')">💎 RICHOPTION911</div>
-    <div class="sb-item active" data-sec="secDash" onclick="switchSec(this)"><span class="ico">📊</span>Dashboard</div>
-    <div class="sb-item" data-sec="secTrade" onclick="switchSec(this)"><span class="ico">📈</span>เทรด</div>
-    <div class="sb-item" data-sec="secProfile" onclick="switchSec(this)"><span class="ico">👤</span>โปรไฟล์</div>
-    <div class="sb-item" data-sec="secDeposit" onclick="switchSec(this)"><span class="ico">💳</span>ฝาก-ถอน</div>
-    <div class="sb-item" data-sec="secRef" onclick="switchSec(this)"><span class="ico">🎁</span>แนะนำเพื่อน</div>
-    <div class="sb-item" onclick="doLogout()"><span class="ico">🚪</span>ออกจากระบบ</div>
-    <div class="sb-bottom"><div class="sb-user" id="sbUser">—</div><div class="sb-email" id="sbEmail">—</div></div>
-  </aside>
-  <main class="dash-main">
-    <div class="nav" style="border-bottom:1px solid var(--border)">
-      <button class="mob-menu" onclick="toggleSb()">☰</button>
-      <div class="nav-logo" onclick="go('pgLand')">💎 RICHOPTION911</div>
-      <div class="nav-links"><button class="nb nb-g" onclick="switchSecByName('secTrade')">📈 เปิดเทรด</button></div>
-    </div>
+<div class="mov" id="mo" onclick="tSb()"></div>
+<aside class="sb" id="sbE">
+<div class="sb-l">💎 RICHOPTION911</div>
+<div class="si on" data-s="sD" onclick="sw(this)"><span class="ic">📊</span>Dashboard</div>
+<div class="si" data-s="sT" onclick="sw(this)"><span class="ic">📈</span>เทรด</div>
+<div class="si" data-s="sP" onclick="sw(this)"><span class="ic">👤</span>โปรไฟล์</div>
+<div class="si" data-s="sDW" onclick="sw(this)"><span class="ic">💳</span>ฝาก-ถอน</div>
+<div class="si" data-s="sRf" onclick="sw(this)"><span class="ic">🎁</span>แนะนำเพื่อน</div>
+<div class="si" onclick="doOut()"><span class="ic">🚪</span>ออกจากระบบ</div>
+<div class="sb-bt"><div class="sb-u" id="sU">—</div><div class="sb-e" id="sEm">—</div></div>
+</aside>
+<main class="dm">
+<div class="nav"><button class="mm" onclick="tSb()">☰</button><div class="logo">💎 RICHOPTION911</div><div><button class="nb nb-s" onclick="swN('sT')">📈 เทรด</button></div></div>
 
-    <!-- SEC: Dashboard -->
-    <div class="dash-sec active" id="secDash">
-      <div class="dash-header"><div class="dash-title" id="dashWelcome">สวัสดี!</div><div class="dash-sub">ภาพรวมบัญชีของคุณ</div></div>
-      <div class="dash-body">
-        <div class="cards">
-          <div class="card"><div class="card-label">ยอดเงินคงเหลือ</div><div class="card-val" style="color:var(--t1)" id="dBal">$100,000</div><div class="card-sub">Demo Account</div></div>
-          <div class="card"><div class="card-label">กำไร/ขาดทุนวันนี้</div><div class="card-val" style="color:var(--green)" id="dPnl">$0.00</div><div class="card-sub">วันนี้</div></div>
-          <div class="card"><div class="card-label">จำนวนเทรด</div><div class="card-val" style="color:var(--blue)" id="dTrades">0</div><div class="card-sub">ทั้งหมด</div></div>
-          <div class="card"><div class="card-label">เพื่อนที่แนะนำ</div><div class="card-val" style="color:var(--purple)" id="dRefs">0</div><div class="card-sub">คน</div></div>
-        </div>
-        <h3 style="color:var(--t1);font-size:15px;margin-bottom:8px">ประวัติเทรดล่าสุด</h3>
-        <table class="tbl"><thead><tr><th>สินทรัพย์</th><th>ประเภท</th><th>Lots</th><th>กำไร/ขาดทุน</th><th>เวลา</th></tr></thead><tbody id="dHistory"><tr><td colspan="5" class="empty">ยังไม่มีประวัติเทรด</td></tr></tbody></table>
-      </div>
-    </div>
+<!-- Dashboard -->
+<div class="sec active" id="sD">
+<div class="dh"><div class="dt" id="dW">สวัสดี!</div><div class="ds">ภาพรวมบัญชี</div></div>
+<div class="db">
+<div class="cds">
+<div class="cd"><div class="cd-l">ยอดเงิน</div><div class="cd-v" style="color:var(--t1)" id="dB">$100,000</div><div class="cd-s">Demo</div></div>
+<div class="cd"><div class="cd-l">กำไร/ขาดทุน</div><div class="cd-v" style="color:var(--grn)" id="dPl">$0.00</div><div class="cd-s">วันนี้</div></div>
+<div class="cd"><div class="cd-l">จำนวนเทรด</div><div class="cd-v" style="color:var(--blu)" id="dTr">0</div></div>
+<div class="cd"><div class="cd-l">เพื่อนแนะนำ</div><div class="cd-v" style="color:var(--pur)" id="dRf">0</div></div>
+</div>
+<h3 style="color:var(--t1);font-size:13px;margin-bottom:6px">ประวัติเทรดล่าสุด</h3>
+<table class="tbl"><thead><tr><th>สินทรัพย์</th><th>ประเภท</th><th>P/L</th><th>เวลา</th></tr></thead><tbody id="dH"><tr><td colspan="4" class="mt">ยังไม่มี — <a href="#" onclick="swN('sT');return false">เริ่มเทรด!</a></td></tr></tbody></table>
+</div></div>
 
-    <!-- SEC: Trading -->
-    <div class="dash-sec" id="secTrade" style="display:none">
-      <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:14px;font-weight:700;color:var(--t1)">📈 Trading Platform</span>
-        <span style="font-size:11px;color:var(--t3)">เงินจำลอง $100,000</span>
-      </div>
-      <div id="tradeContainer" style="height:calc(100vh - 100px);overflow:hidden;position:relative">
-        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--t3);font-size:14px" id="tradeLoading">กำลังโหลดหน้าเทรด...</div>
-      </div>
-    </div>
-
-    <!-- SEC: Profile -->
-    <div class="dash-sec" id="secProfile" style="display:none">
-      <div class="dash-header"><div class="dash-title">👤 โปรไฟล์</div><div class="dash-sub">แก้ไขข้อมูลส่วนตัว</div></div>
-      <div class="dash-body"><div class="pf-form">
-        <div class="fr half"><div><label class="fl">ชื่อ</label><input class="fi" id="pFn"></div><div><label class="fl">นามสกุล</label><input class="fi" id="pLn"></div></div>
-        <div class="fr"><label class="fl">อีเมล (เปลี่ยนไม่ได้)</label><input class="fi" id="pEm" disabled style="opacity:.6"></div>
-        <div class="fr"><label class="fl">เบอร์โทรศัพท์</label><input class="fi" id="pPh"></div>
-        <div class="fr"><label class="fl">ที่อยู่</label><textarea class="fi" id="pAd" rows="2"></textarea></div>
-        <div class="fr"><label class="fl">สมัครเมื่อ</label><input class="fi" id="pDate" disabled style="opacity:.6"></div>
-        <button class="pf-save" onclick="saveProfile()">💾 บันทึกข้อมูล</button>
-      </div></div>
-    </div>
-
-    <!-- SEC: Deposit/Withdraw -->
-    <div class="dash-sec" id="secDeposit" style="display:none">
-      <div class="dash-header"><div class="dash-title">💳 ฝาก-ถอนเงิน</div><div class="dash-sub">จัดการเงินในบัญชี</div></div>
-      <div class="dash-body">
-        <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
-          <div class="card"><div class="card-label">ยอดคงเหลือ</div><div class="card-val" style="color:var(--t1)" id="dwBal">$100,000</div></div>
-          <div class="card"><div class="card-label">ฝากรวม</div><div class="card-val" style="color:var(--green)" id="dwDep">$0</div></div>
-          <div class="card"><div class="card-label">ถอนรวม</div><div class="card-val" style="color:var(--red)" id="dwWit">$0</div></div>
-        </div>
-        <button class="dw-btn dw-dep" onclick="showDW('deposit')">➕ ฝากเงิน</button>
-        <button class="dw-btn dw-wit" onclick="showDW('withdraw')">➖ ถอนเงิน</button>
-        <h3 style="color:var(--t1);font-size:14px;margin:16px 0 8px">ประวัติฝาก-ถอน</h3>
-        <table class="tbl"><thead><tr><th>ประเภท</th><th>จำนวน</th><th>สถานะ</th><th>เวลา</th></tr></thead><tbody id="dwHist"><tr><td colspan="4" class="empty">ยังไม่มีประวัติ</td></tr></tbody></table>
-      </div>
-    </div>
-
-    <!-- SEC: Referral -->
-    <div class="dash-sec" id="secRef" style="display:none">
-      <div class="dash-header"><div class="dash-title">🎁 แนะนำเพื่อน</div><div class="dash-sub">แชร์รหัสของคุณ รับโบนัสทุกครั้งที่เพื่อนสมัคร</div></div>
-      <div class="dash-body">
-        <div class="ref-box">
-          <div style="font-size:13px;color:var(--t2)">รหัสแนะนำของคุณ</div>
-          <div class="ref-code" id="refCode">REF-XXXXXX</div>
-          <button class="ref-copy" onclick="copyRef()">📋 คัดลอกรหัส</button>
-        </div>
-        <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
-          <div class="card"><div class="card-label">เพื่อนที่สมัครแล้ว</div><div class="card-val" style="color:var(--green)" id="refCount">0</div></div>
-          <div class="card"><div class="card-label">โบนัสรวม</div><div class="card-val" style="color:var(--gold)" id="refBonus">$0</div></div>
-        </div>
-        <div class="ref-box" style="margin-top:16px">
-          <div style="font-size:13px;color:var(--t1);font-weight:600;margin-bottom:8px">วิธีรับโบนัส</div>
-          <div style="font-size:12px;color:var(--t3);line-height:1.6">
-            1. แชร์รหัส Referral ของคุณให้เพื่อน<br>
-            2. เพื่อนสมัครสมาชิกโดยกรอกรหัสของคุณ<br>
-            3. ทั้งคุณและเพื่อนจะได้รับโบนัส $500 เข้าบัญชีทันที!
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </main>
+<!-- TRADING -->
+<div class="sec" id="sT" style="display:none">
+<div style="display:flex;flex-direction:column;height:calc(100vh - 52px)">
+<div class="tp-bar" id="aBar"></div>
+<div class="tp-wrap">
+<div class="tp-chart">
+<div class="tp-tb"><div class="tp-tbg" id="tfG"></div><div class="tp-tbg" id="idG"></div></div>
+<div class="cw" id="cW"><div class="ci" id="cI"></div><canvas id="cC"></canvas></div>
+<div class="ip" id="rP2" style="display:none;height:60px"><div class="il">RSI(14)</div><canvas id="rC"></canvas></div>
+<div class="ip" id="mP2" style="display:none;height:60px"><div class="il">MACD</div><canvas id="mC"></canvas></div>
+<div class="bp"><div class="bpt"><button class="bptb on" onclick="sTab('pos',this)" id="pT">Positions(0)</button><button class="bptb" onclick="sTab('hist',this)" id="hT">History(0)</button><button class="bptb" onclick="sTab('news',this)">News</button></div><div class="bpc" id="bpC"></div></div>
+</div>
+<div class="tp-sb">
+<div class="tp-cd"><div class="tp-ct" id="mwT">Market Watch</div><div class="ba"><div><div style="font-size:8px;color:var(--red)">BID</div><div class="bp2" style="color:var(--red)" id="bP">—</div></div><div class="spb mono" id="sPb">—</div><div style="text-align:right"><div style="font-size:8px;color:var(--grn)">ASK</div><div class="bp2" style="color:var(--grn)" id="aP">—</div></div></div></div>
+<div class="tp-cd"><div class="tp-ct">New Order</div>
+<div class="otg"><button class="ob on" id="bT" onclick="sOT('buy')">BUY</button><button class="os" id="sT2" onclick="sOT('sell')">SELL</button></div>
+<div style="font-size:9px;color:var(--t3);margin-bottom:2px">Volume</div>
+<div class="lr"><button class="sb2" onclick="aL(-0.01)">−</button><input type="number" class="li" id="lI" value="0.10" step="0.01" min="0.01"><button class="sb2" onclick="aL(0.01)">+</button></div>
+<div class="pr2"><button class="pb" onclick="sL(0.01)">0.01</button><button class="pb" onclick="sL(0.05)">0.05</button><button class="pb on" onclick="sL(0.10)">0.10</button><button class="pb" onclick="sL(0.50)">0.50</button><button class="pb" onclick="sL(1.0)">1.00</button></div>
+<div class="slr"><div><div class="sll" style="color:var(--red)">SL</div><input type="number" class="li" id="slI" placeholder="—"></div><div><div class="sll" style="color:var(--grn)">TP</div><input type="number" class="li" id="tpI" placeholder="—"></div></div>
+<button class="eb buy" id="eB" onclick="exO()">BUY</button>
+<div class="oi" id="oI"></div>
+</div>
+<div class="tp-cd" style="margin-top:auto"><div class="tp-ct">Account</div><div id="aS"></div></div>
 </div>
 </div>
+</div></div>
 
-<!-- Deposit/Withdraw Modal -->
-<div class="dw-modal" id="dwModal">
-<div class="dw-card">
-  <h3 id="dwTitle">ฝากเงิน</h3>
-  <div class="fr"><label class="fl">จำนวนเงิน ($)</label><input class="fi mono" type="number" id="dwAmt" placeholder="1000" min="1"></div>
-  <div class="fr"><label class="fl">วิธีการ</label><select class="fi" id="dwMethod"><option>ธนาคารไทย</option><option>PromptPay</option><option>USDT (TRC-20)</option><option>บัตรเครดิต</option></select></div>
-  <div style="display:flex;gap:8px;margin-top:14px">
-    <button class="ab" style="flex:1" onclick="doDW()">ยืนยัน</button>
-    <button class="nb nb-g" style="flex:1" onclick="closeDW()">ยกเลิก</button>
-  </div>
+<!-- Profile -->
+<div class="sec" id="sP" style="display:none">
+<div class="dh"><div class="dt">👤 โปรไฟล์</div><div class="ds">แก้ไขข้อมูลส่วนตัว</div></div>
+<div class="db"><div class="pf">
+<div class="fr h"><div><label class="fl">ชื่อ</label><input class="fi" id="pF"></div><div><label class="fl">นามสกุล</label><input class="fi" id="pL2"></div></div>
+<div class="fr"><label class="fl">อีเมล</label><input class="fi" id="pE2" disabled style="opacity:.6"></div>
+<div class="fr"><label class="fl">เบอร์โทร</label><input class="fi" id="pPh"></div>
+<div class="fr"><label class="fl">ที่อยู่</label><textarea class="fi" id="pA" rows="2"></textarea></div>
+<div class="fr"><label class="fl">สมัครเมื่อ</label><input class="fi" id="pDt" disabled style="opacity:.6"></div>
+<button class="pf-sv" onclick="svPf()">💾 บันทึก</button>
+</div></div></div>
+
+<!-- Deposit/Withdraw -->
+<div class="sec" id="sDW" style="display:none">
+<div class="dh"><div class="dt">💳 ฝาก-ถอนเงิน</div></div>
+<div class="db">
+<div class="cds" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<div class="cd"><div class="cd-l">คงเหลือ</div><div class="cd-v" style="color:var(--t1)" id="dwB">$100,000</div></div>
+<div class="cd"><div class="cd-l">ฝากรวม</div><div class="cd-v" style="color:var(--grn)" id="dwD">$0</div></div>
+<div class="cd"><div class="cd-l">ถอนรวม</div><div class="cd-v" style="color:var(--red)" id="dwW">$0</div></div>
 </div>
-</div>
+<button class="dwb dwd" onclick="sDW('d')">➕ ฝาก</button><button class="dwb dww" onclick="sDW('w')">➖ ถอน</button>
+<h3 style="color:var(--t1);font-size:12px;margin:12px 0 6px">ประวัติ</h3>
+<table class="tbl"><thead><tr><th>ประเภท</th><th>จำนวน</th><th>สถานะ</th><th>เวลา</th></tr></thead><tbody id="dwH"><tr><td colspan="4" class="mt">ยังไม่มี</td></tr></tbody></table>
+</div></div>
+
+<!-- Referral -->
+<div class="sec" id="sRf" style="display:none">
+<div class="dh"><div class="dt">🎁 แนะนำเพื่อน</div><div class="ds">แชร์รหัส รับโบนัส $500</div></div>
+<div class="db">
+<div class="rb"><div style="font-size:12px;color:var(--t2)">รหัสของคุณ</div><div class="rc" id="rfC">—</div><button class="rcp" onclick="cpR()">📋 คัดลอก</button></div>
+<div class="cds" style="grid-template-columns:1fr 1fr"><div class="cd"><div class="cd-l">เพื่อนสมัคร</div><div class="cd-v" style="color:var(--grn)" id="rfN">0</div></div><div class="cd"><div class="cd-l">โบนัส</div><div class="cd-v" style="color:var(--gold)" id="rfB">$0</div></div></div>
+<div class="rb"><div style="font-size:12px;color:var(--t1);font-weight:600;margin-bottom:6px">วิธีรับโบนัส</div><div style="font-size:11px;color:var(--t3);line-height:1.6">1. แชร์รหัส Referral ให้เพื่อน<br>2. เพื่อนสมัครโดยกรอกรหัสคุณ<br>3. ทั้งคู่ได้รับ $500 ทันที!</div></div>
+</div></div>
+</main></div></div>
+
+<!-- DW Modal -->
+<div class="modal" id="dwM"><div class="mc"><h3 id="dwTi">ฝากเงิน</h3>
+<div class="fr"><label class="fl">จำนวน ($)</label><input class="li" type="number" id="dwAm" placeholder="1000" min="1"></div>
+<div class="fr"><label class="fl">วิธี</label><select class="fi" id="dwMe"><option>ธนาคารไทย</option><option>PromptPay</option><option>USDT (TRC-20)</option><option>บัตรเครดิต</option></select></div>
+<div style="display:flex;gap:6px;margin-top:12px"><button class="ab" style="flex:1" onclick="dDW()">ยืนยัน</button><button class="nb nb-g" style="flex:1;padding:10px" onclick="cDW()">ยกเลิก</button></div>
+</div></div>
 
 <script>
-// ====== STATE ======
-let curUser=null, dwType='deposit';
+// ===== ASSETS =====
+const A={XAUUSD:{n:'Gold',b:2380,v:4,sp:.5,pp:100},EURUSD:{n:'EUR/USD',b:1.085,v:.003,sp:.0002,pp:10000},GBPUSD:{n:'GBP/USD',b:1.265,v:.004,sp:.0003,pp:10000},USDJPY:{n:'USD/JPY',b:151.5,v:.3,sp:.03,pp:100},BTCUSD:{n:'BTC',b:87500,v:500,sp:25,pp:1},ETHUSD:{n:'ETH',b:2050,v:25,sp:1.5,pp:1},AAPL:{n:'Apple',b:178.5,v:1.5,sp:.05,pp:100},TSLA:{n:'Tesla',b:172.3,v:3,sp:.1,pp:100},NVDA:{n:'Nvidia',b:880,v:8,sp:.2,pp:100}};
+const NEWS=[{t:'10m',n:'Fed signals rate hold through Q3',g:'n'},{t:'25m',n:'Gold surges past $2,380',g:'b'},{t:'45m',n:'Bitcoin nears $88K',g:'b'},{t:'1h',n:'EUR/USD weakens on US jobs data',g:'r'},{t:'2h',n:'Tesla Q1 beats expectations',g:'b'},{t:'3h',n:'NVIDIA announces next-gen AI chips',g:'b'}];
+let cA='XAUUSD',pC={},bal=100000,eq=100000,pos=[],oH=[];
+let oT='buy',lS=.1,sMA=true,sRSI=false,sMACD=false,tf='M15',cOff=0,hI=null,aTab='pos';
+const V=80;
 
-// ====== NAV ======
-function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='pgDash')loadDash()}
+function gD(s,c=250){const a=A[s];let p=a.b+(Math.random()-.5)*a.v*10;const d=[],now=Date.now();for(let i=0;i<c;i++){const v=a.v*(.3+Math.random()),dir=Math.random()>.48?1:-1,o=p,cl=o+dir*v*Math.random(),h=Math.max(o,cl)+Math.random()*v*.6,l=Math.min(o,cl)-Math.random()*v*.6;d.push({t:now-(c-i)*9e5,o:+o.toFixed(6),h:+h.toFixed(6),l:+l.toFixed(6),c:+cl.toFixed(6),v:Math.floor(500+Math.random()*1500)});p=cl}return d}
+function eD(s){if(!pC[s])pC[s]=gD(s);return pC[s]}
+function cP(){return eD(cA).slice(-1)[0].c}
+function fP(s,v){const a=A[s];return a.pp>=10000?v.toFixed(4):v.toFixed(2)}
 
-// ====== STORAGE ======
-function getU(){try{return JSON.parse(localStorage.getItem('ro_u')||'[]')}catch{return[]}}
-function saveU(u){localStorage.setItem('ro_u',JSON.stringify(u))}
-function setCur(u){localStorage.setItem('ro_cur',JSON.stringify(u));curUser=u}
-function getCur(){try{curUser=JSON.parse(localStorage.getItem('ro_cur'));return curUser}catch{return null}}
+// Indicators
+function cSMA(d,p){return d.map((_,i)=>{if(i<p-1)return null;let s=0;for(let j=i-p+1;j<=i;j++)s+=d[j].c;return s/p})}
+function cEMA(d,p){const k=2/(p+1),e=[];let pr=null;for(let i=0;i<d.length;i++){if(i<p-1){e.push(null);continue}if(pr===null){let s=0;for(let j=0;j<p;j++)s+=d[j].c;pr=s/p}else pr=d[i].c*k+pr*(1-k);e.push(pr)}return e}
+function cRSI(d,p=14){const r=[];let ag=0,al=0;for(let i=0;i<d.length;i++){if(!i){r.push(null);continue}const ch=d[i].c-d[i-1].c,g=ch>0?ch:0,l=ch<0?-ch:0;if(i<=p){ag+=g;al+=l;if(i===p){ag/=p;al/=p}r.push(i<p?null:100-100/(1+ag/(al||.001)))}else{ag=(ag*(p-1)+g)/p;al=(al*(p-1)+l)/p;r.push(100-100/(1+ag/(al||.001)))}}return r}
+function cMACD(d){const e12=cEMA(d,12),e26=cEMA(d,26),ml=e12.map((v,i)=>(v!==null&&e26[i]!==null)?v-e26[i]:null);const sd=ml.filter(v=>v!==null).map(v=>({c:v})),sr=cEMA(sd,9);let si2=0;const sig=ml.map(v=>v===null?null:sr[si2++]);const hi=ml.map((v,i)=>(v!==null&&sig[i]!==null)?v-sig[i]:null);return{ml,sig,hi}}
 
-// ====== REGISTER ======
-function doReg(e){
-  e.preventDefault();
-  const pw=document.getElementById('rPw').value,pwc=document.getElementById('rPwc').value,email=document.getElementById('rEm').value.trim().toLowerCase();
-  if(pw!==pwc){document.getElementById('pwE').style.display='block';return}document.getElementById('pwE').style.display='none';
-  const us=getU();if(us.find(u=>u.email===email)){document.getElementById('emE').style.display='block';return}document.getElementById('emE').style.display='none';
-  const ref='REF-'+Math.random().toString(36).substr(2,6).toUpperCase();
-  const refBy=document.getElementById('rRf').value.trim()||null;
-  const user={id:Date.now(),fn:document.getElementById('rFn').value.trim(),ln:document.getElementById('rLn').value.trim(),email,pw,pc:document.getElementById('rPc').value,ph:document.getElementById('rPh').value.trim(),addr:document.getElementById('rAd').value.trim(),ref,refBy,bal:100000,created:new Date().toISOString(),deps:[],wits:[],trades:[]};
+// ===== PAGES =====
+function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='pgD')lD()}
+let cU=null;
+function gU(){try{return JSON.parse(localStorage.getItem('ro_u')||'[]')}catch{return[]}}
+function sU(u){localStorage.setItem('ro_u',JSON.stringify(u))}
+function sC(u){localStorage.setItem('ro_c',JSON.stringify(u));cU=u}
+function gC(){try{cU=JSON.parse(localStorage.getItem('ro_c'));return cU}catch{return null}}
 
-  // Handle referral bonus
-  if(refBy){const referrer=us.find(u=>u.ref===refBy);if(referrer){referrer.bal+=500;user.bal+=500;if(!referrer.referrals)referrer.referrals=[];referrer.referrals.push({name:user.fn,date:new Date().toISOString()})}}
-  us.push(user);saveU(us);
-  document.getElementById('regB').disabled=true;document.getElementById('regOk').style.display='block';
-  setTimeout(()=>{document.getElementById('regB').disabled=false;document.getElementById('regOk').style.display='none';e.target.reset();go('pgLogin');toast('สมัครสำเร็จ! กรุณาเข้าสู่ระบบ','success')},1200);
-}
+function doReg(e){e.preventDefault();const pw=document.getElementById('rW').value,pwc=document.getElementById('rWc').value,em=document.getElementById('rE').value.trim().toLowerCase();
+if(pw!==pwc){document.getElementById('pE').style.display='block';return}document.getElementById('pE').style.display='none';
+const us=gU();if(us.find(u=>u.email===em)){document.getElementById('eE').style.display='block';return}document.getElementById('eE').style.display='none';
+const ref='REF-'+Math.random().toString(36).substr(2,6).toUpperCase(),refBy=document.getElementById('rRf').value.trim()||null;
+const user={id:Date.now(),fn:document.getElementById('rF').value.trim(),ln:document.getElementById('rL').value.trim(),email:em,pw,ph:document.getElementById('rP').value.trim(),addr:document.getElementById('rA').value.trim(),ref,refBy,bal:100000,created:new Date().toISOString(),deps:[],wits:[],trades:[],referrals:[]};
+if(refBy){const rr=us.find(u=>u.ref===refBy);if(rr){rr.bal+=500;user.bal+=500;rr.referrals.push({name:user.fn,date:new Date().toISOString()})}}
+us.push(user);sU(us);document.getElementById('rB').disabled=true;document.getElementById('rOk').style.display='block';
+setTimeout(()=>{document.getElementById('rB').disabled=false;document.getElementById('rOk').style.display='none';e.target.reset();go('pgLi');T('สมัครสำเร็จ!','s')},1e3)}
 
-// ====== LOGIN ======
-function doLog(e){
-  e.preventDefault();
-  const email=document.getElementById('lEm').value.trim().toLowerCase(),pw=document.getElementById('lPw').value;
-  const us=getU(),user=us.find(u=>u.email===email&&u.pw===pw);
-  if(!user){document.getElementById('logE').style.display='block';return}document.getElementById('logE').style.display='none';
-  document.getElementById('logB').disabled=true;document.getElementById('logOk').style.display='block';
-  setCur(user);
-  setTimeout(()=>{document.getElementById('logB').disabled=false;document.getElementById('logOk').style.display='none';go('pgDash');toast('ยินดีต้อนรับ '+user.fn+'!','success')},1000);
-}
+function doLog(e){e.preventDefault();const em=document.getElementById('lE').value.trim().toLowerCase(),pw=document.getElementById('lW').value;
+const us=gU(),u=us.find(x=>x.email===em&&x.pw===pw);
+if(!u){document.getElementById('lEr').style.display='block';return}document.getElementById('lEr').style.display='none';
+document.getElementById('lB').disabled=true;document.getElementById('lOk').style.display='block';sC(u);bal=u.bal;
+setTimeout(()=>{document.getElementById('lB').disabled=false;document.getElementById('lOk').style.display='none';go('pgD');T('ยินดีต้อนรับ '+u.fn+'!','s')},800)}
 
-function doLogout(){localStorage.removeItem('ro_cur');curUser=null;go('pgLand');toast('ออกจากระบบแล้ว','success')}
+function doOut(){localStorage.removeItem('ro_c');cU=null;pos=[];oH=[];go('pgL');T('ออกจากระบบแล้ว','s')}
 
-// ====== DASHBOARD ======
-function loadDash(){
-  const u=getCur();if(!u)return go('pgLand');
-  document.getElementById('sbUser').textContent=u.fn+' '+u.ln;
-  document.getElementById('sbEmail').textContent=u.email;
-  document.getElementById('dashWelcome').textContent='สวัสดี, '+u.fn+'! 👋';
-  document.getElementById('dBal').textContent='$'+u.bal.toLocaleString();
-  const totalPnl=(u.trades||[]).reduce((s,t)=>s+(t.pnl||0),0);
-  const dPnl=document.getElementById('dPnl');dPnl.textContent='$'+totalPnl.toFixed(2);dPnl.style.color=totalPnl>=0?'var(--green)':'var(--red)';
-  document.getElementById('dTrades').textContent=(u.trades||[]).length;
-  document.getElementById('dRefs').textContent=(u.referrals||[]).length;
+// Dashboard
+function lD(){const u=gC();if(!u)return go('pgL');bal=u.bal;
+document.getElementById('sU').textContent=u.fn+' '+u.ln;document.getElementById('sEm').textContent=u.email;
+document.getElementById('dW').textContent='สวัสดี, '+u.fn+'! 👋';document.getElementById('dB').textContent='$'+u.bal.toLocaleString();
+const tp=(u.trades||[]).reduce((s,t)=>s+(t.pnl||0),0);const dP=document.getElementById('dPl');dP.textContent='$'+tp.toFixed(2);dP.style.color=tp>=0?'var(--grn)':'var(--red)';
+document.getElementById('dTr').textContent=(u.trades||[]).length;document.getElementById('dRf').textContent=(u.referrals||[]).length;
+const dh=document.getElementById('dH');if(!u.trades||!u.trades.length)dh.innerHTML='<tr><td colspan="4" class="mt"><a href="#" onclick="swN(\'sT\');return false">เริ่มเทรด!</a></td></tr>';
+else dh.innerHTML=u.trades.slice(-5).reverse().map(t=>`<tr><td class="mono">${t.sym||'XAUUSD'}</td><td style="color:${t.type==='buy'?'var(--grn)':'var(--red)'}">${(t.type||'buy').toUpperCase()}</td><td class="mono" style="color:${(t.pnl||0)>=0?'var(--grn)':'var(--red)'}">$${(t.pnl||0).toFixed(2)}</td><td style="color:var(--t4);font-size:9px">${new Date(t.time||Date.now()).toLocaleString('th')}</td></tr>`).join('');
+document.getElementById('pF').value=u.fn;document.getElementById('pL2').value=u.ln;document.getElementById('pE2').value=u.email;document.getElementById('pPh').value=u.ph;document.getElementById('pA').value=u.addr;document.getElementById('pDt').value=new Date(u.created).toLocaleString('th');
+document.getElementById('dwB').textContent='$'+u.bal.toLocaleString();document.getElementById('dwD').textContent='$'+(u.deps||[]).reduce((s,d)=>s+d.a,0).toLocaleString();document.getElementById('dwW').textContent='$'+(u.wits||[]).reduce((s,d)=>s+d.a,0).toLocaleString();
+const dw=document.getElementById('dwH');const all=[...(u.deps||[]).map(d=>({...d,tp:'ฝาก'})),...(u.wits||[]).map(d=>({...d,tp:'ถอน'}))].sort((a,b)=>b.t2-a.t2);
+if(!all.length)dw.innerHTML='<tr><td colspan="4" class="mt">ยังไม่มี</td></tr>';else dw.innerHTML=all.map(t=>`<tr><td style="color:${t.tp==='ฝาก'?'var(--grn)':'var(--red)'};font-weight:600">${t.tp}</td><td class="mono">$${t.a.toLocaleString()}</td><td style="color:var(--grn)">สำเร็จ</td><td style="color:var(--t4);font-size:9px">${new Date(t.t2).toLocaleString('th')}</td></tr>`).join('');
+document.getElementById('rfC').textContent=u.ref;document.getElementById('rfN').textContent=(u.referrals||[]).length;document.getElementById('rfB').textContent='$'+((u.referrals||[]).length*500);
+initTrade()}
 
-  // Trade history
-  const hist=document.getElementById('dHistory');
-  if(!u.trades||!u.trades.length){hist.innerHTML='<tr><td colspan="5" class="empty">ยังไม่มีประวัติเทรด — <a href="#" onclick="switchSecByName(\'secTrade\');return false">เริ่มเทรดเลย!</a></td></tr>'}
-  else{hist.innerHTML=u.trades.slice(-5).reverse().map(t=>`<tr><td class="mono">${t.sym||'XAUUSD'}</td><td style="color:${t.type==='buy'?'var(--green)':'var(--red)'}">${(t.type||'buy').toUpperCase()}</td><td>${t.lots||0.1}</td><td class="mono" style="color:${(t.pnl||0)>=0?'var(--green)':'var(--red)'}">$${(t.pnl||0).toFixed(2)}</td><td style="color:var(--t4)">${new Date(t.time||Date.now()).toLocaleString('th-TH')}</td></tr>`).join('')}
+function svPf(){const u=gC();if(!u)return;u.fn=document.getElementById('pF').value.trim();u.ln=document.getElementById('pL2').value.trim();u.ph=document.getElementById('pPh').value.trim();u.addr=document.getElementById('pA').value.trim();const us=gU();const i=us.findIndex(x=>x.id===u.id);if(i>=0)us[i]=u;sU(us);sC(u);lD();T('บันทึกแล้ว!','s')}
 
-  // Profile
-  document.getElementById('pFn').value=u.fn;document.getElementById('pLn').value=u.ln;
-  document.getElementById('pEm').value=u.email;document.getElementById('pPh').value=u.ph;
-  document.getElementById('pAd').value=u.addr;document.getElementById('pDate').value=new Date(u.created).toLocaleString('th-TH');
+function sw(el){document.querySelectorAll('.si').forEach(i=>i.classList.remove('on'));el.classList.add('on');const s=el.dataset.s;document.querySelectorAll('.sec').forEach(x=>x.style.display='none');document.getElementById(s).style.display='block';if(s==='sT')setTimeout(rChart,100);if(window.innerWidth<769)tSb()}
+function swN(n){const el=document.querySelector(`[data-s="${n}"]`);if(el)sw(el)}
+function tSb(){document.getElementById('sbE').classList.toggle('open');document.getElementById('mo').classList.toggle('show')}
 
-  // Deposit/Withdraw
-  document.getElementById('dwBal').textContent='$'+u.bal.toLocaleString();
-  const totalDep=(u.deps||[]).reduce((s,d)=>s+d.amt,0);
-  const totalWit=(u.wits||[]).reduce((s,d)=>s+d.amt,0);
-  document.getElementById('dwDep').textContent='$'+totalDep.toLocaleString();
-  document.getElementById('dwWit').textContent='$'+totalWit.toLocaleString();
-  const dwH=document.getElementById('dwHist');
-  const allTx=[...(u.deps||[]).map(d=>({...d,type:'ฝาก'})),...(u.wits||[]).map(d=>({...d,type:'ถอน'}))].sort((a,b)=>b.time-a.time);
-  if(!allTx.length)dwH.innerHTML='<tr><td colspan="4" class="empty">ยังไม่มีประวัติ</td></tr>';
-  else dwH.innerHTML=allTx.map(t=>`<tr><td style="color:${t.type==='ฝาก'?'var(--green)':'var(--red)'};font-weight:600">${t.type}</td><td class="mono">$${t.amt.toLocaleString()}</td><td style="color:var(--green)">สำเร็จ</td><td style="color:var(--t4)">${new Date(t.time).toLocaleString('th-TH')}</td></tr>`).join('');
+// DW
+let dwTp='d';
+function sDW(t){dwTp=t;document.getElementById('dwTi').textContent=t==='d'?'➕ ฝากเงิน':'➖ ถอนเงิน';document.getElementById('dwAm').value='';document.getElementById('dwM').classList.add('show')}
+function cDW(){document.getElementById('dwM').classList.remove('show')}
+function dDW(){const a=+document.getElementById('dwAm').value;if(!a||a<=0)return T('กรอกจำนวน','e');const u=gC();if(!u)return;if(dwTp==='w'&&a>u.bal)return T('เงินไม่พอ','e');
+if(dwTp==='d'){u.bal+=a;u.deps.push({a,t2:Date.now()})}else{u.bal-=a;u.wits.push({a,t2:Date.now()})}
+bal=u.bal;const us=gU();const i=us.findIndex(x=>x.id===u.id);if(i>=0)us[i]=u;sU(us);sC(u);cDW();lD();T(`${dwTp==='d'?'ฝาก':'ถอน'} $${a.toLocaleString()} สำเร็จ!`,'s')}
+function cpR(){const c=document.getElementById('rfC').textContent;navigator.clipboard.writeText(c).then(()=>T('คัดลอกแล้ว!','s')).catch(()=>T('คัดลอกแล้ว!','s'))}
 
-  // Referral
-  document.getElementById('refCode').textContent=u.ref;
-  document.getElementById('refCount').textContent=(u.referrals||[]).length;
-  document.getElementById('refBonus').textContent='$'+((u.referrals||[]).length*500);
-}
+// ===== TRADING ENGINE =====
+let tradeInit=false;
+function initTrade(){if(tradeInit)return;tradeInit=true;
+const ab=document.getElementById('aBar');ab.innerHTML='';
+Object.entries(A).forEach(([s,a])=>{const b=document.createElement('button');b.className='tp-tab'+(s===cA?' on':'');b.dataset.s=s;b.innerHTML=`${s}<span class="pr" id="at_${s}">—</span>`;b.onclick=()=>swA(s);ab.appendChild(b)});
+const tg=document.getElementById('tfG');['M1','M5','M15','M30','H1','H4','D1'].forEach(t=>{const b=document.createElement('button');b.className='tb'+(t===tf?' on':'');b.textContent=t;b.onclick=()=>{tf=t;tg.querySelectorAll('.tb').forEach(x=>x.classList.remove('on'));b.classList.add('on')};tg.appendChild(b)});
+const ig=document.getElementById('idG');[{k:'ma',l:'MA',a:sMA},{k:'rsi',l:'RSI',a:sRSI},{k:'macd',l:'MACD',a:sMACD}].forEach(ind=>{const b=document.createElement('button');b.className='tb'+(ind.a?' io':'');b.textContent=ind.l;b.onclick=()=>{if(ind.k==='ma')sMA=!sMA;else if(ind.k==='rsi')sRSI=!sRSI;else sMACD=!sMACD;b.classList.toggle('io');document.getElementById('rP2').style.display=sRSI?'block':'none';document.getElementById('mP2').style.display=sMACD?'block':'none';rChart()};ig.appendChild(b)});
+document.getElementById('cW').addEventListener('wheel',e=>{e.preventDefault();cOff=Math.max(0,Math.min(eD(cA).length-V,cOff+(e.deltaY>0?5:-5)));rChart()},{passive:false});
+document.getElementById('cC').addEventListener('mousemove',e=>{const r=e.target.getBoundingClientRect();hI=Math.floor((e.clientX-r.left)/(r.width/V));rChart()});
+document.getElementById('cC').addEventListener('mouseleave',()=>{hI=null;document.getElementById('cI').innerHTML='';rChart()});
+startEngine();uAll()}
 
-function saveProfile(){
-  const u=getCur();if(!u)return;
-  u.fn=document.getElementById('pFn').value.trim();u.ln=document.getElementById('pLn').value.trim();
-  u.ph=document.getElementById('pPh').value.trim();u.addr=document.getElementById('pAd').value.trim();
-  const us=getU();const idx=us.findIndex(x=>x.id===u.id);if(idx>=0)us[idx]=u;saveU(us);setCur(u);
-  loadDash();toast('บันทึกข้อมูลเรียบร้อย!','success');
-}
+function swA(s){cA=s;cOff=0;hI=null;document.querySelectorAll('.tp-tab').forEach(t=>t.classList.toggle('on',t.dataset.s===s));document.getElementById('mwT').textContent='Market — '+s;uAll()}
 
-// ====== SIDEBAR ======
-function switchSec(el){
-  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));el.classList.add('active');
-  const sec=el.dataset.sec;document.querySelectorAll('.dash-sec').forEach(s=>s.style.display='none');
-  document.getElementById(sec).style.display='block';
-  if(sec==='secTrade')loadTrading();
-  if(window.innerWidth<769)toggleSb();
-}
-function switchSecByName(name){const el=document.querySelector(`[data-sec="${name}"]`);if(el)switchSec(el)}
-function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('mobOv').classList.toggle('show')}
+function rChart(){const w=document.getElementById('cW'),cv=document.getElementById('cC');const W=w.clientWidth,H=w.clientHeight;cv.width=W*2;cv.height=H*2;cv.style.width=W+'px';cv.style.height=H+'px';const x=cv.getContext('2d');x.scale(2,2);x.clearRect(0,0,W,H);
+const d=eD(cA),end=d.length-cOff,st=Math.max(0,end-V),vis=d.slice(st,end||d.length);if(!vis.length)return;
+const cw=W/V,pd=6,a=A[cA];const ps=vis.flatMap(d=>[d.h,d.l]),mn=Math.min(...ps)-a.v*.3,mx=Math.max(...ps)+a.v*.3,rng=mx-mn||1;
+const tY=p=>pd+((mx-p)/rng)*(H-pd*2),tX=i=>i*cw+cw/2;
+x.strokeStyle='rgba(28,37,64,.5)';x.lineWidth=.5;const step=rng/5;for(let i=0;i<=5;i++){const p=mn+step*i,y=tY(p);x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();x.fillStyle='#3a4458';x.font='9px JetBrains Mono';x.textAlign='right';x.fillText(fP(cA,p),W-3,y-2)}
+vis.forEach((d,i)=>{const bl=d.c>=d.o,g=bl?'#00e676':'#ff5252',xx=tX(i),bt=tY(Math.max(d.o,d.c)),bb=tY(Math.min(d.o,d.c));x.strokeStyle=g;x.lineWidth=1;x.beginPath();x.moveTo(xx,tY(d.h));x.lineTo(xx,tY(d.l));x.stroke();const bh=Math.max(1,bb-bt);if(bl){x.strokeRect(xx-cw*.3,bt,cw*.6,bh)}else{x.fillStyle=g;x.fillRect(xx-cw*.3,bt,cw*.6,bh)}});
+if(sMA){const s20=cSMA(d,20).slice(st,end||d.length),s50=cSMA(d,50).slice(st,end||d.length);dL(x,s20,tX,tY,'rgba(68,138,255,.7)',1);dL(x,s50,tX,tY,'rgba(232,185,74,.7)',1)}
+const cp=d[d.length-1].c;if(cp>=mn&&cp<=mx){x.setLineDash([3,3]);x.strokeStyle='rgba(232,185,74,.4)';x.lineWidth=.5;x.beginPath();x.moveTo(0,tY(cp));x.lineTo(W,tY(cp));x.stroke();x.setLineDash([]);x.fillStyle='#e8b94a';rR(x,W-52,tY(cp)-8,48,16,3);x.fill();x.fillStyle='#06080f';x.font='bold 9px JetBrains Mono';x.textAlign='center';x.fillText(fP(cA,cp),W-28,tY(cp)+3)}
+pos.filter(p=>p.s===cA).forEach(p=>{if(p.op>=mn&&p.op<=mx){const c=p.tp==='buy'?'#00e676':'#ff5252';x.setLineDash([2,2]);x.strokeStyle=c+'77';x.lineWidth=.5;x.beginPath();x.moveTo(0,tY(p.op));x.lineTo(W,tY(p.op));x.stroke();x.setLineDash([])}});
+if(hI!==null&&hI>=0&&hI<vis.length){x.setLineDash([2,2]);x.strokeStyle='rgba(154,163,184,.2)';x.lineWidth=.5;x.beginPath();x.moveTo(tX(hI),0);x.lineTo(tX(hI),H);x.stroke();x.setLineDash([]);const dd=vis[hI];document.getElementById('cI').innerHTML=`<span>O:<b style="color:var(--t1)">${fP(cA,dd.o)}</b></span> <span>H:<b style="color:var(--grn)">${fP(cA,dd.h)}</b></span> <span>L:<b style="color:var(--red)">${fP(cA,dd.l)}</b></span> <span>C:<b style="color:var(--t1)">${fP(cA,dd.c)}</b></span>`}
+if(sRSI){const rc=document.getElementById('rC'),rw=rc.parentElement.clientWidth,rh=rc.parentElement.clientHeight;rc.width=rw*2;rc.height=rh*2;rc.style.width=rw+'px';rc.style.height=rh+'px';const rx=rc.getContext('2d');rx.scale(2,2);rx.clearRect(0,0,rw,rh);const rsi=cRSI(d).slice(st,end||d.length);[70,30].forEach(v=>{rx.setLineDash([2,2]);rx.strokeStyle='rgba(28,37,64,.6)';rx.lineWidth=.3;rx.beginPath();rx.moveTo(0,rh*(1-v/100));rx.lineTo(rw,rh*(1-v/100));rx.stroke();rx.setLineDash([])});const pts=[];rsi.forEach((v,i)=>{if(v!==null)pts.push({x:tX(i),y:rh*(1-v/100)})});if(pts.length>1){rx.strokeStyle='#b388ff';rx.lineWidth=1;rx.beginPath();rx.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>rx.lineTo(p.x,p.y));rx.stroke()}}
+if(sMACD){const mc=document.getElementById('mC'),mw=mc.parentElement.clientWidth,mh=mc.parentElement.clientHeight;mc.width=mw*2;mc.height=mh*2;mc.style.width=mw+'px';mc.style.height=mh+'px';const mx2=mc.getContext('2d');mx2.scale(2,2);mx2.clearRect(0,0,mw,mh);const macd=cMACD(d),ml=macd.ml.slice(st,end||d.length),sig=macd.sig.slice(st,end||d.length),hi=macd.hi.slice(st,end||d.length);const vals=hi.filter(v=>v!==null),mxA=Math.max(...vals.map(Math.abs),.001),mid=mh/2,sc=(mh/2-3)/mxA;mx2.strokeStyle='rgba(28,37,64,.5)';mx2.lineWidth=.3;mx2.beginPath();mx2.moveTo(0,mid);mx2.lineTo(mw,mid);mx2.stroke();hi.forEach((v,i)=>{if(v===null)return;const h=Math.abs(v)*sc;mx2.fillStyle=v>=0?'rgba(0,230,118,.2)':'rgba(255,82,82,.2)';mx2.fillRect(tX(i)-cw*.25,v>=0?mid-h:mid,cw*.5,h)})}}
 
-// ====== DEPOSIT/WITHDRAW ======
-function showDW(type){dwType=type;document.getElementById('dwTitle').textContent=type==='deposit'?'➕ ฝากเงิน':'➖ ถอนเงิน';document.getElementById('dwAmt').value='';document.getElementById('dwModal').classList.add('show')}
-function closeDW(){document.getElementById('dwModal').classList.remove('show')}
-function doDW(){
-  const amt=+document.getElementById('dwAmt').value;if(!amt||amt<=0)return toast('กรุณากรอกจำนวนเงิน','error');
-  const u=getCur();if(!u)return;
-  if(dwType==='withdraw'&&amt>u.bal)return toast('ยอดเงินไม่เพียงพอ','error');
-  const method=document.getElementById('dwMethod').value;
-  if(dwType==='deposit'){u.bal+=amt;if(!u.deps)u.deps=[];u.deps.push({amt,method,time:Date.now()})}
-  else{u.bal-=amt;if(!u.wits)u.wits=[];u.wits.push({amt,method,time:Date.now()})}
-  const us=getU();const idx=us.findIndex(x=>x.id===u.id);if(idx>=0)us[idx]=u;saveU(us);setCur(u);
-  closeDW();loadDash();toast(`${dwType==='deposit'?'ฝาก':'ถอน'}เงิน $${amt.toLocaleString()} สำเร็จ!`,'success');
-}
+function dL(x,a,xF,yF,c,w){x.strokeStyle=c;x.lineWidth=w;x.beginPath();let s=false;a.forEach((v,i)=>{if(v===null)return;const xx=xF(i),yy=yF(v);if(!s){x.moveTo(xx,yy);s=true}else x.lineTo(xx,yy)});x.stroke()}
+function rR(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.lineTo(a+w-r,b);x.quadraticCurveTo(a+w,b,a+w,b+r);x.lineTo(a+w,b+h-r);x.quadraticCurveTo(a+w,b+h,a+w-r,b+h);x.lineTo(a+r,b+h);x.quadraticCurveTo(a,b+h,a,b+h-r);x.lineTo(a,b+r);x.quadraticCurveTo(a,b,a+r,b);x.closePath()}
 
-function copyRef(){const code=document.getElementById('refCode').textContent;navigator.clipboard.writeText(code).then(()=>toast('คัดลอกรหัสแล้ว!','success')).catch(()=>{const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('คัดลอกรหัสแล้ว!','success')})}
+// Orders
+function sOT(t){oT=t;document.getElementById('bT').classList.toggle('on',t==='buy');document.getElementById('sT2').classList.toggle('on',t==='sell');uOUI()}
+function aL(d){lS=Math.max(.01,+(lS+d).toFixed(2));document.getElementById('lI').value=lS.toFixed(2);uOUI()}
+function sL(v){lS=v;document.getElementById('lI').value=v.toFixed(2);uOUI()}
+document.getElementById('lI').addEventListener('change',e=>{lS=Math.max(.01,+e.target.value);uOUI()});
+function uOUI(){const a=A[cA],cp=cP(),bid=cp,ask=+(cp+a.sp).toFixed(6),pr=oT==='buy'?ask:bid;const b=document.getElementById('eB');b.textContent=`${oT.toUpperCase()} ${cA} @ ${fP(cA,pr)}`;b.className='eb '+oT;document.getElementById('oI').textContent=`Spread: ${a.sp}`}
+function exO(){const a=A[cA],cp=cP(),pr=oT==='buy'?+(cp+a.sp).toFixed(6):cp;const sl=document.getElementById('slI').value?+document.getElementById('slI').value:null,tp=document.getElementById('tpI').value?+document.getElementById('tpI').value:null;
+pos.push({id:Date.now(),tp:oT,lots:lS,op:pr,ot:Date.now(),sl,tpp:tp,s:cA});document.getElementById('slI').value='';document.getElementById('tpI').value='';T(`${oT.toUpperCase()} ${lS}L ${cA} @ ${fP(cA,pr)}`,'s');uAll()}
+function clP(id){const i=pos.findIndex(p=>p.id===id);if(i===-1)return;const p=pos[i],a=A[p.s],cp=eD(p.s).slice(-1)[0].c;const df=p.tp==='buy'?(cp-p.op):(p.op-cp),mt=a.pp>=10000?10000:100,pnl=+(df*p.lots*mt).toFixed(2);bal=+(bal+pnl).toFixed(2);
+oH.push({...p,cp:cp,pnl,ct:Date.now(),r:'Manual'});pos.splice(i,1);
+const u=gC();if(u){u.bal=bal;if(!u.trades)u.trades=[];u.trades.push({sym:p.s,type:p.tp,lots:p.lots,pnl,time:Date.now()});const us=gU();const idx=us.findIndex(x=>x.id===u.id);if(idx>=0)us[idx]=u;sU(us);sC(u)}
+T(`Closed ${p.s} | P/L: $${pnl}`,'s');uAll()}
+function chkSLTP(){pos.forEach((p,i)=>{const cp=eD(p.s).slice(-1)[0].c;let r='';if(p.sl){if(p.tp==='buy'&&cp<=p.sl)r='SL';if(p.tp==='sell'&&cp>=p.sl)r='SL'}if(p.tpp){if(p.tp==='buy'&&cp>=p.tpp)r='TP';if(p.tp==='sell'&&cp<=p.tpp)r='TP'}if(r){const a=A[p.s],df=p.tp==='buy'?(cp-p.op):(p.op-cp),mt=a.pp>=10000?10000:100,pnl=+(df*p.lots*mt).toFixed(2);bal=+(bal+pnl).toFixed(2);oH.push({...p,cp,pnl,ct:Date.now(),r});pos.splice(i,1);const u=gC();if(u){u.bal=bal;u.trades.push({sym:p.s,type:p.tp,lots:p.lots,pnl,time:Date.now()});const us=gU();const idx=us.findIndex(x=>x.id===u.id);if(idx>=0)us[idx]=u;sU(us);sC(u)}T(`${r}: ${p.s} $${pnl}`,'s')}})}
 
-// ====== TRADING (inline) ======
-function loadTrading(){
-  const c=document.getElementById('tradeContainer');
-  if(c.dataset.loaded)return;c.dataset.loaded='1';
-  c.innerHTML='<div style="padding:20px;text-align:center;color:var(--t2)"><p style="font-size:16px;margin-bottom:12px">📈 หน้าเทรดพร้อมใช้งาน!</p><p style="font-size:13px;color:var(--t3);margin-bottom:16px">หน้าเทรดจะถูกโหลดเป็น version เต็มใน Step ถัดไป<br>ตอนนี้สามารถใช้ฟีเจอร์อื่นได้ก่อน (Dashboard, ฝาก-ถอน, Referral)</p><button class="nb nb-s" onclick="toast(\'หน้าเทรดจะพร้อมเต็มรูปแบบใน Step ถัดไป\',\'success\')">🔄 รอการอัปเดต</button></div>';
-}
+function sTab(t,el){aTab=t;document.querySelectorAll('.bptb').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');rTbl()}
+function rTbl(){const c=document.getElementById('bpC'),cp2=cP();
+if(aTab==='news'){c.innerHTML='<div style="padding:4px 8px">'+NEWS.map(n=>`<div class="ni"><div class="nt">${n.t}</div><div class="nn"><span class="tg tg-${n.g==='b'?'b':n.g==='r'?'r':'n'}">${n.g==='b'?'BULL':n.g==='r'?'BEAR':'INFO'}</span>${n.n}</div></div>`).join('')+'</div>';return}
+if(aTab==='pos'){let h='<table class="tbl"><thead><tr><th>Symbol</th><th>Type</th><th>Lots</th><th>P/L</th><th></th></tr></thead><tbody>';if(!pos.length)h+='<tr><td colspan="5" class="mt">No positions</td></tr>';else pos.forEach(p=>{const cp=eD(p.s).slice(-1)[0].c,a=A[p.s],df=p.tp==='buy'?(cp-p.op):(p.op-cp),mt=a.pp>=10000?10000:100,pnl=(df*p.lots*mt).toFixed(2);h+=`<tr><td class="mono">${p.s}</td><td style="color:${p.tp==='buy'?'var(--grn)':'var(--red)'}">${p.tp.toUpperCase()}</td><td>${p.lots}</td><td class="mono" style="color:${pnl>=0?'var(--grn)':'var(--red)'}">$${pnl}</td><td><button class="clb" onclick="clP(${p.id})">X</button></td></tr>`});h+='</tbody></table>';c.innerHTML=h}
+else{let h='<table class="tbl"><thead><tr><th>Symbol</th><th>Type</th><th>P/L</th><th>Reason</th></tr></thead><tbody>';if(!oH.length)h+='<tr><td colspan="4" class="mt">No history</td></tr>';else oH.slice().reverse().forEach(o=>{h+=`<tr><td class="mono">${o.s}</td><td style="color:${o.tp==='buy'?'var(--grn)':'var(--red)'}">${o.tp.toUpperCase()}</td><td class="mono" style="color:${o.pnl>=0?'var(--grn)':'var(--red)'}">$${o.pnl.toFixed(2)}</td><td>${o.r}</td></tr>`});h+='</tbody></table>';c.innerHTML=h}
+document.getElementById('pT').textContent=`Pos(${pos.length})`;document.getElementById('hT').textContent=`Hist(${oH.length})`}
 
-// ====== PASSWORD STRENGTH ======
-function chkPw(pw){const b=document.getElementById('pwB');let s=0;if(pw.length>=8)s++;if(pw.length>=12)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;const l=[{w:'0%',c:'var(--border)'},{w:'20%',c:'var(--red)'},{w:'40%',c:'#ff9800'},{w:'60%',c:'var(--gold)'},{w:'80%',c:'#8bc34a'},{w:'100%',c:'var(--green)'}][Math.min(s,5)];b.style.width=l.w;b.style.background=l.c}
+function uAll(){if(!tradeInit)return;const a=A[cA],d=eD(cA),cp=d[d.length-1].c,bid=cp,ask=+(cp+a.sp).toFixed(6);
+Object.keys(A).forEach(s=>{const dd=eD(s),p=dd[dd.length-1].c,pr=dd.length>=2?dd[dd.length-2].c:p;const el=document.getElementById('at_'+s);if(el)el.innerHTML=`<span class="${p>=pr?'up':'dn'}">${fP(s,p)}</span>`});
+const ur=pos.reduce((s,p)=>{const dd=eD(p.s),cp2=dd[dd.length-1].c,a2=A[p.s],df=p.tp==='buy'?(cp2-p.op):(p.op-cp2),mt=a2.pp>=10000?10000:100;return s+df*p.lots*mt},0);
+eq=+(bal+ur).toFixed(2);
+document.getElementById('bP').textContent=fP(cA,bid);document.getElementById('aP').textContent=fP(cA,ask);document.getElementById('sPb').textContent=a.sp;
+uOUI();
+const fm=Math.max(0,eq-pos.reduce((s,p)=>{const a2=A[p.s],cp2=eD(p.s).slice(-1)[0].c;return s+p.lots*cp2*(a2.pp>=10000?1000:10)},0));
+document.getElementById('aS').innerHTML=[{l:'Balance',v:'$'+bal.toLocaleString(),c:'var(--t1)'},{l:'Equity',v:'$'+eq.toLocaleString(),c:eq>=bal?'var(--grn)':'var(--red)'},{l:'Open P/L',v:'$'+ur.toFixed(2),c:ur>=0?'var(--grn)':'var(--red)'},{l:'Positions',v:pos.length,c:'var(--t1)'}].map(r=>`<div class="sr"><span class="sl2">${r.l}</span><span class="sv" style="color:${r.c}">${r.v}</span></div>`).join('');
+rTbl();rChart()}
 
-// ====== TOAST ======
-function toast(m,t='success'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),3000)}
+function startEngine(){setInterval(()=>{Object.keys(A).forEach(s=>{const d=eD(s),last=d[d.length-1],a=A[s],ch=(Math.random()-.48)*a.v*.15,nc=+(last.c+ch).toFixed(6);d[d.length-1]={...last,c:nc,h:+Math.max(last.h,nc).toFixed(6),l:+Math.min(last.l,nc).toFixed(6),v:last.v+Math.floor(Math.random()*10)}});chkSLTP();uAll()},1300);
+setInterval(()=>{Object.keys(A).forEach(s=>{const d=eD(s),last=d[d.length-1],a=A[s],o=last.c,ch=(Math.random()-.48)*a.v*.5,c=+(o+ch).toFixed(6);d.push({t:Date.now(),o,c,h:+Math.max(o,c,o+Math.random()*a.v*.3).toFixed(6),l:+Math.min(o,c,o-Math.random()*a.v*.3).toFixed(6),v:Math.floor(500+Math.random()*1500)});if(d.length>500)d.shift()});uAll()},12e3)}
 
-// ====== AUTO LOGIN ======
-(function(){const u=getCur();if(u){curUser=u}})();
+// Utils
+function ckP(pw){const b=document.getElementById('pwB');let s=0;if(pw.length>=8)s++;if(pw.length>=12)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;const l=[{w:'0%',c:'var(--bd)'},{w:'20%',c:'var(--red)'},{w:'40%',c:'#ff9800'},{w:'60%',c:'var(--gold)'},{w:'80%',c:'#8bc34a'},{w:'100%',c:'var(--grn)'}][Math.min(s,5)];b.style.width=l.w;b.style.background=l.c}
+function T(m,t='s'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),3e3)}
+window.addEventListener('resize',()=>{if(tradeInit)rChart()});
+(function(){const u=gC();if(u)cU=u})();
 </script>
 </body>
 </html>
