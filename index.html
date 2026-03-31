@@ -537,8 +537,8 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 </div></div>
 
 <!-- MODALS -->
-<div class="modal-overlay" id="depositModal"><div class="modal" style="position:relative"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('depositModal')">✕</button><h3>⬆ ฝากเงิน</h3><form onsubmit="handleDeposit(event)"><div class="form-group"><label>จำนวน ($)</label><input type="number" class="form-input" id="depositAmount" min="10" required></div><div class="form-group"><label>ช่องทาง</label><select class="form-input" id="depositMethod"><option value="bank">ธนาคาร</option><option value="crypto">Crypto</option><option value="promptpay">PromptPay</option></select></div><button type="submit" class="btn btn-gold btn-full" id="depositBtn">ยืนยัน</button></form></div></div>
-<div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน</h3><form onsubmit="handleWithdraw(event)"><div class="form-group"><label>จำนวน ($)</label><input type="number" class="form-input" id="withdrawAmount" min="10" required></div><div class="form-group"><label>ช่องทาง</label><select class="form-input" id="withdrawMethod"><option value="bank">ธนาคาร</option><option value="crypto">Crypto</option></select></div><div class="form-group"><label>บัญชีปลายทาง</label><input type="text" class="form-input" id="withdrawAccount" required></div><button type="submit" class="btn btn-gold btn-full" id="withdrawBtn">ยืนยัน</button></form></div></div>
+<div class="modal-overlay" id="depositModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('depositModal')">✕</button><h3>⬆ ฝากเงิน (Crypto)</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ฝากผ่าน USDT, BTC, ETH และ Crypto อื่นๆ</p><form onsubmit="handleCryptoDeposit(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="depositAmount" min="5" step="0.01" required placeholder="ขั้นต่ำ $5"></div><div class="form-group"><label>เลือกสกุลเงินที่จะจ่าย</label><select class="form-input" id="depositCurrency"><option value="">อัตโนมัติ (เลือกตอนจ่าย)</option><option value="USDT">USDT (TRC20/ERC20/BEP20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option><option value="USDC">USDC</option><option value="LTC">Litecoin (LTC)</option><option value="TRX">TRON (TRX)</option></select></div><button type="submit" class="btn btn-gold btn-full" id="depositBtn">สร้างลิงก์ชำระเงิน</button></form><div id="depositResult" style="display:none;margin-top:16px;text-align:center"><p style="color:var(--green);font-weight:600;margin-bottom:8px">✅ สร้างลิงก์สำเร็จ!</p><a id="depositPayLink" href="#" target="_blank" class="btn btn-gold btn-full" style="margin-bottom:8px">💳 ไปหน้าชำระเงิน</a><p style="color:var(--text3);font-size:.75rem">กรุณาโอน Crypto ภายในเวลาที่กำหนด<br>เงินจะเข้าบัญชีหลังจาก Admin ตรวจสอบ</p></div></div></div>
+<div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน (Crypto)</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น USDT ไปยัง Wallet ของคุณ</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>สกุลเงินที่ต้องการรับ</label><select class="form-input" id="withdrawCurrency"><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div><div class="form-group"><label>Wallet Address ปลายทาง</label><input type="text" class="form-input" id="withdrawWallet" required placeholder="วาง Wallet Address ที่นี่"></div><div class="form-group"><label>Network (ตรวจสอบให้ตรงกัน)</label><select class="form-input" id="withdrawNetwork"><option value="TRC20">TRC20 (Tron)</option><option value="BEP20">BEP20 (BSC)</option><option value="ERC20">ERC20 (Ethereum)</option><option value="BTC">Bitcoin</option></select></div><button type="submit" class="btn btn-gold btn-full" id="withdrawBtn">📤 ส่งคำขอถอนเงิน</button></form></div></div>
 
 <!-- TRADE RESULT POPUP -->
 <div class="tv-result-overlay" id="resultOverlay">
@@ -1178,8 +1178,108 @@ function playSound(type){
       var osc2=ctx.createOscillator();var g2=ctx.createGain();osc2.connect(g2);g2.connect(ctx.destination);osc2.frequency.value=260;osc2.type='sawtooth';g2.gain.setValueAtTime(0.05,ctx.currentTime+0.2);g2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);osc2.start(ctx.currentTime+0.2);osc2.stop(ctx.currentTime+0.5);}
   }catch(e){}
 }
-async function handleDeposit(e){e.preventDefault();var btn=document.getElementById('depositBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;var amt=parseFloat(document.getElementById('depositAmount').value),method=document.getElementById('depositMethod').value;try{await loadUserProfile();var nb=(currentProfile.balance||0)+amt;await sb.from('profiles').update({balance:nb}).eq('id',currentUser.id);await sb.from('transactions').insert({user_id:currentUser.id,type:'deposit',amount:amt,method:method,status:'completed',created_at:new Date().toISOString()});currentProfile.balance=nb;showToast('ฝากเงิน $'+amt.toFixed(2)+' สำเร็จ','success');closeModal('depositModal');loadTransactions();}catch(err){showToast(err.message,'error');}finally{btn.innerHTML='ยืนยัน';btn.disabled=false;}}
-async function handleWithdraw(e){e.preventDefault();var btn=document.getElementById('withdrawBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;var amt=parseFloat(document.getElementById('withdrawAmount').value),method=document.getElementById('withdrawMethod').value,acc=document.getElementById('withdrawAccount').value.trim();try{await loadUserProfile();if(amt>(currentProfile.balance||0))throw new Error('ยอดไม่พอ');var nb=currentProfile.balance-amt;await sb.from('profiles').update({balance:nb}).eq('id',currentUser.id);await sb.from('transactions').insert({user_id:currentUser.id,type:'withdrawal',amount:amt,method:method,account:acc,status:'pending',created_at:new Date().toISOString()});currentProfile.balance=nb;showToast('ส่งคำขอถอน $'+amt.toFixed(2),'success');closeModal('withdrawModal');loadTransactions();}catch(err){showToast(err.message,'error');}finally{btn.innerHTML='ยืนยัน';btn.disabled=false;}}
+/* ===== CRYPTO DEPOSIT via OxaPay ===== */
+var OXAPAY_MERCHANT_KEY='FH19D6-OWFOII-5J2FPD-27KZHT';
+
+async function handleCryptoDeposit(e){
+  e.preventDefault();
+  var btn=document.getElementById('depositBtn');
+  btn.innerHTML='<span class="spinner"></span> กำลังสร้าง...';btn.disabled=true;
+  
+  var amt=parseFloat(document.getElementById('depositAmount').value);
+  var currency=document.getElementById('depositCurrency').value;
+  
+  if(!amt||amt<5){showToast('ขั้นต่ำ $5','error');btn.innerHTML='สร้างลิงก์ชำระเงิน';btn.disabled=false;return;}
+  
+  try{
+    var body={
+      merchant:OXAPAY_MERCHANT_KEY,
+      amount:amt,
+      currency:'USD',
+      lifeTime:60,
+      feePaidByPayer:1,
+      callbackUrl:'https://richxauusd911.xyz/callback',
+      returnUrl:'https://richxauusd911.xyz/',
+      orderId:'DEP-'+currentUser.id.substring(0,8)+'-'+Date.now(),
+      description:'Deposit $'+amt.toFixed(2)+' to RichOption911'
+    };
+    if(currency)body.toCurrency=currency;
+    
+    var res=await fetch('https://api.oxapay.com/merchants/request',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    var data=await res.json();
+    
+    if(data.result===100&&data.payLink){
+      /* Save pending deposit to DB */
+      await sb.from('transactions').insert({
+        user_id:currentUser.id,
+        type:'deposit',
+        amount:amt,
+        method:'crypto_oxapay',
+        account:data.trackId||'',
+        status:'pending',
+        created_at:new Date().toISOString()
+      });
+      
+      /* Show payment link */
+      document.getElementById('depositResult').style.display='block';
+      document.getElementById('depositPayLink').href=data.payLink;
+      showToast('✅ สร้างลิงก์สำเร็จ! กดไปชำระเงิน','success');
+    }else{
+      throw new Error(data.message||'ไม่สามารถสร้างลิงก์ได้');
+    }
+  }catch(err){
+    showToast('เกิดข้อผิดพลาด: '+err.message,'error');
+  }finally{
+    btn.innerHTML='สร้างลิงก์ชำระเงิน';btn.disabled=false;
+  }
+}
+
+/* ===== CRYPTO WITHDRAW ===== */
+async function handleCryptoWithdraw(e){
+  e.preventDefault();
+  var btn=document.getElementById('withdrawBtn');
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  
+  var amt=parseFloat(document.getElementById('withdrawAmount').value);
+  var currency=document.getElementById('withdrawCurrency').value;
+  var wallet=document.getElementById('withdrawWallet').value.trim();
+  var network=document.getElementById('withdrawNetwork').value;
+  
+  if(!amt||amt<10){showToast('ขั้นต่ำ $10','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
+  if(!wallet){showToast('กรุณาใส่ Wallet Address','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
+  
+  try{
+    await loadUserProfile();
+    if(amt>(currentProfile.balance||0))throw new Error('ยอดเงินไม่เพียงพอ');
+    
+    /* Deduct balance + create pending withdrawal */
+    var nb=currentProfile.balance-amt;
+    await sb.from('profiles').update({balance:nb}).eq('id',currentUser.id);
+    await sb.from('transactions').insert({
+      user_id:currentUser.id,
+      type:'withdrawal',
+      amount:amt,
+      method:'crypto_'+currency,
+      account:wallet+' | '+network,
+      status:'pending',
+      created_at:new Date().toISOString()
+    });
+    
+    currentProfile.balance=nb;
+    showToast('✅ ส่งคำขอถอน $'+amt.toFixed(2)+' สำเร็จ รอ Admin อนุมัติ','success');
+    closeModal('withdrawModal');
+    loadTransactions();
+    
+  }catch(err){
+    showToast(err.message,'error');
+  }finally{
+    btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;
+  }
+}
 var txFilter='all';function filterTx(type,el){txFilter=type;document.querySelectorAll('.tx-tab').forEach(function(t){t.classList.remove('active')});if(el)el.classList.add('active');loadTransactions();}
 async function loadTransactions(){await loadUserProfile();document.getElementById('walletBalance').textContent='$'+(currentProfile?currentProfile.balance||0:0).toFixed(2);try{var q=sb.from('transactions').select('*').eq('user_id',currentUser.id);if(txFilter!=='all')q=q.eq('type',txFilter);var r=await q.order('created_at',{ascending:false}).limit(50),tb=document.getElementById('txHistory');if(!r.error&&r.data&&r.data.length>0){tb.innerHTML=r.data.map(function(tx){return '<tr><td class="mono" style="font-size:.8rem">'+new Date(tx.created_at).toLocaleString('th-TH')+'</td><td><span class="badge '+(tx.type==='deposit'?'badge-green':'badge-red')+'">'+(tx.type==='deposit'?'⬆ ฝาก':'⬇ ถอน')+'</span></td><td class="mono" style="font-weight:600;color:'+(tx.type==='deposit'?'var(--green)':'var(--red)')+'">'+(tx.type==='deposit'?'+':'-')+'$'+(tx.amount||0).toFixed(2)+'</td><td><span class="badge '+(tx.status==='completed'?'badge-green':tx.status==='pending'?'badge-blue':'badge-red')+'">'+(tx.status==='completed'?'✅':tx.status==='pending'?'⏳':'❌')+'</span></td></tr>'}).join('');}else{tb.innerHTML='<tr><td colspan="4" class="text-center text-muted" style="padding:36px">ยังไม่มีธุรกรรม</td></tr>';}}catch(err){console.error(err);}}
 async function loadReferrals(){if(!currentProfile)await loadUserProfile();var rc=currentProfile?currentProfile.referral_code:'---';document.getElementById('myRefCode').textContent=rc||'---';document.getElementById('myRefLink').textContent=window.location.origin+'?ref='+(rc||'');try{var r=await sb.from('profiles').select('full_name,created_at').eq('referred_by',rc);if(!r.error&&r.data){document.getElementById('refCount').textContent=r.data.length;document.getElementById('refEarnings').textContent='$'+(r.data.length*5).toFixed(2);if(r.data.length>0){document.getElementById('refList').innerHTML=r.data.map(function(x){return '<tr><td>'+(x.full_name||'-')+'</td><td class="mono" style="font-size:.8rem">'+new Date(x.created_at).toLocaleDateString('th-TH')+'</td><td><span class="badge badge-green">✅</span></td></tr>'}).join('');}}}catch(err){console.error(err);}}
