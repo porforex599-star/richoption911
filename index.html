@@ -1193,27 +1193,56 @@ async function handleCryptoDeposit(e){
   
   try{
     var body={
-      merchant:OXAPAY_MERCHANT_KEY,
       amount:amt,
       currency:'USD',
-      lifeTime:60,
-      feePaidByPayer:1,
-      callbackUrl:'https://richxauusd911.xyz/callback',
-      returnUrl:'https://richxauusd911.xyz/',
-      orderId:'DEP-'+currentUser.id.substring(0,8)+'-'+Date.now(),
+      lifetime:60,
+      fee_paid_by_payer:1,
+      callback_url:'https://richxauusd911.xyz/callback',
+      return_url:'https://richxauusd911.xyz/',
+      order_id:'DEP-'+currentUser.id.substring(0,8)+'-'+Date.now(),
       description:'Deposit $'+amt.toFixed(2)+' to RichOption911'
     };
-    if(currency)body.toCurrency=currency;
+    if(currency)body.to_currency=currency;
     
-    var res=await fetch('https://api.oxapay.com/merchants/request',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(body)
-    });
-    var data=await res.json();
+    /* Try direct API call first, then CORS proxy fallback */
+    var data=null;
+    try{
+      var res=await fetch('https://api.oxapay.com/v1/payment/invoice',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','merchant_api_key':OXAPAY_MERCHANT_KEY},
+        body:JSON.stringify(body)
+      });
+      data=await res.json();
+    }catch(corsErr){
+      /* CORS blocked — try legacy endpoint */
+      try{
+        var legacyBody={merchant:OXAPAY_MERCHANT_KEY,amount:amt,currency:'USD',lifeTime:60,feePaidByPayer:1,callbackUrl:'https://richxauusd911.xyz/callback',returnUrl:'https://richxauusd911.xyz/',orderId:body.order_id,description:body.description};
+        if(currency)legacyBody.toCurrency=currency;
+        var res2=await fetch('https://api.oxapay.com/merchants/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(legacyBody)});
+        data=await res2.json();
+      }catch(e2){
+        throw new Error('ไม่สามารถเชื่อมต่อ OxaPay ได้ กรุณาลองใหม่');
+      }
+    }
     
-    if(data.result===100&&data.payLink){
+    if(data.status===200&&data.data&&data.data.payment_url){
       /* Save pending deposit to DB */
+      await sb.from('transactions').insert({
+        user_id:currentUser.id,
+        type:'deposit',
+        amount:amt,
+        method:'crypto_oxapay',
+        account:data.data.track_id||'',
+        status:'pending',
+        created_at:new Date().toISOString()
+      });
+      
+      /* Show payment link */
+      document.getElementById('depositResult').style.display='block';
+      document.getElementById('depositPayLink').href=data.data.payment_url;
+      showToast('✅ สร้างลิงก์สำเร็จ! กดไปชำระเงิน','success');
+    }else if(data.result===100&&data.payLink){
+      /* Legacy format fallback */
       await sb.from('transactions').insert({
         user_id:currentUser.id,
         type:'deposit',
@@ -1223,11 +1252,9 @@ async function handleCryptoDeposit(e){
         status:'pending',
         created_at:new Date().toISOString()
       });
-      
-      /* Show payment link */
       document.getElementById('depositResult').style.display='block';
       document.getElementById('depositPayLink').href=data.payLink;
-      showToast('✅ สร้างลิงก์สำเร็จ! กดไปชำระเงิน','success');
+      showToast('✅ สร้างลิงก์สำเร็จ!','success');
     }else{
       throw new Error(data.message||'ไม่สามารถสร้างลิงก์ได้');
     }
