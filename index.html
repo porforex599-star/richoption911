@@ -400,13 +400,13 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
           <span class="tv-symbol-change up" id="priceChange">+0.00%</span>
         </div>
         <div class="tv-timeframes" id="tvTimeframes">
-          <button class="tv-tf-btn" data-tf="0" onclick="setTimeframe(this)" style="color:var(--gold)">Tick</button>
-          <button class="tv-tf-btn" data-tf="1" onclick="setTimeframe(this)">1m</button>
-          <button class="tv-tf-btn active" data-tf="5" onclick="setTimeframe(this)">5m</button>
-          <button class="tv-tf-btn" data-tf="15" onclick="setTimeframe(this)">15m</button>
-          <button class="tv-tf-btn" data-tf="60" onclick="setTimeframe(this)">1H</button>
-          <button class="tv-tf-btn" data-tf="240" onclick="setTimeframe(this)">4H</button>
-          <button class="tv-tf-btn" data-tf="1440" onclick="setTimeframe(this)">1D</button>
+          <button class="tv-tf-btn active" data-tf="0" onclick="setTimeframe(this)" style="color:var(--gold)">Tick</button>
+          <button class="tv-tf-btn" data-tf="1" onclick="setTimeframe(this)" style="display:none">1m</button>
+          <button class="tv-tf-btn" data-tf="5" onclick="setTimeframe(this)" style="display:none">5m</button>
+          <button class="tv-tf-btn" data-tf="15" onclick="setTimeframe(this)" style="display:none">15m</button>
+          <button class="tv-tf-btn" data-tf="60" onclick="setTimeframe(this)" style="display:none">1H</button>
+          <button class="tv-tf-btn" data-tf="240" onclick="setTimeframe(this)" style="display:none">4H</button>
+          <button class="tv-tf-btn" data-tf="1440" onclick="setTimeframe(this)" style="display:none">1D</button>
         </div>
       </div>
       <div class="tv-ohlc-bar" id="ohlcBar">
@@ -795,7 +795,7 @@ async function updateProfile(e){e.preventDefault();var btn=document.getElementBy
 async function loadDashboard(){await loadUserProfile();if(!currentProfile)return;document.getElementById('dashBalance').textContent='$'+(currentProfile.balance||0).toFixed(2);try{var r=await sb.from('trades').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(!r.error&&r.data){var t=r.data;var w=t.filter(function(x){return (x.result||x.status||x.outcome)==='win'}).length;var l=t.filter(function(x){return (x.result||x.status||x.outcome)==='loss'}).length;document.getElementById('dashTotalTrades').textContent=t.length;document.getElementById('dashWins').textContent=w;document.getElementById('dashLosses').textContent=l;var tb=document.getElementById('dashTradeHistory');tb.innerHTML=t.length===0?'<tr><td colspan="5" class="text-center text-muted" style="padding:36px">ยังไม่มีประวัติ</td></tr>':t.slice(0,10).map(function(x){var xAsset=x.asset||x.symbol||x.pair||'-';var xDir=x.direction||x.side||'up';var xAmt=x.amount||x.trade_amount||x.stake||0;var xRes=x.result||x.status||x.outcome||'pending';return '<tr><td class="mono" style="font-size:.8rem">'+new Date(x.created_at).toLocaleString('th-TH')+'</td><td style="font-weight:600">'+xAsset+'</td><td><span class="badge '+(xDir==='up'?'badge-green':'badge-red')+'">'+(xDir==='up'?'📈':'📉')+'</span></td><td class="mono">$'+(parseFloat(xAmt)||0).toFixed(2)+'</td><td><span class="badge '+(xRes==='win'?'badge-green':xRes==='loss'?'badge-red':'badge-blue')+'">'+(xRes==='win'?'✅':xRes==='loss'?'❌':'⏳')+'</span></td></tr>'}).join('');}else{console.warn('trades query error:',r.error?r.error.message:'no data');}}catch(err){console.error('loadDashboard error:',err);}}
 function initTrading(){renderAssetTabs();connectFinnhubWs();connectBinanceWs();selectAsset(0);updateTradingBalance();generateOrderBook();startCountdownUI();}
 function renderAssetTabs(){document.getElementById('assetTabs').innerHTML=ASSETS.map(function(a,i){return '<div class="asset-tab '+(i===selectedAsset?'active':'')+'" onclick="selectAsset('+i+')">'+a.symbol+'</div>'}).join('');}
-var currentTimeframe=5,candleData=[],tradeCooldown=false;
+var currentTimeframe=0,candleData=[],tradeCooldown=false;
 var finnhubLoading=false;
 
 async function selectAsset(i){
@@ -965,7 +965,7 @@ var candleIntervalMs=60000; /* default 1m per candle */
 function getCandleInterval(){
   /* REAL timeframe intervals */
   var map={
-    '0':5000,        /* Tick = 5 second candles (fast action) */
+    '0':15000,       /* Tick = 15 second candles (natural size) */
     '1':60000,       /* 1m = 60 seconds */
     '5':300000,      /* 5m = 5 minutes */
     '15':900000,     /* 15m = 15 minutes */
@@ -1004,56 +1004,60 @@ function startChart(){
         var targetWin=t.willWin;
         var goUp=(t.direction==='up'&&targetWin)||(t.direction==='down'&&!targetWin);
         
-        /* Use real API price as base when available */
-        var baseP=realtimeP&&realtimeP>0?realtimeP:last.c;
-        var vol=last.c*0.00008;
-        var gNoise=_gRand()*vol*0.5;
+        /* Tiny target: just 15% of normal tick volatility above/below entry */
+        var tickVol=last.c*0.00006;
+        var targetGap=tickVol*0.15;/* very small — just barely past the entry line */
+        var gNoise=_gRand()*tickVol*0.4;
         
         /* ===== PHASE 1: First 70% — completely normal, follow API ===== */
         if(progress<0.70){
-          /* Pure natural movement — no bias at all */
           if(realtimeP&&realtimeP>0){
             var diff=realtimeP-last.c;
-            var approachSpeed=currentTimeframe===0?0.22:0.12;
-            nc=last.c+diff*approachSpeed+gNoise;
+            var speed=currentTimeframe===0?0.22:0.12;
+            nc=last.c+diff*speed+gNoise;
           }else{
             nc=last.c+gNoise;
           }
           
-        /* ===== PHASE 2: 70%-95% — smooth invisible drift ===== */
+        /* ===== PHASE 2: 70%-95% — gentle drift, looks like normal movement ===== */
         }else if(progress<0.95){
-          /* Gradually introduce bias, still looks natural */
-          var driftProgress=(progress-0.70)/0.25; /* 0→1 within this phase */
-          var biasStr=driftProgress*driftProgress*0.3; /* quadratic ease-in */
-          var bias=(goUp?1:-1)*vol*biasStr;
+          var driftProgress=(progress-0.70)/0.25; /* 0→1 */
           
-          /* Still follow API if available, but add drift */
+          /* Very gentle bias — grows slowly with quadratic curve */
+          var biasAmount=driftProgress*driftProgress*tickVol*0.08;
+          var bias=(goUp?1:-1)*biasAmount;
+          
+          /* Still follow API but gradually add tiny drift */
           if(realtimeP&&realtimeP>0){
             var diff=realtimeP-last.c;
-            nc=last.c+diff*0.08*(1-driftProgress)+gNoise+bias;
+            var apiWeight=0.08*(1-driftProgress*0.6);
+            nc=last.c+diff*apiWeight+gNoise+bias;
           }else{
             nc=last.c+gNoise+bias;
           }
           
-          /* Counter-moves for realism (decreasing as we approach end) */
-          var counterChance=0.35*(1-driftProgress);
-          if(Math.random()<counterChance) nc=last.c+gNoise-bias*0.3;
+          /* Counter-moves keep it looking natural */
+          if(Math.random()<0.3*(1-driftProgress)){
+            nc=last.c+gNoise-bias*0.2;
+          }
           
-        /* ===== PHASE 3: Last 5% — ensure correct side smoothly ===== */
+        /* ===== PHASE 3: Last 5% — nudge to correct side, very gently ===== */
         }else{
-          var finalProgress=(progress-0.95)/0.05; /* 0→1 in last 5% */
-          var bias=(goUp?1:-1)*vol*(0.5+finalProgress*0.5);
-          nc=last.c+gNoise*0.3+bias;
+          var finalProgress=(progress-0.95)/0.05; /* 0→1 */
           
-          /* Guarantee correct side in very last moments */
-          if(finalProgress>0.7){
-            var gap=last.c*0.00004;
+          /* Gentle nudge — just enough to be on correct side */
+          var nudge=(goUp?1:-1)*tickVol*0.05*(1+finalProgress);
+          nc=last.c+gNoise*0.2+nudge;
+          
+          /* Ensure price is on correct side but only by ~15% of normal movement */
+          if(finalProgress>0.5){
+            var minGap=t.open_price*0.000015;/* 0.0015% — barely visible */
             if(targetWin){
-              if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+gap*(0.5+Math.random()*0.5);
-              if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-gap*(0.5+Math.random()*0.5);
+              if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+minGap*(0.8+Math.random()*0.4);
+              if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-minGap*(0.8+Math.random()*0.4);
             }else{
-              if(t.direction==='up'&&nc>=t.open_price)nc=t.open_price-gap*(0.5+Math.random()*0.5);
-              if(t.direction==='down'&&nc<=t.open_price)nc=t.open_price+gap*(0.5+Math.random()*0.5);
+              if(t.direction==='up'&&nc>=t.open_price)nc=t.open_price-minGap*(0.8+Math.random()*0.4);
+              if(t.direction==='down'&&nc<=t.open_price)nc=t.open_price+minGap*(0.8+Math.random()*0.4);
             }
           }
         }
