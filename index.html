@@ -798,23 +798,19 @@ function renderAssetTabs(){document.getElementById('assetTabs').innerHTML=ASSETS
 var currentTimeframe=0,candleData=[],tradeCooldown=false;
 var finnhubLoading=false;
 
-/* ===== CANDLE CACHE — preserve data when switching assets ===== */
+/* ===== CANDLE CACHE — only used as fallback ===== */
 var _candleCache={};
 
 async function selectAsset(i){
+  /* Stop current chart immediately */
+  _tickRunning++;
+  if(chartAnimFrame){clearTimeout(chartAnimFrame);chartAnimFrame=null;}
+  _tickMom=0;
+  
   selectedAsset=i;
   var a=ASSETS[i];
   document.getElementById('currentAssetName').textContent=a.symbol;
   document.querySelectorAll('.asset-tab').forEach(function(t,j){t.classList.toggle('active',j===i)});
-  
-  /* Check cache first — if we have data for this asset, restore it */
-  if(_candleCache[a.symbol]&&_candleCache[a.symbol].length>5){
-    candleData=_candleCache[a.symbol];
-    priceHistory=candleData.map(function(c){return c.c});
-    finnhubLoading=false;
-    updatePriceDisplay();startChart();generateOrderBook();
-    return;
-  }
   
   finnhubLoading=true;
   var realCandles=null;
@@ -824,12 +820,10 @@ async function selectAsset(i){
   var binInterval=tfBinance[currentTimeframe.toString()]||'1m';
   var tdInterval=tfTD[currentTimeframe.toString()]||'1min';
   
-  /* Crypto → Binance */
+  /* Always try to fetch fresh data from API */
   if(a.exchange==='crypto'&&a.binSymbol){
     realCandles=await fetchBinanceKlines(a.binSymbol,binInterval,80);
   }
-  
-  /* Forex/Index → Twelve Data */
   if(!realCandles&&a.tdSymbol){
     realCandles=await fetchTwelveDataCandles(a,tdInterval);
     if(!realCandles){
@@ -840,14 +834,16 @@ async function selectAsset(i){
   
   if(realCandles&&realCandles.length>10){
     candleData=realCandles.slice(-80);
-    priceHistory=candleData.map(function(c){return c.c});
-    a.price=candleData[candleData.length-1].c;
+  }else if(_candleCache[a.symbol]&&_candleCache[a.symbol].length>5){
+    /* Fallback to cache only if API failed */
+    candleData=_candleCache[a.symbol];
   }else{
     await fetchTwelveDataPrice(a);
     generateCandleData();
   }
   
-  /* Save to cache */
+  priceHistory=candleData.map(function(c){return c.c});
+  a.price=candleData[candleData.length-1].c;
   _candleCache[a.symbol]=candleData;
   
   finnhubLoading=false;
