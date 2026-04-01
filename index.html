@@ -538,7 +538,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 
 <!-- MODALS -->
 <div class="modal-overlay" id="depositModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('depositModal')">✕</button><h3>⬆ ฝากเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ฝากผ่าน Crypto หรือ Demo (ทดสอบ)</p><form onsubmit="handleCryptoDeposit(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="depositAmount" min="5" step="0.01" required placeholder="ขั้นต่ำ $5"></div><div class="form-group"><label>เลือกช่องทางฝากเงิน</label><select class="form-input" id="depositCurrency" onchange="toggleDepositMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ต้องจ่ายจริง)</option><option value="">Crypto อัตโนมัติ (เลือกตอนจ่าย)</option><option value="USDT">USDT (TRC20/ERC20/BEP20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option><option value="USDC">USDC</option><option value="LTC">Litecoin (LTC)</option><option value="TRX">TRON (TRX)</option></select></div><button type="submit" class="btn btn-gold btn-full" id="depositBtn">📤 ส่งคำขอฝากเงิน</button></form><div id="depositResult" style="display:none;margin-top:16px;text-align:center"><p id="depositResultMsg" style="color:var(--green);font-weight:600;margin-bottom:8px">✅ สร้างลิงก์สำเร็จ!</p><a id="depositPayLink" href="#" target="_blank" class="btn btn-gold btn-full" style="margin-bottom:8px;display:none">💳 ไปหน้าชำระเงิน</a><p id="depositResultSub" style="color:var(--text3);font-size:.75rem">เงินจะเข้าบัญชีหลังจาก Admin ตรวจสอบ</p></div></div></div>
-<div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน (Crypto)</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น USDT ไปยัง Wallet ของคุณ</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>สกุลเงินที่ต้องการรับ</label><select class="form-input" id="withdrawCurrency"><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div><div class="form-group"><label>Wallet Address ปลายทาง</label><input type="text" class="form-input" id="withdrawWallet" required placeholder="วาง Wallet Address ที่นี่"></div><div class="form-group"><label>Network (ตรวจสอบให้ตรงกัน)</label><select class="form-input" id="withdrawNetwork"><option value="TRC20">TRC20 (Tron)</option><option value="BEP20">BEP20 (BSC)</option><option value="ERC20">ERC20 (Ethereum)</option><option value="BTC">Bitcoin</option></select></div><button type="submit" class="btn btn-gold btn-full" id="withdrawBtn">📤 ส่งคำขอถอนเงิน</button></form></div></div>
+<div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น Crypto หรือ Demo (ทดสอบ)</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>เลือกช่องทางถอนเงิน</label><select class="form-input" id="withdrawCurrency" onchange="toggleWithdrawMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ถอนจริง)</option><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div><div id="withdrawCryptoFields" style="display:none"><div class="form-group"><label>Wallet Address ปลายทาง</label><input type="text" class="form-input" id="withdrawWallet" placeholder="วาง Wallet Address ที่นี่"></div><div class="form-group"><label>Network (ตรวจสอบให้ตรงกัน)</label><select class="form-input" id="withdrawNetwork"><option value="TRC20">TRC20 (Tron)</option><option value="BEP20">BEP20 (BSC)</option><option value="ERC20">ERC20 (Ethereum)</option><option value="BTC">Bitcoin</option></select></div></div><button type="submit" class="btn btn-gold btn-full" id="withdrawBtn">📤 ส่งคำขอถอนเงิน</button></form></div></div>
 
 <!-- TRADE RESULT POPUP -->
 <div class="tv-result-overlay" id="resultOverlay">
@@ -1306,6 +1306,19 @@ async function handleCryptoDeposit(e){
 }
 
 /* ===== CRYPTO WITHDRAW ===== */
+function toggleWithdrawMethod(){
+  var sel=document.getElementById('withdrawCurrency').value;
+  var fields=document.getElementById('withdrawCryptoFields');
+  var walletInput=document.getElementById('withdrawWallet');
+  if(sel==='DEMO'){
+    fields.style.display='none';
+    if(walletInput)walletInput.removeAttribute('required');
+  }else{
+    fields.style.display='block';
+    if(walletInput)walletInput.setAttribute('required','');
+  }
+}
+
 async function handleCryptoWithdraw(e){
   e.preventDefault();
   var btn=document.getElementById('withdrawBtn');
@@ -1313,11 +1326,12 @@ async function handleCryptoWithdraw(e){
   
   var amt=parseFloat(document.getElementById('withdrawAmount').value);
   var currency=document.getElementById('withdrawCurrency').value;
-  var wallet=document.getElementById('withdrawWallet').value.trim();
-  var network=document.getElementById('withdrawNetwork').value;
+  var isDemo=(currency==='DEMO');
+  var wallet=isDemo?'DEMO':document.getElementById('withdrawWallet').value.trim();
+  var network=isDemo?'DEMO':document.getElementById('withdrawNetwork').value;
   
   if(!amt||amt<10){showToast('ขั้นต่ำ $10','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
-  if(!wallet){showToast('กรุณาใส่ Wallet Address','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
+  if(!isDemo&&!wallet){showToast('กรุณาใส่ Wallet Address','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
   
   try{
     await loadUserProfile();
@@ -1330,8 +1344,8 @@ async function handleCryptoWithdraw(e){
       user_id:currentUser.id,
       type:'withdrawal',
       amount:amt,
-      method:'crypto_'+currency,
-      account:wallet+' | '+network,
+      method:isDemo?'demo':'crypto_'+currency,
+      account:isDemo?'DEMO-'+Date.now():wallet+' | '+network,
       status:'pending',
       created_at:new Date().toISOString()
     });
