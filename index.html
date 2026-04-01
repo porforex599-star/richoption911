@@ -645,10 +645,10 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
 var ASSETS=[
-  {symbol:'BTC/USD',name:'Bitcoin',price:68100,color:'#f7931a',tdSymbol:'BTC/USD',fhSymbol:'BINANCE:BTCUSDT',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
+  {symbol:'AUD/USD',name:'Aussie/Dollar',price:0.6853,color:'#003f87',tdSymbol:'AUD/USD',fhSymbol:'OANDA:AUD_USD',binSymbol:null,exchange:'forex',decimals:4},
   {symbol:'ETH/USD',name:'Ethereum',price:2098,color:'#627eea',tdSymbol:'ETH/USD',fhSymbol:'BINANCE:ETHUSDT',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
   {symbol:'BNB/USD',name:'BNB',price:616,color:'#f0b90b',tdSymbol:'BNB/USD',fhSymbol:'BINANCE:BNBUSDT',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
-  {symbol:'XAU/USD',name:'Gold',price:4730,color:'#d4a437',tdSymbol:'XAU/USD',fhSymbol:'OANDA:XAU_USD',binSymbol:null,exchange:'commodity',decimals:2},
+  {symbol:'NZD/USD',name:'Kiwi/Dollar',price:0.5735,color:'#00247d',tdSymbol:'NZD/USD',fhSymbol:'OANDA:NZD_USD',binSymbol:null,exchange:'forex',decimals:4},
   {symbol:'EUR/USD',name:'Euro/Dollar',price:1.1590,color:'#0052b4',tdSymbol:'EUR/USD',fhSymbol:'OANDA:EUR_USD',binSymbol:null,exchange:'forex',decimals:4},
   {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3280,color:'#c8102e',tdSymbol:'GBP/USD',fhSymbol:'OANDA:GBP_USD',binSymbol:null,exchange:'forex',decimals:4},
   {symbol:'USD/JPY',name:'Dollar/Yen',price:158.00,color:'#bc002d',tdSymbol:'USD/JPY',fhSymbol:'OANDA:USD_JPY',binSymbol:null,exchange:'forex',decimals:3},
