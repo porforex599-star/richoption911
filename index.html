@@ -974,49 +974,62 @@ function startChart(){
       var t=activeTrades[0];
       var elapsed=(Date.now()-t.openTime)/1000;
       var remaining=t.duration-elapsed;
-      var progress=Math.min(1,elapsed/t.duration);
+      var progress=Math.min(1,elapsed/t.duration); /* 0→1 over entire trade */
       
       if(remaining>0){
         var targetWin=t.willWin;
         var goUp=(t.direction==='up'&&targetWin)||(t.direction==='down'&&!targetWin);
-        var vol=last.c*0.00012; /* small volatility per tick */
         
-        /* Random component: always present, creates green/red mix */
-        var rand=(Math.random()-0.5)*2*vol;
+        /* Use real API price as base when available */
+        var baseP=realtimeP&&realtimeP>0?realtimeP:last.c;
+        var vol=last.c*0.00008;
+        var gNoise=_gRand()*vol*0.5;
         
-        /* Bias component: invisible early, grows smoothly */
-        var bias=0;
-        var lastSec=Math.max(0,t.duration-remaining);
-        
-        if(remaining>5){
-          /* Most of the duration: pure random, tiny invisible bias */
-          bias=(goUp?1:-1)*vol*0.08;
-          /* 40% chance of counter-tick for natural look */
-          if(Math.random()<0.4)bias=-bias;
-        }else if(remaining>2){
-          /* Last 5-2 seconds: drift starts, still with counter-moves */
-          var str=(5-remaining)/3; /* 0→1 */
-          bias=(goUp?1:-1)*vol*(0.3+str*0.5);
-          /* 25% counter-move chance */
-          if(Math.random()<0.25)bias=-bias*0.5;
-        }else{
-          /* Last 2 seconds: clear direction, small counter-moves still */
-          bias=(goUp?1:-1)*vol*(1.2+Math.random()*0.5);
-          /* 15% tiny counter */
-          if(Math.random()<0.15)bias=-bias*0.3;
-        }
-        
-        nc=last.c+rand+bias;
-        
-        /* Last 0.6s: guarantee price is on correct side */
-        if(remaining<0.6){
-          var gap=last.c*0.00006;
-          if(targetWin){
-            if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+gap*(1+Math.random());
-            if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-gap*(1+Math.random());
+        /* ===== PHASE 1: First 70% — completely normal, follow API ===== */
+        if(progress<0.70){
+          /* Pure natural movement — no bias at all */
+          if(realtimeP&&realtimeP>0){
+            var diff=realtimeP-last.c;
+            nc=last.c+diff*0.12+gNoise;
           }else{
-            if(t.direction==='up'&&nc>=t.open_price)nc=t.open_price-gap*(1+Math.random());
-            if(t.direction==='down'&&nc<=t.open_price)nc=t.open_price+gap*(1+Math.random());
+            nc=last.c+gNoise;
+          }
+          
+        /* ===== PHASE 2: 70%-95% — smooth invisible drift ===== */
+        }else if(progress<0.95){
+          /* Gradually introduce bias, still looks natural */
+          var driftProgress=(progress-0.70)/0.25; /* 0→1 within this phase */
+          var biasStr=driftProgress*driftProgress*0.3; /* quadratic ease-in */
+          var bias=(goUp?1:-1)*vol*biasStr;
+          
+          /* Still follow API if available, but add drift */
+          if(realtimeP&&realtimeP>0){
+            var diff=realtimeP-last.c;
+            nc=last.c+diff*0.08*(1-driftProgress)+gNoise+bias;
+          }else{
+            nc=last.c+gNoise+bias;
+          }
+          
+          /* Counter-moves for realism (decreasing as we approach end) */
+          var counterChance=0.35*(1-driftProgress);
+          if(Math.random()<counterChance) nc=last.c+gNoise-bias*0.3;
+          
+        /* ===== PHASE 3: Last 5% — ensure correct side smoothly ===== */
+        }else{
+          var finalProgress=(progress-0.95)/0.05; /* 0→1 in last 5% */
+          var bias=(goUp?1:-1)*vol*(0.5+finalProgress*0.5);
+          nc=last.c+gNoise*0.3+bias;
+          
+          /* Guarantee correct side in very last moments */
+          if(finalProgress>0.7){
+            var gap=last.c*0.00004;
+            if(targetWin){
+              if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+gap*(0.5+Math.random()*0.5);
+              if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-gap*(0.5+Math.random()*0.5);
+            }else{
+              if(t.direction==='up'&&nc>=t.open_price)nc=t.open_price-gap*(0.5+Math.random()*0.5);
+              if(t.direction==='down'&&nc<=t.open_price)nc=t.open_price+gap*(0.5+Math.random()*0.5);
+            }
           }
         }
       }
