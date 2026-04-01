@@ -644,19 +644,19 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
 var ASSETS=[
-  {symbol:'BTC/USD',name:'Bitcoin',price:67450,color:'#f7931a',tdSymbol:'BTC/USD',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
-  {symbol:'ETH/USD',name:'Ethereum',price:3520,color:'#627eea',tdSymbol:'ETH/USD',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
-  {symbol:'BNB/USD',name:'BNB',price:608,color:'#f0b90b',tdSymbol:'BNB/USD',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
-  {symbol:'XAU/USD',name:'Gold',price:2345,color:'#d4a437',tdSymbol:'XAU/USD',binSymbol:null,exchange:'commodity',decimals:2},
-  {symbol:'EUR/USD',name:'Euro/Dollar',price:1.0862,color:'#0052b4',tdSymbol:'EUR/USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.2643,color:'#c8102e',tdSymbol:'GBP/USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'USD/JPY',name:'Dollar/Yen',price:154.32,color:'#bc002d',tdSymbol:'USD/JPY',binSymbol:null,exchange:'forex',decimals:3},
-  {symbol:'SPX500',name:'S&P 500',price:5248,color:'#00c805',tdSymbol:'SPX',binSymbol:null,exchange:'index',decimals:2},
-  {symbol:'NAS100',name:'NASDAQ 100',price:18420,color:'#0072c6',tdSymbol:'IXIC',binSymbol:null,exchange:'index',decimals:2}
+  {symbol:'BTC/USD',name:'Bitcoin',price:68100,color:'#f7931a',tdSymbol:'BTC/USD',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
+  {symbol:'ETH/USD',name:'Ethereum',price:2098,color:'#627eea',tdSymbol:'ETH/USD',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
+  {symbol:'BNB/USD',name:'BNB',price:616,color:'#f0b90b',tdSymbol:'BNB/USD',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
+  {symbol:'XAU/USD',name:'Gold',price:4560,color:'#d4a437',tdSymbol:'XAU/USD',binSymbol:null,exchange:'commodity',decimals:2},
+  {symbol:'EUR/USD',name:'Euro/Dollar',price:1.1500,color:'#0052b4',tdSymbol:'EUR/USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3235,color:'#c8102e',tdSymbol:'GBP/USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'USD/JPY',name:'Dollar/Yen',price:160.00,color:'#bc002d',tdSymbol:'USD/JPY',binSymbol:null,exchange:'forex',decimals:3},
+  {symbol:'SPX500',name:'S&P 500',price:6529,color:'#00c805',tdSymbol:'SPX',binSymbol:null,exchange:'index',decimals:2},
+  {symbol:'NAS100',name:'NASDAQ 100',price:20795,color:'#0072c6',tdSymbol:'IXIC',binSymbol:null,exchange:'index',decimals:2}
 ];
 
 /* ===== TWELVE DATA API (Forex, Gold, Index) ===== */
-var TD_KEY='faf303613acf44ec8b7fd40e9daf12b1';
+var TD_KEY='91ff9418c8ec4aad9a875ecb7b61c138';
 var tdLastPrices={};
 var tdWs=null;
 var tdConnected=false;
@@ -877,8 +877,8 @@ function generateCandleData(){
       /* Mean reversion: pulls price back toward basePrice */
       var meanRev=(basePrice-price)/basePrice*0.008;
       price=price*(1+mom+drift+meanRev);
-      /* Hard clamp: never exceed ±4% from base */
-      price=Math.max(basePrice*0.96,Math.min(basePrice*1.04,price));
+      /* Hard clamp: never exceed ±3% from base */
+      price=Math.max(basePrice*0.97,Math.min(basePrice*1.03,price));
       if(price>high)high=price;
       if(price<low)low=price;
     }
@@ -938,6 +938,8 @@ function startChart(){
   var _tTrend=0;
   var _tTrendN=0;
   var _tTrendMax=40+Math.floor(Math.random()*60);
+  /* Anchor price: fixed reference point for mean reversion (won't drift) */
+  var _anchorPrice=ASSETS[selectedAsset].price;
   
   function tick(){
     var last=candleData[candleData.length-1];
@@ -1015,6 +1017,8 @@ function startChart(){
       }
       
       if(realtimeP&&realtimeP>0){
+        /* Update anchor when we get real API data */
+        _anchorPrice=realtimeP;
         /* Smoothly approach real price with Gaussian jitter */
         var diff=realtimeP-last.c;
         var gNoise=_gRand()*last.c*baseVol*0.3;
@@ -1026,10 +1030,10 @@ function startChart(){
         var gNoise=_gRand()*last.c*baseVol*0.5;
         _tMom=_tMom*0.82+gNoise*0.18;
         var drift=_tTrend*last.c*baseVol*0.08;
-        var meanRev=(a.price-last.c)/a.price*0.0005*last.c;
+        var meanRev=(_anchorPrice-last.c)/_anchorPrice*0.002*last.c;
         nc=last.c+_tMom+drift+meanRev;
-        /* Hard clamp: stay within ±4% of asset base price */
-        nc=Math.max(a.price*0.96,Math.min(a.price*1.04,nc));
+        /* Hard clamp: stay within ±3% of anchor price */
+        nc=Math.max(_anchorPrice*0.97,Math.min(_anchorPrice*1.03,nc));
       }
     }
     
