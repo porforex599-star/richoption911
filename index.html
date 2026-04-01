@@ -1004,16 +1004,16 @@ function startChart(){
         var targetWin=t.willWin;
         var goUp=(t.direction==='up'&&targetWin)||(t.direction==='down'&&!targetWin);
         
-        /* Tiny target: just 15% of normal tick volatility above/below entry */
-        var tickVol=last.c*0.00006;
+        /* Volatility for trade movement — Tick mode needs more visible swings */
+        var tickVol=currentTimeframe===0?last.c*0.00012:last.c*0.00006;
         var targetGap=tickVol*0.15;/* very small — just barely past the entry line */
-        var gNoise=_gRand()*tickVol*0.4;
+        var gNoise=_gRand()*tickVol*0.5;
         
         /* ===== PHASE 1: First 70% — completely normal, follow API ===== */
         if(progress<0.70){
           if(realtimeP&&realtimeP>0){
             var diff=realtimeP-last.c;
-            var speed=currentTimeframe===0?0.22:0.12;
+            var speed=currentTimeframe===0?0.18:0.12;
             nc=last.c+diff*speed+gNoise;
           }else{
             nc=last.c+gNoise;
@@ -1067,9 +1067,9 @@ function startChart(){
       if(realtimeP&&realtimeP>0){
         var diff=realtimeP-last.c;
         if(currentTimeframe===0){
-          /* Tick mode: approach API fast + add micro-noise for excitement */
-          var microNoise=_gRand()*last.c*0.000015;
-          nc=last.c+diff*0.25+microNoise;
+          /* Tick mode: follow API + add visible movement */
+          var microNoise=_gRand()*last.c*0.00008;
+          nc=last.c+diff*0.18+microNoise;
         }else{
           /* Normal modes: smooth approach */
           var gNoise=_gRand()*last.c*0.000025;
@@ -1078,8 +1078,8 @@ function startChart(){
       }else{
         /* No API — Gaussian micro-movements */
         if(currentTimeframe===0){
-          /* Tick: slightly more active movement */
-          var microVol=last.c*0.00005;
+          /* Tick: more active visible movement */
+          var microVol=last.c*0.00012;
           nc=last.c+_gRand()*microVol;
         }else{
           var microVol=last.c*0.00008;
@@ -1092,9 +1092,19 @@ function startChart(){
     var elapsedCandle=now-candleStartTime;
     
     if(elapsedCandle<candleIntervalMs){
+      /* Add intra-candle micro-volatility for realistic body/wicks */
+      if(currentTimeframe===0){
+        var microSwing=last.c*0.00012;/* creates visible body within tick candle */
+        var swing=_gRand()*microSwing;
+        var tickHigh=nc+Math.abs(swing*0.6);
+        var tickLow=nc-Math.abs(swing*0.4);
+        if(tickHigh>last.h)last.h=tickHigh;
+        if(tickLow<last.l)last.l=tickLow;
+      }else{
+        if(nc>last.h)last.h=nc;
+        if(nc<last.l)last.l=nc;
+      }
       last.c=nc;
-      if(nc>last.h)last.h=nc;
-      if(nc<last.l)last.l=nc;
       last.v+=Math.floor(Math.random()*10+1);
     }else{
       candleStartTime=now;
