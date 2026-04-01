@@ -644,15 +644,15 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
 var ASSETS=[
-  {symbol:'BTC/USD',name:'Bitcoin',price:68100,_basePrice:68100,color:'#f7931a',tdSymbol:'BTC/USD',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
-  {symbol:'ETH/USD',name:'Ethereum',price:2098,_basePrice:2098,color:'#627eea',tdSymbol:'ETH/USD',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
-  {symbol:'BNB/USD',name:'BNB',price:616,_basePrice:616,color:'#f0b90b',tdSymbol:'BNB/USD',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
-  {symbol:'XAU/USD',name:'Gold',price:4560,_basePrice:4560,color:'#d4a437',tdSymbol:'XAU/USD',binSymbol:null,exchange:'commodity',decimals:2},
-  {symbol:'EUR/USD',name:'Euro/Dollar',price:1.1500,_basePrice:1.1500,color:'#0052b4',tdSymbol:'EUR/USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3235,_basePrice:1.3235,color:'#c8102e',tdSymbol:'GBP/USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'USD/JPY',name:'Dollar/Yen',price:160.00,_basePrice:160.00,color:'#bc002d',tdSymbol:'USD/JPY',binSymbol:null,exchange:'forex',decimals:3},
-  {symbol:'SPX500',name:'S&P 500',price:6529,_basePrice:6529,color:'#00c805',tdSymbol:'SPX',binSymbol:null,exchange:'index',decimals:2},
-  {symbol:'NAS100',name:'NASDAQ 100',price:20795,_basePrice:20795,color:'#0072c6',tdSymbol:'IXIC',binSymbol:null,exchange:'index',decimals:2}
+  {symbol:'BTC/USD',name:'Bitcoin',price:68100,color:'#f7931a',tdSymbol:'BTC/USD',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
+  {symbol:'ETH/USD',name:'Ethereum',price:2098,color:'#627eea',tdSymbol:'ETH/USD',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
+  {symbol:'BNB/USD',name:'BNB',price:616,color:'#f0b90b',tdSymbol:'BNB/USD',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
+  {symbol:'XAU/USD',name:'Gold',price:4560,color:'#d4a437',tdSymbol:'XAU/USD',binSymbol:null,exchange:'commodity',decimals:2},
+  {symbol:'EUR/USD',name:'Euro/Dollar',price:1.0862,color:'#0052b4',tdSymbol:'EUR/USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3235,color:'#c8102e',tdSymbol:'GBP/USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'USD/JPY',name:'Dollar/Yen',price:160.00,color:'#bc002d',tdSymbol:'USD/JPY',binSymbol:null,exchange:'forex',decimals:3},
+  {symbol:'SPX500',name:'S&P 500',price:6529,color:'#00c805',tdSymbol:'SPX',binSymbol:null,exchange:'index',decimals:2},
+  {symbol:'NAS100',name:'NASDAQ 100',price:20795,color:'#0072c6',tdSymbol:'IXIC',binSymbol:null,exchange:'index',decimals:2}
 ];
 
 /* ===== TWELVE DATA API (Forex, Gold, Index) ===== */
@@ -672,15 +672,8 @@ async function fetchTwelveDataCandles(asset,interval){
       var candles=d.values.reverse().map(function(v){
         return {o:parseFloat(v.open),h:parseFloat(v.high),l:parseFloat(v.low),c:parseFloat(v.close),v:parseInt(v.volume)||Math.floor(Math.random()*1000)};
       });
-      /* Sanity check: verify last candle close is within reasonable range of base price */
-      var lastClose=candles[candles.length-1].c;
-      var base=asset._basePrice||asset.price;
-      if(!_isPriceSane(lastClose,base)){
-        console.warn('TwelveData candles REJECTED — price',lastClose,'too far from base',base,'for',asset.symbol);
-        return null;
-      }
-      asset.price=lastClose;
-      console.log('TwelveData candles:',asset.symbol,candles.length,'price:',lastClose);
+      asset.price=candles[candles.length-1].c;
+      console.log('TwelveData candles:',asset.symbol,candles.length);
       return candles;
     }
     console.warn('TwelveData no data:',asset.symbol,d.status,d.message||'');
@@ -694,17 +687,7 @@ async function fetchTwelveDataPrice(asset){
   try{
     var r=await fetch(url);
     var d=await r.json();
-    if(d.price){
-      var p=parseFloat(d.price);
-      var base=asset._basePrice||asset.price;
-      if(_isPriceSane(p,base)){
-        asset.price=p;
-        return p;
-      }else{
-        console.warn('TwelveData price REJECTED:',p,'for',asset.symbol,'base:',base);
-        return null;
-      }
-    }
+    if(d.price){asset.price=parseFloat(d.price);return asset.price;}
     return null;
   }catch(err){return null;}
 }
@@ -772,24 +755,16 @@ async function fetchBinanceKlines(symbol,interval,limit){
 }
 
 /* ===== GET REALTIME PRICE (Binance for crypto, TwelveData for rest) ===== */
-/* Sanity check: reject prices that deviate too far from base */
-function _isPriceSane(apiPrice,basePrice){
-  if(!apiPrice||apiPrice<=0||!basePrice||basePrice<=0)return false;
-  var ratio=apiPrice/basePrice;
-  return ratio>0.5&&ratio<2.0; /* accept within 50%-200% of base */
-}
-
 function getRealtimePrice(){
   var a=ASSETS[selectedAsset];
-  var base=a._basePrice||a.price;
   /* Crypto → Binance */
   if(a.exchange==='crypto'&&a.binSymbol){
     var bp=binanceLastPrices[a.binSymbol];
-    if(bp&&bp>0&&_isPriceSane(bp,base))return bp;
+    if(bp&&bp>0)return bp;
   }
   /* Forex/Gold/Index → Twelve Data */
   var tp=tdLastPrices[a.tdSymbol];
-  if(tp&&tp>0&&_isPriceSane(tp,base))return tp;
+  if(tp&&tp>0)return tp;
   return null;
 }
 function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(p==='dashboard')loadDashboard();if(p==='trading')initTrading();if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
@@ -859,68 +834,24 @@ async function selectAsset(i){
   updatePriceDisplay();startChart();generateOrderBook();
 }
 
-/* ===== REALISTIC CANDLE GENERATOR ===== */
 function _gRand(){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
-
 function generateCandleData(){
-  candleData=[];
-  var a=ASSETS[selectedAsset];
-  var basePrice=a.price; /* anchor price — never drift far from this */
-  var price=basePrice;
-  
-  /* Per-asset volatility per candle (% of price) */
-  var volMap={crypto:0.0015,commodity:0.0008,forex:0.0003,index:0.0006};
-  var vol=volMap[a.exchange]||0.001;
-  
-  /* State for smooth walk */
-  var mom=0;
-  var trend=0;
-  var trendLife=0;
-  var trendMax=8+Math.floor(Math.random()*15);
-  
+  candleData=[];var a=ASSETS[selectedAsset],base=a.price;
+  var mom=0,trend=0,tLife=0,tMax=10+Math.floor(Math.random()*15);
   for(var k=0;k<80;k++){
-    /* Update trend phase every N candles */
-    trendLife++;
-    if(trendLife>trendMax){
-      trendLife=0;
-      trendMax=6+Math.floor(Math.random()*20);
-      var r=Math.random();
-      if(r<0.45) trend=(Math.random()-0.5)*0.2;       /* sideways */
-      else if(r<0.8) trend=(Math.random()-0.5)*0.6;   /* mild trend */
-      else trend=(Math.random()>0.5?1:-1)*0.8;         /* strong move */
-    }
-    
-    var open=price;
-    var high=open,low=open,close=open;
-    
-    /* Simulate 15-25 micro ticks within this candle */
-    var ticks=15+Math.floor(Math.random()*10);
+    tLife++;if(tLife>tMax){tLife=0;tMax=8+Math.floor(Math.random()*20);var r=Math.random();trend=r<0.4?(Math.random()-0.5)*0.2:r<0.8?(Math.random()-0.5)*0.5:(Math.random()>0.5?1:-1)*0.7;}
+    var o=base,h=o,l=o,c=o;
+    var ticks=12+Math.floor(Math.random()*10);
     for(var t=0;t<ticks;t++){
-      var noise=_gRand()*vol*0.25;
+      var noise=_gRand()*base*0.001;
       mom=mom*0.7+noise*0.3;
-      var drift=trend*vol*0.08;
-      /* Mean reversion: pulls price back toward basePrice */
-      var meanRev=(basePrice-price)/basePrice*0.008;
-      price=price*(1+mom+drift+meanRev);
-      /* Hard clamp: never exceed ±3% from base */
-      price=Math.max(basePrice*0.97,Math.min(basePrice*1.03,price));
-      if(price>high)high=price;
-      if(price<low)low=price;
+      var drift=trend*base*0.0001;
+      var rev=(a.price-base)/a.price*0.005*base;
+      base=base+mom+drift+rev;
+      if(base>h)h=base;if(base<l)l=base;
     }
-    close=price;
-    
-    /* Ensure wick proportions are realistic */
-    var range=high-low;
-    var body=Math.abs(close-open);
-    if(range>0&&body<range*0.1){
-      /* Doji with huge wicks — compress wicks */
-      var maxWick=Math.max(body*3,basePrice*vol*0.3);
-      var mid=(open+close)/2;
-      high=Math.min(high,mid+maxWick);
-      low=Math.max(low,mid-maxWick);
-    }
-    
-    candleData.push({o:open,h:high,l:low,c:close,v:Math.floor(200+Math.random()*1500)});
+    c=base;
+    candleData.push({o:o,h:h,l:l,c:c,v:Math.floor(200+Math.random()*1500)});
   }
   priceHistory=candleData.map(function(c){return c.c});
 }
@@ -937,16 +868,10 @@ var candleStartTime=0;
 var candleIntervalMs=5000; /* default 5s per candle for smooth display */
 
 function getCandleInterval(){
-  /* Real timeframe intervals in milliseconds */
-  var map={
-    '1':60000,       /* 1m = 60 seconds */
-    '5':300000,      /* 5m = 5 minutes */
-    '15':900000,     /* 15m = 15 minutes */
-    '60':3600000,    /* 1H = 1 hour */
-    '240':14400000,  /* 4H = 4 hours */
-    '1440':86400000  /* 1D = 1 day */
-  };
-  return map[currentTimeframe.toString()]||60000;
+  /* Map timeframe to candle duration in ms for smooth display */
+  /* Real timeframes: 1m=60s, 5m=300s, etc. but we show candles faster for smooth UX */
+  var map={'1':3000,'5':5000,'15':8000,'60':12000,'240':15000,'1440':20000};
+  return map[currentTimeframe.toString()]||5000;
 }
 
 function startChart(){
@@ -958,107 +883,71 @@ function startChart(){
   candleIntervalMs=getCandleInterval();
   candleStartTime=Date.now();
   
-  /* Smooth momentum state for live ticks */
-  var _tMom=0;
-  var _tTrend=0;
-  var _tTrendN=0;
-  var _tTrendMax=40+Math.floor(Math.random()*60);
-  /* Anchor price: fixed reference point for mean reversion (won't drift) */
-  var _anchorPrice=ASSETS[selectedAsset].price;
-  
   function tick(){
     var last=candleData[candleData.length-1];
     if(!last)return;
     
+    /* Base price from API or last close */
     var realtimeP=getRealtimePrice();
     var nc=last.c;
-    var a=ASSETS[selectedAsset];
-    /* Per-asset tick volatility — much smaller than candle vol */
-    var bvMap={crypto:0.00008,commodity:0.00004,forex:0.000015,index:0.00003};
-    var baseVol=bvMap[a.exchange]||0.00006;
     
     /* ===== SMOOTH REALISTIC PRICE MOVEMENT ===== */
     if(activeTrades.length>0){
       var t=activeTrades[0];
       var elapsed=(Date.now()-t.openTime)/1000;
       var remaining=t.duration-elapsed;
+      var progress=Math.min(1,elapsed/t.duration);
       
       if(remaining>0){
         var targetWin=t.willWin;
         var goUp=(t.direction==='up'&&targetWin)||(t.direction==='down'&&!targetWin);
-        var vol=last.c*baseVol;
+        var vol=last.c*0.00012; /* small volatility per tick */
         
-        /* Gaussian noise for natural feel */
-        var noise=_gRand()*vol*0.6;
-        _tMom=_tMom*0.85+noise*0.15;
+        /* Random component: always present, creates green/red mix */
+        var rand=(Math.random()-0.5)*2*vol;
         
-        /* Gradual bias that grows with trade progress */
+        /* Bias component: invisible early, grows smoothly */
         var bias=0;
-        var phasePct=elapsed/t.duration;
+        var lastSec=Math.max(0,t.duration-remaining);
         
-        if(remaining>t.duration*0.3){
-          /* First 70%: very subtle drift, lots of oscillation */
-          bias=(goUp?1:-1)*vol*0.03*phasePct;
-          if(Math.random()<0.45)bias=-bias*0.7;
-        }else if(remaining>t.duration*0.1){
-          /* 70-90%: drift becomes noticeable */
-          var str=(phasePct-0.7)/0.2;
-          bias=(goUp?1:-1)*vol*(0.08+str*0.25);
-          if(Math.random()<0.30)bias=-bias*0.4;
-        }else if(remaining>1.5){
-          /* Last portion before final 1.5s */
-          bias=(goUp?1:-1)*vol*(0.4+Math.random()*0.2);
-          if(Math.random()<0.20)bias=-bias*0.25;
+        if(remaining>5){
+          /* Most of the duration: pure random, tiny invisible bias */
+          bias=(goUp?1:-1)*vol*0.08;
+          /* 40% chance of counter-tick for natural look */
+          if(Math.random()<0.4)bias=-bias;
+        }else if(remaining>2){
+          /* Last 5-2 seconds: drift starts, still with counter-moves */
+          var str=(5-remaining)/3; /* 0→1 */
+          bias=(goUp?1:-1)*vol*(0.3+str*0.5);
+          /* 25% counter-move chance */
+          if(Math.random()<0.25)bias=-bias*0.5;
         }else{
-          /* Final 1.5s: decisive */
-          bias=(goUp?1:-1)*vol*(0.7+Math.random()*0.3);
-          if(Math.random()<0.10)bias=-bias*0.15;
+          /* Last 2 seconds: clear direction, small counter-moves still */
+          bias=(goUp?1:-1)*vol*(1.2+Math.random()*0.5);
+          /* 15% tiny counter */
+          if(Math.random()<0.15)bias=-bias*0.3;
         }
         
-        nc=last.c+_tMom+bias;
+        nc=last.c+rand+bias;
         
-        /* Last 0.5s: guarantee correct side */
-        if(remaining<0.5){
-          var gap=last.c*0.00004;
+        /* Last 0.6s: guarantee price is on correct side */
+        if(remaining<0.6){
+          var gap=last.c*0.00006;
           if(targetWin){
-            if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+gap*(0.8+Math.random()*0.5);
-            if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-gap*(0.8+Math.random()*0.5);
+            if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+gap*(1+Math.random());
+            if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-gap*(1+Math.random());
           }else{
-            if(t.direction==='up'&&nc>=t.open_price)nc=t.open_price-gap*(0.8+Math.random()*0.5);
-            if(t.direction==='down'&&nc<=t.open_price)nc=t.open_price+gap*(0.8+Math.random()*0.5);
+            if(t.direction==='up'&&nc>=t.open_price)nc=t.open_price-gap*(1+Math.random());
+            if(t.direction==='down'&&nc<=t.open_price)nc=t.open_price+gap*(1+Math.random());
           }
         }
       }
     }else{
-      /* No active trade — natural movement with micro-trends */
-      _tTrendN++;
-      if(_tTrendN>_tTrendMax){
-        _tTrendN=0;
-        _tTrendMax=30+Math.floor(Math.random()*80);
-        var r=Math.random();
-        if(r<0.5)_tTrend=(Math.random()-0.5)*0.15;
-        else if(r<0.8)_tTrend=(Math.random()-0.5)*0.4;
-        else _tTrend=(Math.random()>0.5?1:-1)*0.6;
-      }
-      
+      /* No active trade */
       if(realtimeP&&realtimeP>0){
-        /* Update anchor when we get real API data */
-        _anchorPrice=realtimeP;
-        /* Smoothly approach real price with Gaussian jitter */
-        var diff=realtimeP-last.c;
-        var gNoise=_gRand()*last.c*baseVol*0.3;
-        var step=diff*0.12+gNoise;
-        _tMom=_tMom*0.8+step*0.2;
-        nc=last.c+_tMom;
+        nc=realtimeP;
       }else{
-        /* Gaussian random walk + momentum + micro-trends + mean reversion */
-        var gNoise=_gRand()*last.c*baseVol*0.5;
-        _tMom=_tMom*0.82+gNoise*0.18;
-        var drift=_tTrend*last.c*baseVol*0.08;
-        var meanRev=(_anchorPrice-last.c)/_anchorPrice*0.002*last.c;
-        nc=last.c+_tMom+drift+meanRev;
-        /* Hard clamp: stay within ±3% of anchor price */
-        nc=Math.max(_anchorPrice*0.97,Math.min(_anchorPrice*1.03,nc));
+        nc=last.c+(Math.random()-0.5)*last.c*0.0002;
       }
     }
     
@@ -1084,7 +973,7 @@ function startChart(){
     updateOrderBookPrices(nc);
     
     chartAnimFrame=requestAnimationFrame(function(){
-      setTimeout(function(){requestAnimationFrame(tick)},250);
+      setTimeout(function(){requestAnimationFrame(tick)},400);
     });
   }
   tick();
@@ -1104,21 +993,15 @@ var gap=maxCW-cw;
 var totalW=maxCW*len;
 var startX=padL+chartW-totalW;
 /* grid */
-ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=0.5;ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='rgba(255,255,255,.3)';var steps=6;for(var i=0;i<=steps;i++){var y=padT+chartH*i/steps;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+5,y);ctx.stroke();var pv=mx-rng*i/steps;ctx.fillText(pv.toFixed(dp),w-padR+8,y+4);}
+ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='rgba(255,255,255,.25)';var steps=6;for(var i=0;i<=steps;i++){var y=padT+chartH*i/steps;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+5,y);ctx.stroke();var pv=mx-rng*i/steps;ctx.fillText(pv.toFixed(dp),w-padR+8,y+4);}
 /* volume bars */
-var maxV=Math.max.apply(null,d.map(function(c){return c.v}))||1;var volH=chartH*0.12;for(var i=0;i<len;i++){var x=startX+i*maxCW+gap/2;var vH=(d[i].v/maxV)*volH;var bull=d[i].c>=d[i].o;ctx.fillStyle=bull?'rgba(72,187,120,.15)':'rgba(252,81,133,.15)';ctx.fillRect(x,padT+chartH-vH,cw,vH);}
+var maxV=Math.max.apply(null,d.map(function(c){return c.v}))||1;var volH=chartH*0.12;for(var i=0;i<len;i++){var x=startX+i*maxCW+gap/2;var vH=(d[i].v/maxV)*volH;var bull=d[i].c>=d[i].o;ctx.fillStyle=bull?'rgba(56,161,105,.1)':'rgba(229,62,62,.1)';ctx.fillRect(x,padT+chartH-vH,cw,vH);}
 /* candles */
 for(var i=0;i<len;i++){var c=d[i],x=startX+i*maxCW+gap/2,bull=c.c>=c.o;var yO=padT+(1-(c.o-mn)/rng)*chartH,yC=padT+(1-(c.c-mn)/rng)*chartH,yH=padT+(1-(c.h-mn)/rng)*chartH,yL=padT+(1-(c.l-mn)/rng)*chartH;
 /* wick */
-var wickColor=bull?'#48bb78':'#fc5185';
-ctx.strokeStyle=wickColor;ctx.lineWidth=1.2;var cx=x+cw/2;ctx.beginPath();ctx.moveTo(cx,yH);ctx.lineTo(cx,yL);ctx.stroke();
-/* body with gradient */
-var bodyTop=Math.min(yO,yC),bodyH=Math.max(Math.abs(yC-yO),1.8);
-if(bull){var grd=ctx.createLinearGradient(x,bodyTop,x,bodyTop+bodyH);grd.addColorStop(0,'#68d391');grd.addColorStop(1,'#38a169');ctx.fillStyle=grd;}
-else{var grd=ctx.createLinearGradient(x,bodyTop,x,bodyTop+bodyH);grd.addColorStop(0,'#fc5185');grd.addColorStop(1,'#e53e3e');ctx.fillStyle=grd;}
-/* rounded rect for body */
-var r2=Math.min(2,cw/4,bodyH/4);
-ctx.beginPath();ctx.moveTo(x+r2,bodyTop);ctx.lineTo(x+cw-r2,bodyTop);ctx.arcTo(x+cw,bodyTop,x+cw,bodyTop+r2,r2);ctx.lineTo(x+cw,bodyTop+bodyH-r2);ctx.arcTo(x+cw,bodyTop+bodyH,x+cw-r2,bodyTop+bodyH,r2);ctx.lineTo(x+r2,bodyTop+bodyH);ctx.arcTo(x,bodyTop+bodyH,x,bodyTop+bodyH-r2,r2);ctx.lineTo(x,bodyTop+r2);ctx.arcTo(x,bodyTop,x+r2,bodyTop,r2);ctx.fill();}
+ctx.strokeStyle=bull?'#38a169':'#e53e3e';ctx.lineWidth=1.5;var cx=x+cw/2;ctx.beginPath();ctx.moveTo(cx,yH);ctx.lineTo(cx,yL);ctx.stroke();
+/* body */
+var bodyTop=Math.min(yO,yC),bodyH=Math.max(Math.abs(yC-yO),1.5);ctx.fillStyle=bull?'#38a169':'#e53e3e';ctx.fillRect(x,bodyTop,cw,bodyH);}
 /* entry lines for active trades */
 for(var ti=0;ti<activeTrades.length;ti++){var t=activeTrades[ti];if(t.assetIndex===selectedAsset){var yEntry=padT+(1-(t.open_price-mn)/rng)*chartH;ctx.setLineDash([6,4]);ctx.strokeStyle=t.direction==='up'?'rgba(56,161,105,.5)':'rgba(229,62,62,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,yEntry);ctx.lineTo(w-padR,yEntry);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=t.direction==='up'?'rgba(56,161,105,.7)':'rgba(229,62,62,.7)';ctx.font='bold 9px JetBrains Mono,monospace';ctx.fillText((t.direction==='up'?'▲ BUY ':'▼ SELL ')+t.open_price.toFixed(2),padL+4,yEntry-4);}}
 /* current price line */
