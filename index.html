@@ -848,10 +848,16 @@ var candleStartTime=0;
 var candleIntervalMs=5000; /* default 5s per candle for smooth display */
 
 function getCandleInterval(){
-  /* Map timeframe to candle duration in ms for smooth display */
-  /* Real timeframes: 1m=60s, 5m=300s, etc. but we show candles faster for smooth UX */
-  var map={'1':3000,'5':5000,'15':8000,'60':12000,'240':15000,'1440':20000};
-  return map[currentTimeframe.toString()]||5000;
+  /* Real timeframe intervals in milliseconds */
+  var map={
+    '1':60000,       /* 1m = 60 seconds */
+    '5':300000,      /* 5m = 5 minutes */
+    '15':900000,     /* 15m = 15 minutes */
+    '60':3600000,    /* 1H = 1 hour */
+    '240':14400000,  /* 4H = 4 hours */
+    '1440':86400000  /* 1D = 1 day */
+  };
+  return map[currentTimeframe.toString()]||60000;
 }
 
 function startChart(){
@@ -923,11 +929,16 @@ function startChart(){
         }
       }
     }else{
-      /* No active trade */
+      /* No active trade — follow real price with smooth micro-movements */
       if(realtimeP&&realtimeP>0){
-        nc=realtimeP;
+        /* Smoothly approach real price */
+        var diff=realtimeP-last.c;
+        var step=diff*0.15+(Math.random()-0.5)*last.c*0.00008;
+        nc=last.c+step;
       }else{
-        nc=last.c+(Math.random()-0.5)*last.c*0.0002;
+        /* Random walk when no API price */
+        var microVol=last.c*0.00015;
+        nc=last.c+(Math.random()-0.5)*2*microVol;
       }
     }
     
@@ -953,7 +964,7 @@ function startChart(){
     updateOrderBookPrices(nc);
     
     chartAnimFrame=requestAnimationFrame(function(){
-      setTimeout(function(){requestAnimationFrame(tick)},400);
+      setTimeout(function(){requestAnimationFrame(tick)},250);
     });
   }
   tick();
@@ -973,15 +984,21 @@ var gap=maxCW-cw;
 var totalW=maxCW*len;
 var startX=padL+chartW-totalW;
 /* grid */
-ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='rgba(255,255,255,.25)';var steps=6;for(var i=0;i<=steps;i++){var y=padT+chartH*i/steps;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+5,y);ctx.stroke();var pv=mx-rng*i/steps;ctx.fillText(pv.toFixed(dp),w-padR+8,y+4);}
+ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=0.5;ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='rgba(255,255,255,.3)';var steps=6;for(var i=0;i<=steps;i++){var y=padT+chartH*i/steps;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+5,y);ctx.stroke();var pv=mx-rng*i/steps;ctx.fillText(pv.toFixed(dp),w-padR+8,y+4);}
 /* volume bars */
-var maxV=Math.max.apply(null,d.map(function(c){return c.v}))||1;var volH=chartH*0.12;for(var i=0;i<len;i++){var x=startX+i*maxCW+gap/2;var vH=(d[i].v/maxV)*volH;var bull=d[i].c>=d[i].o;ctx.fillStyle=bull?'rgba(56,161,105,.1)':'rgba(229,62,62,.1)';ctx.fillRect(x,padT+chartH-vH,cw,vH);}
+var maxV=Math.max.apply(null,d.map(function(c){return c.v}))||1;var volH=chartH*0.12;for(var i=0;i<len;i++){var x=startX+i*maxCW+gap/2;var vH=(d[i].v/maxV)*volH;var bull=d[i].c>=d[i].o;ctx.fillStyle=bull?'rgba(72,187,120,.15)':'rgba(252,81,133,.15)';ctx.fillRect(x,padT+chartH-vH,cw,vH);}
 /* candles */
 for(var i=0;i<len;i++){var c=d[i],x=startX+i*maxCW+gap/2,bull=c.c>=c.o;var yO=padT+(1-(c.o-mn)/rng)*chartH,yC=padT+(1-(c.c-mn)/rng)*chartH,yH=padT+(1-(c.h-mn)/rng)*chartH,yL=padT+(1-(c.l-mn)/rng)*chartH;
 /* wick */
-ctx.strokeStyle=bull?'#38a169':'#e53e3e';ctx.lineWidth=1.5;var cx=x+cw/2;ctx.beginPath();ctx.moveTo(cx,yH);ctx.lineTo(cx,yL);ctx.stroke();
-/* body */
-var bodyTop=Math.min(yO,yC),bodyH=Math.max(Math.abs(yC-yO),1.5);ctx.fillStyle=bull?'#38a169':'#e53e3e';ctx.fillRect(x,bodyTop,cw,bodyH);}
+var wickColor=bull?'#48bb78':'#fc5185';
+ctx.strokeStyle=wickColor;ctx.lineWidth=1.2;var cx=x+cw/2;ctx.beginPath();ctx.moveTo(cx,yH);ctx.lineTo(cx,yL);ctx.stroke();
+/* body with gradient */
+var bodyTop=Math.min(yO,yC),bodyH=Math.max(Math.abs(yC-yO),1.8);
+if(bull){var grd=ctx.createLinearGradient(x,bodyTop,x,bodyTop+bodyH);grd.addColorStop(0,'#68d391');grd.addColorStop(1,'#38a169');ctx.fillStyle=grd;}
+else{var grd=ctx.createLinearGradient(x,bodyTop,x,bodyTop+bodyH);grd.addColorStop(0,'#fc5185');grd.addColorStop(1,'#e53e3e');ctx.fillStyle=grd;}
+/* rounded rect for body */
+var r2=Math.min(2,cw/4,bodyH/4);
+ctx.beginPath();ctx.moveTo(x+r2,bodyTop);ctx.lineTo(x+cw-r2,bodyTop);ctx.arcTo(x+cw,bodyTop,x+cw,bodyTop+r2,r2);ctx.lineTo(x+cw,bodyTop+bodyH-r2);ctx.arcTo(x+cw,bodyTop+bodyH,x+cw-r2,bodyTop+bodyH,r2);ctx.lineTo(x+r2,bodyTop+bodyH);ctx.arcTo(x,bodyTop+bodyH,x,bodyTop+bodyH-r2,r2);ctx.lineTo(x,bodyTop+r2);ctx.arcTo(x,bodyTop,x+r2,bodyTop,r2);ctx.fill();}
 /* entry lines for active trades */
 for(var ti=0;ti<activeTrades.length;ti++){var t=activeTrades[ti];if(t.assetIndex===selectedAsset){var yEntry=padT+(1-(t.open_price-mn)/rng)*chartH;ctx.setLineDash([6,4]);ctx.strokeStyle=t.direction==='up'?'rgba(56,161,105,.5)':'rgba(229,62,62,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,yEntry);ctx.lineTo(w-padR,yEntry);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=t.direction==='up'?'rgba(56,161,105,.7)':'rgba(229,62,62,.7)';ctx.font='bold 9px JetBrains Mono,monospace';ctx.fillText((t.direction==='up'?'▲ BUY ':'▼ SELL ')+t.open_price.toFixed(2),padL+4,yEntry-4);}}
 /* current price line */
