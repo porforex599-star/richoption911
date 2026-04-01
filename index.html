@@ -976,6 +976,155 @@ function getCandleInterval(){
   return map[currentTimeframe.toString()]||60000;
 }
 
+/* ===== MARKET PATTERN ENGINE — 20 realistic movement patterns ===== */
+var _mpe={
+  mom:0,              /* momentum carry-over */
+  patternId:0,        /* current pattern index */
+  patternLife:0,      /* ticks in current pattern */
+  patternMax:60,      /* ticks before pattern change */
+  intensity:1,        /* pattern strength multiplier */
+  microTrend:0,       /* short-term directional bias */
+  swingPhase:0,       /* for oscillation patterns */
+  burstCooldown:0,    /* prevent back-to-back bursts */
+  lastDir:1           /* last dominant direction */
+};
+
+function _mpeNextPattern(){
+  _mpe.patternLife=0;
+  _mpe.patternMax=30+Math.floor(Math.random()*100);/* 30-130 ticks per pattern */
+  _mpe.patternId=Math.floor(Math.random()*20);
+  _mpe.intensity=0.5+Math.random()*1.0;
+  _mpe.swingPhase=Math.random()*Math.PI*2;
+  if(_mpe.burstCooldown>0)_mpe.burstCooldown--;
+  
+  /* Bias some patterns more likely */
+  var r=Math.random();
+  if(r<0.15) _mpe.patternId=0;       /* steady drift — very common */
+  else if(r<0.25) _mpe.patternId=1;  /* consolidation range */
+  else if(r<0.35) _mpe.patternId=2;  /* small oscillation */
+  else if(r<0.42) _mpe.patternId=3;  /* step pattern */
+  else if(r<0.48) _mpe.patternId=4;  /* pullback */
+  else if(r<0.53) _mpe.patternId=5;  /* micro trend */
+}
+
+/* Generate one tick of price movement based on current pattern */
+function _mpeStep(price,baseVol){
+  _mpe.patternLife++;
+  if(_mpe.patternLife>_mpe.patternMax) _mpeNextPattern();
+  
+  var v=baseVol*_mpe.intensity;
+  var progress=_mpe.patternLife/_mpe.patternMax;
+  var noise=_gRand()*v*0.3;
+  var signal=0;
+  
+  switch(_mpe.patternId){
+    case 0: /* Steady drift up or down */
+      _mpe.microTrend=_mpe.microTrend||((Math.random()>0.5?1:-1)*0.4);
+      signal=_mpe.microTrend*v*0.15+noise;
+      break;
+    case 1: /* Tight consolidation / ranging */
+      signal=noise*0.6;
+      /* Mean-revert within range */
+      var rangeCenter=price;
+      signal+=(rangeCenter-price)/price*0.001*price;
+      break;
+    case 2: /* Sine-wave oscillation */
+      _mpe.swingPhase+=0.08+Math.random()*0.04;
+      signal=Math.sin(_mpe.swingPhase)*v*0.25+noise*0.4;
+      break;
+    case 3: /* Staircase — flat then jump */
+      if(progress>0.7&&progress<0.8){
+        signal=(Math.random()>0.5?1:-1)*v*0.8;
+      }else{
+        signal=noise*0.3;
+      }
+      break;
+    case 4: /* Pullback after move */
+      if(progress<0.4){
+        signal=_mpe.lastDir*v*0.3+noise;
+      }else{
+        signal=-_mpe.lastDir*v*0.15+noise*0.5;
+      }
+      break;
+    case 5: /* Micro uptrend */
+      signal=v*0.12+noise;
+      _mpe.lastDir=1;
+      break;
+    case 6: /* Micro downtrend */
+      signal=-v*0.12+noise;
+      _mpe.lastDir=-1;
+      break;
+    case 7: /* Volatile choppy */
+      signal=noise*1.5;
+      break;
+    case 8: /* Slow grind up */
+      signal=v*0.05+noise*0.4;
+      break;
+    case 9: /* Slow grind down */
+      signal=-v*0.05+noise*0.4;
+      break;
+    case 10: /* Double top formation */
+      _mpe.swingPhase+=0.06;
+      var wave=Math.sin(_mpe.swingPhase);
+      signal=wave*v*0.2*(wave>0?1:0.3)+noise*0.3;
+      break;
+    case 11: /* V-shape recovery */
+      if(progress<0.5){
+        signal=-v*0.2*(1-progress*2)+noise*0.3;
+      }else{
+        signal=v*0.2*((progress-0.5)*2)+noise*0.3;
+      }
+      break;
+    case 12: /* Wedge — narrowing range */
+      var squeeze=1-progress*0.7;
+      signal=noise*squeeze;
+      break;
+    case 13: /* Breakout attempt */
+      if(progress>0.6&&_mpe.burstCooldown<=0){
+        signal=(Math.random()>0.4?1:-1)*v*1.2;
+        _mpe.burstCooldown=3;
+      }else{
+        signal=noise*0.5;
+      }
+      break;
+    case 14: /* Fade / exhaustion */
+      var fade=1-progress;
+      signal=_mpe.lastDir*v*0.2*fade+noise*0.3;
+      break;
+    case 15: /* Random walk — pure noise */
+      signal=noise;
+      break;
+    case 16: /* Momentum burst then calm */
+      if(progress<0.2){
+        var dir=Math.random()>0.5?1:-1;
+        signal=dir*v*0.6+noise;
+        _mpe.lastDir=dir;
+      }else{
+        signal=noise*0.3;
+      }
+      break;
+    case 17: /* Zigzag — alternating direction */
+      var zigLen=Math.floor(_mpe.patternMax/5);
+      var zigPhase=Math.floor(_mpe.patternLife/Math.max(1,zigLen))%2;
+      signal=(zigPhase===0?1:-1)*v*0.15+noise*0.4;
+      break;
+    case 18: /* Accumulation — slow rise with shakeouts */
+      signal=v*0.04+noise*0.5;
+      if(Math.random()<0.08)signal=-v*0.5;/* sudden dip */
+      break;
+    case 19: /* Distribution — slow fall with bounces */
+      signal=-v*0.04+noise*0.5;
+      if(Math.random()<0.08)signal=v*0.5;/* sudden bounce */
+      break;
+    default:
+      signal=noise;
+  }
+  
+  /* Apply momentum smoothing — prevents jerky movement */
+  _mpe.mom=_mpe.mom*0.7+signal*0.3;
+  return _mpe.mom;
+}
+
 function startChart(){
   if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);
   var cv=document.getElementById('priceChart'),ctx=cv.getContext('2d');
@@ -984,74 +1133,54 @@ function startChart(){
   
   candleIntervalMs=getCandleInterval();
   candleStartTime=Date.now();
+  /* Initialize pattern engine */
+  _mpeNextPattern();
   
   function tick(){
     var last=candleData[candleData.length-1];
     if(!last)return;
     
-    /* Base price from API or last close */
     var realtimeP=getRealtimePrice();
     var nc=last.c;
+    var baseVol=last.c*0.00015;/* base volatility for pattern engine */
     
-    /* ===== SMOOTH REALISTIC PRICE MOVEMENT ===== */
+    /* ===== PRICE MOVEMENT — always uses pattern engine ===== */
     if(activeTrades.length>0){
       var t=activeTrades[0];
       var elapsed=(Date.now()-t.openTime)/1000;
       var remaining=t.duration-elapsed;
-      var progress=Math.min(1,elapsed/t.duration); /* 0→1 over entire trade */
+      var progress=Math.min(1,elapsed/t.duration);
       
       if(remaining>0){
         var targetWin=t.willWin;
         var goUp=(t.direction==='up'&&targetWin)||(t.direction==='down'&&!targetWin);
         
-        /* Volatility for trade movement — Tick mode needs more visible swings */
-        var tickVol=currentTimeframe===0?last.c*0.00012:last.c*0.00006;
-        var targetGap=tickVol*0.15;/* very small — just barely past the entry line */
-        var gNoise=_gRand()*tickVol*0.5;
+        /* Pattern engine provides natural movement */
+        var patternMove=_mpeStep(last.c,baseVol);
         
-        /* ===== PHASE 1: First 70% — completely normal, follow API ===== */
+        /* ===== PHASE 1: First 70% — pure pattern movement ===== */
         if(progress<0.70){
           if(realtimeP&&realtimeP>0){
             var diff=realtimeP-last.c;
-            var speed=currentTimeframe===0?0.18:0.12;
-            nc=last.c+diff*speed+gNoise;
+            nc=last.c+diff*0.12+patternMove;
           }else{
-            nc=last.c+gNoise;
+            nc=last.c+patternMove;
           }
           
-        /* ===== PHASE 2: 70%-95% — gentle drift, looks like normal movement ===== */
+        /* ===== PHASE 2: 70%-95% — pattern + gentle drift ===== */
         }else if(progress<0.95){
-          var driftProgress=(progress-0.70)/0.25; /* 0→1 */
+          var dp=(progress-0.70)/0.25;
+          var bias=(goUp?1:-1)*baseVol*0.03*dp*dp;
+          nc=last.c+patternMove*(1-dp*0.3)+bias;
+          if(Math.random()<0.25*(1-dp))nc=last.c+patternMove-bias*0.2;
           
-          /* Very gentle bias — grows slowly with quadratic curve */
-          var biasAmount=driftProgress*driftProgress*tickVol*0.08;
-          var bias=(goUp?1:-1)*biasAmount;
-          
-          /* Still follow API but gradually add tiny drift */
-          if(realtimeP&&realtimeP>0){
-            var diff=realtimeP-last.c;
-            var apiWeight=0.08*(1-driftProgress*0.6);
-            nc=last.c+diff*apiWeight+gNoise+bias;
-          }else{
-            nc=last.c+gNoise+bias;
-          }
-          
-          /* Counter-moves keep it looking natural */
-          if(Math.random()<0.3*(1-driftProgress)){
-            nc=last.c+gNoise-bias*0.2;
-          }
-          
-        /* ===== PHASE 3: Last 5% — nudge to correct side, very gently ===== */
+        /* ===== PHASE 3: Last 5% — ensure correct side ===== */
         }else{
-          var finalProgress=(progress-0.95)/0.05; /* 0→1 */
-          
-          /* Gentle nudge — just enough to be on correct side */
-          var nudge=(goUp?1:-1)*tickVol*0.05*(1+finalProgress);
-          nc=last.c+gNoise*0.2+nudge;
-          
-          /* Ensure price is on correct side but only by ~15% of normal movement */
-          if(finalProgress>0.5){
-            var minGap=t.open_price*0.000015;/* 0.0015% — barely visible */
+          var fp=(progress-0.95)/0.05;
+          nc=last.c+patternMove*0.3+(goUp?1:-1)*baseVol*0.04*(1+fp);
+          /* Guarantee side with minimal gap */
+          if(fp>0.5){
+            var minGap=t.open_price*0.000015;
             if(targetWin){
               if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+minGap*(0.8+Math.random()*0.4);
               if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-minGap*(0.8+Math.random()*0.4);
@@ -1063,28 +1192,13 @@ function startChart(){
         }
       }
     }else{
-      /* No active trade — follow real market price faithfully */
+      /* No active trade — pattern engine + follow API */
+      var patternMove=_mpeStep(last.c,baseVol);
       if(realtimeP&&realtimeP>0){
         var diff=realtimeP-last.c;
-        if(currentTimeframe===0){
-          /* Tick mode: follow API + add visible movement */
-          var microNoise=_gRand()*last.c*0.00008;
-          nc=last.c+diff*0.18+microNoise;
-        }else{
-          /* Normal modes: smooth approach */
-          var gNoise=_gRand()*last.c*0.000025;
-          nc=last.c+diff*0.15+gNoise;
-        }
+        nc=last.c+diff*0.12+patternMove;
       }else{
-        /* No API — Gaussian micro-movements */
-        if(currentTimeframe===0){
-          /* Tick: more active visible movement */
-          var microVol=last.c*0.00012;
-          nc=last.c+_gRand()*microVol;
-        }else{
-          var microVol=last.c*0.00008;
-          nc=last.c+_gRand()*microVol;
-        }
+        nc=last.c+patternMove;
       }
     }
     
@@ -1092,19 +1206,9 @@ function startChart(){
     var elapsedCandle=now-candleStartTime;
     
     if(elapsedCandle<candleIntervalMs){
-      /* Add intra-candle micro-volatility for realistic body/wicks */
-      if(currentTimeframe===0){
-        var microSwing=last.c*0.00012;/* creates visible body within tick candle */
-        var swing=_gRand()*microSwing;
-        var tickHigh=nc+Math.abs(swing*0.6);
-        var tickLow=nc-Math.abs(swing*0.4);
-        if(tickHigh>last.h)last.h=tickHigh;
-        if(tickLow<last.l)last.l=tickLow;
-      }else{
-        if(nc>last.h)last.h=nc;
-        if(nc<last.l)last.l=nc;
-      }
       last.c=nc;
+      if(nc>last.h)last.h=nc;
+      if(nc<last.l)last.l=nc;
       last.v+=Math.floor(Math.random()*10+1);
     }else{
       candleStartTime=now;
