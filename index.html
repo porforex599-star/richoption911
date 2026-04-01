@@ -537,7 +537,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 </div></div>
 
 <!-- MODALS -->
-<div class="modal-overlay" id="depositModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('depositModal')">✕</button><h3>⬆ ฝากเงิน (Crypto)</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ฝากผ่าน USDT, BTC, ETH และ Crypto อื่นๆ</p><form onsubmit="handleCryptoDeposit(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="depositAmount" min="5" step="0.01" required placeholder="ขั้นต่ำ $5"></div><div class="form-group"><label>เลือกสกุลเงินที่จะจ่าย</label><select class="form-input" id="depositCurrency"><option value="">อัตโนมัติ (เลือกตอนจ่าย)</option><option value="USDT">USDT (TRC20/ERC20/BEP20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option><option value="USDC">USDC</option><option value="LTC">Litecoin (LTC)</option><option value="TRX">TRON (TRX)</option></select></div><button type="submit" class="btn btn-gold btn-full" id="depositBtn">สร้างลิงก์ชำระเงิน</button></form><div id="depositResult" style="display:none;margin-top:16px;text-align:center"><p style="color:var(--green);font-weight:600;margin-bottom:8px">✅ สร้างลิงก์สำเร็จ!</p><a id="depositPayLink" href="#" target="_blank" class="btn btn-gold btn-full" style="margin-bottom:8px">💳 ไปหน้าชำระเงิน</a><p style="color:var(--text3);font-size:.75rem">กรุณาโอน Crypto ภายในเวลาที่กำหนด<br>เงินจะเข้าบัญชีหลังจาก Admin ตรวจสอบ</p></div></div></div>
+<div class="modal-overlay" id="depositModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('depositModal')">✕</button><h3>⬆ ฝากเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ฝากผ่าน Crypto หรือ Demo (ทดสอบ)</p><form onsubmit="handleCryptoDeposit(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="depositAmount" min="5" step="0.01" required placeholder="ขั้นต่ำ $5"></div><div class="form-group"><label>เลือกช่องทางฝากเงิน</label><select class="form-input" id="depositCurrency" onchange="toggleDepositMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ต้องจ่ายจริง)</option><option value="">Crypto อัตโนมัติ (เลือกตอนจ่าย)</option><option value="USDT">USDT (TRC20/ERC20/BEP20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option><option value="USDC">USDC</option><option value="LTC">Litecoin (LTC)</option><option value="TRX">TRON (TRX)</option></select></div><button type="submit" class="btn btn-gold btn-full" id="depositBtn">📤 ส่งคำขอฝากเงิน</button></form><div id="depositResult" style="display:none;margin-top:16px;text-align:center"><p id="depositResultMsg" style="color:var(--green);font-weight:600;margin-bottom:8px">✅ สร้างลิงก์สำเร็จ!</p><a id="depositPayLink" href="#" target="_blank" class="btn btn-gold btn-full" style="margin-bottom:8px;display:none">💳 ไปหน้าชำระเงิน</a><p id="depositResultSub" style="color:var(--text3);font-size:.75rem">เงินจะเข้าบัญชีหลังจาก Admin ตรวจสอบ</p></div></div></div>
 <div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน (Crypto)</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น USDT ไปยัง Wallet ของคุณ</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>สกุลเงินที่ต้องการรับ</label><select class="form-input" id="withdrawCurrency"><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div><div class="form-group"><label>Wallet Address ปลายทาง</label><input type="text" class="form-input" id="withdrawWallet" required placeholder="วาง Wallet Address ที่นี่"></div><div class="form-group"><label>Network (ตรวจสอบให้ตรงกัน)</label><select class="form-input" id="withdrawNetwork"><option value="TRC20">TRC20 (Tron)</option><option value="BEP20">BEP20 (BSC)</option><option value="ERC20">ERC20 (Ethereum)</option><option value="BTC">Bitcoin</option></select></div><button type="submit" class="btn btn-gold btn-full" id="withdrawBtn">📤 ส่งคำขอถอนเงิน</button></form></div></div>
 
 <!-- TRADE RESULT POPUP -->
@@ -1181,15 +1181,50 @@ function playSound(type){
 /* ===== CRYPTO DEPOSIT via OxaPay ===== */
 var OXAPAY_MERCHANT_KEY='FH19D6-OWFOII-5J2FPD-27KZHT';
 
+function toggleDepositMethod(){
+  var sel=document.getElementById('depositCurrency').value;
+  var btn=document.getElementById('depositBtn');
+  if(sel==='DEMO'){
+    btn.innerHTML='📤 ส่งคำขอฝากเงิน (Demo)';
+  }else{
+    btn.innerHTML='📤 สร้างลิงก์ชำระเงิน';
+  }
+}
+
 async function handleCryptoDeposit(e){
   e.preventDefault();
   var btn=document.getElementById('depositBtn');
-  btn.innerHTML='<span class="spinner"></span> กำลังสร้าง...';btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span> กำลังดำเนินการ...';btn.disabled=true;
   
   var amt=parseFloat(document.getElementById('depositAmount').value);
   var currency=document.getElementById('depositCurrency').value;
   
-  if(!amt||amt<5){showToast('ขั้นต่ำ $5','error');btn.innerHTML='สร้างลิงก์ชำระเงิน';btn.disabled=false;return;}
+  if(!amt||amt<5){showToast('ขั้นต่ำ $5','error');btn.innerHTML='📤 ส่งคำขอฝากเงิน';btn.disabled=false;return;}
+  
+  /* === DEMO DEPOSIT === */
+  if(currency==='DEMO'){
+    try{
+      await sb.from('transactions').insert({
+        user_id:currentUser.id,
+        type:'deposit',
+        amount:amt,
+        method:'demo',
+        account:'DEMO-'+Date.now(),
+        status:'pending',
+        created_at:new Date().toISOString()
+      });
+      document.getElementById('depositResult').style.display='block';
+      document.getElementById('depositPayLink').style.display='none';
+      document.getElementById('depositResultMsg').textContent='✅ ส่งคำขอฝากเงิน Demo สำเร็จ!';
+      document.getElementById('depositResultSub').textContent='รอ Admin อนุมัติ — เงินจะเข้าบัญชีเมื่ออนุมัติแล้ว';
+      showToast('✅ ส่งคำขอฝาก $'+amt.toFixed(2)+' สำเร็จ! รอ Admin อนุมัติ','success');
+      loadTransactions();
+    }catch(err){
+      showToast(err.message,'error');
+    }
+    btn.innerHTML='📤 ส่งคำขอฝากเงิน (Demo)';btn.disabled=false;
+    return;
+  }
   
   try{
     var body={
@@ -1239,7 +1274,10 @@ async function handleCryptoDeposit(e){
       
       /* Show payment link */
       document.getElementById('depositResult').style.display='block';
+      document.getElementById('depositPayLink').style.display='block';
       document.getElementById('depositPayLink').href=data.data.payment_url;
+      document.getElementById('depositResultMsg').textContent='✅ สร้างลิงก์สำเร็จ!';
+      document.getElementById('depositResultSub').textContent='กรุณาโอน Crypto ภายในเวลาที่กำหนด — เงินจะเข้าบัญชีหลังจาก Admin ตรวจสอบ';
       showToast('✅ สร้างลิงก์สำเร็จ! กดไปชำระเงิน','success');
     }else if(data.result===100&&data.payLink){
       /* Legacy format fallback */
@@ -1253,7 +1291,9 @@ async function handleCryptoDeposit(e){
         created_at:new Date().toISOString()
       });
       document.getElementById('depositResult').style.display='block';
+      document.getElementById('depositPayLink').style.display='block';
       document.getElementById('depositPayLink').href=data.payLink;
+      document.getElementById('depositResultMsg').textContent='✅ สร้างลิงก์สำเร็จ!';
       showToast('✅ สร้างลิงก์สำเร็จ!','success');
     }else{
       throw new Error(data.message||'ไม่สามารถสร้างลิงก์ได้');
@@ -1261,7 +1301,7 @@ async function handleCryptoDeposit(e){
   }catch(err){
     showToast('เกิดข้อผิดพลาด: '+err.message,'error');
   }finally{
-    btn.innerHTML='สร้างลิงก์ชำระเงิน';btn.disabled=false;
+    btn.innerHTML='📤 สร้างลิงก์ชำระเงิน';btn.disabled=false;
   }
 }
 
