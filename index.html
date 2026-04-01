@@ -1362,7 +1362,36 @@ async function handleCryptoWithdraw(e){
   }
 }
 var txFilter='all';function filterTx(type,el){txFilter=type;document.querySelectorAll('.tx-tab').forEach(function(t){t.classList.remove('active')});if(el)el.classList.add('active');loadTransactions();}
-async function loadTransactions(){await loadUserProfile();document.getElementById('walletBalance').textContent='$'+(currentProfile?currentProfile.balance||0:0).toFixed(2);try{var q=sb.from('transactions').select('*').eq('user_id',currentUser.id);if(txFilter!=='all')q=q.eq('type',txFilter);var r=await q.order('created_at',{ascending:false}).limit(50),tb=document.getElementById('txHistory');if(!r.error&&r.data&&r.data.length>0){tb.innerHTML=r.data.map(function(tx){return '<tr><td class="mono" style="font-size:.8rem">'+new Date(tx.created_at).toLocaleString('th-TH')+'</td><td><span class="badge '+(tx.type==='deposit'?'badge-green':'badge-red')+'">'+(tx.type==='deposit'?'⬆ ฝาก':'⬇ ถอน')+'</span></td><td class="mono" style="font-weight:600;color:'+(tx.type==='deposit'?'var(--green)':'var(--red)')+'">'+(tx.type==='deposit'?'+':'-')+'$'+(tx.amount||0).toFixed(2)+'</td><td><span class="badge '+(tx.status==='completed'?'badge-green':tx.status==='pending'?'badge-blue':'badge-red')+'">'+(tx.status==='completed'?'✅':tx.status==='pending'?'⏳':'❌')+'</span></td></tr>'}).join('');}else{tb.innerHTML='<tr><td colspan="4" class="text-center text-muted" style="padding:36px">ยังไม่มีธุรกรรม</td></tr>';}}catch(err){console.error(err);}}
+async function loadTransactions(){
+  await loadUserProfile();
+  document.getElementById('walletBalance').textContent='$'+(currentProfile?currentProfile.balance||0:0).toFixed(2);
+  try{
+    var q=sb.from('transactions').select('*').eq('user_id',currentUser.id);
+    if(txFilter!=='all')q=q.eq('type',txFilter);
+    var r=await q.order('created_at',{ascending:false}).limit(50);
+    var tb=document.getElementById('txHistory');
+    if(!r.error&&r.data&&r.data.length>0){
+      tb.innerHTML=r.data.map(function(tx){
+        var statusBadge=tx.status==='completed'?'badge-green':tx.status==='pending'?'badge-blue':'badge-red';
+        var statusText=tx.status==='completed'?'✅ สำเร็จ':tx.status==='pending'?'⏳ รออนุมัติ':'❌ ปฏิเสธ';
+        var rejectInfo='';
+        if(tx.status==='rejected'&&tx.reject_reason){
+          rejectInfo='<div style="margin-top:6px;padding:8px 10px;background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.2);border-radius:8px;font-size:.8rem">';
+          rejectInfo+='<div style="color:#ff6666;font-weight:600;margin-bottom:4px">เหตุผล: '+tx.reject_reason+'</div>';
+          if(tx.reject_image_url){rejectInfo+='<img src="'+tx.reject_image_url+'" style="max-width:200px;max-height:120px;border-radius:6px;margin-top:4px;cursor:pointer" onclick="window.open(this.src)">';}
+          rejectInfo+='</div>';
+        }
+        return '<tr>'+
+          '<td class="mono" style="font-size:.8rem">'+new Date(tx.created_at).toLocaleString('th-TH')+'</td>'+
+          '<td><span class="badge '+(tx.type==='deposit'?'badge-green':'badge-red')+'">'+(tx.type==='deposit'?'⬆ ฝาก':'⬇ ถอน')+'</span></td>'+
+          '<td class="mono" style="font-weight:600;color:'+(tx.type==='deposit'?'var(--green)':'var(--red)')+'">'+(tx.type==='deposit'?'+':'-')+'$'+(tx.amount||0).toFixed(2)+'</td>'+
+          '<td><span class="badge '+statusBadge+'">'+statusText+'</span>'+rejectInfo+'</td></tr>';
+      }).join('');
+    }else{
+      tb.innerHTML='<tr><td colspan="4" class="text-center text-muted" style="padding:36px">ยังไม่มีธุรกรรม</td></tr>';
+    }
+  }catch(err){console.error(err);}
+}
 async function loadReferrals(){if(!currentProfile)await loadUserProfile();var rc=currentProfile?currentProfile.referral_code:'---';document.getElementById('myRefCode').textContent=rc||'---';document.getElementById('myRefLink').textContent=window.location.origin+'?ref='+(rc||'');try{var r=await sb.from('profiles').select('full_name,created_at').eq('referred_by',rc);if(!r.error&&r.data){document.getElementById('refCount').textContent=r.data.length;document.getElementById('refEarnings').textContent='$'+(r.data.length*5).toFixed(2);if(r.data.length>0){document.getElementById('refList').innerHTML=r.data.map(function(x){return '<tr><td>'+(x.full_name||'-')+'</td><td class="mono" style="font-size:.8rem">'+new Date(x.created_at).toLocaleDateString('th-TH')+'</td><td><span class="badge badge-green">✅</span></td></tr>'}).join('');}}}catch(err){console.error(err);}}
 function copyRefCode(){navigator.clipboard.writeText(document.getElementById('myRefCode').textContent).then(function(){showToast('คัดลอกแล้ว','success')})}
 function copyRefLink(){navigator.clipboard.writeText(document.getElementById('myRefLink').textContent).then(function(){showToast('คัดลอกลิงก์แล้ว','success')})}
