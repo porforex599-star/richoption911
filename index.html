@@ -644,67 +644,62 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
 var ASSETS=[
-  {symbol:'BTC/USD',name:'Bitcoin',price:68100,color:'#f7931a',fhSymbol:'BINANCE:BTCUSDT',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
-  {symbol:'ETH/USD',name:'Ethereum',price:2098,color:'#627eea',fhSymbol:'BINANCE:ETHUSDT',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
-  {symbol:'BNB/USD',name:'BNB',price:616,color:'#f0b90b',fhSymbol:'BINANCE:BNBUSDT',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
-  {symbol:'XAU/USD',name:'Gold',price:4560,color:'#d4a437',fhSymbol:'OANDA:XAU_USD',binSymbol:null,exchange:'commodity',decimals:2},
-  {symbol:'EUR/USD',name:'Euro/Dollar',price:1.0862,color:'#0052b4',fhSymbol:'OANDA:EUR_USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3235,color:'#c8102e',fhSymbol:'OANDA:GBP_USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'USD/JPY',name:'Dollar/Yen',price:160.00,color:'#bc002d',fhSymbol:'OANDA:USD_JPY',binSymbol:null,exchange:'forex',decimals:3},
-  {symbol:'SPX500',name:'S&P 500',price:6529,color:'#00c805',fhSymbol:'OANDA:SPX500_USD',binSymbol:null,exchange:'index',decimals:2},
-  {symbol:'NAS100',name:'NASDAQ 100',price:20795,color:'#0072c6',fhSymbol:'OANDA:NAS100_USD',binSymbol:null,exchange:'index',decimals:2}
+  {symbol:'BTC/USD',name:'Bitcoin',price:68100,color:'#f7931a',tdSymbol:'BTC/USD',fhSymbol:'BINANCE:BTCUSDT',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
+  {symbol:'ETH/USD',name:'Ethereum',price:2098,color:'#627eea',tdSymbol:'ETH/USD',fhSymbol:'BINANCE:ETHUSDT',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
+  {symbol:'BNB/USD',name:'BNB',price:616,color:'#f0b90b',tdSymbol:'BNB/USD',fhSymbol:'BINANCE:BNBUSDT',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
+  {symbol:'XAU/USD',name:'Gold',price:4730,color:'#d4a437',tdSymbol:'XAU/USD',fhSymbol:'OANDA:XAU_USD',binSymbol:null,exchange:'commodity',decimals:2},
+  {symbol:'EUR/USD',name:'Euro/Dollar',price:1.1590,color:'#0052b4',tdSymbol:'EUR/USD',fhSymbol:'OANDA:EUR_USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3280,color:'#c8102e',tdSymbol:'GBP/USD',fhSymbol:'OANDA:GBP_USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'USD/JPY',name:'Dollar/Yen',price:158.00,color:'#bc002d',tdSymbol:'USD/JPY',fhSymbol:'OANDA:USD_JPY',binSymbol:null,exchange:'forex',decimals:3},
+  {symbol:'SPX500',name:'S&P 500',price:6529,color:'#00c805',tdSymbol:'SPX',fhSymbol:'OANDA:SPX500_USD',binSymbol:null,exchange:'index',decimals:2},
+  {symbol:'NAS100',name:'NASDAQ 100',price:20795,color:'#0072c6',tdSymbol:'IXIC',fhSymbol:'OANDA:NAS100_USD',binSymbol:null,exchange:'index',decimals:2}
 ];
 
-/* ===== FINNHUB API (Forex, Gold, Index) ===== */
+/* ===== TWELVE DATA (Candles only — reliable OHLC for Forex/Gold/Index) ===== */
+var TD_KEY='91ff9418c8ec4aad9a875ecb7b61c138';
+
+async function fetchTwelveDataCandles(asset,interval){
+  var intv=interval||'5min';
+  var url='https://api.twelvedata.com/time_series?symbol='+encodeURIComponent(asset.tdSymbol)+'&interval='+intv+'&outputsize=80&apikey='+TD_KEY;
+  try{
+    var r=await fetch(url);
+    var d=await r.json();
+    if(d.status==='ok'&&d.values&&d.values.length>0){
+      var candles=d.values.reverse().map(function(v){
+        return {o:parseFloat(v.open),h:parseFloat(v.high),l:parseFloat(v.low),c:parseFloat(v.close),v:parseInt(v.volume)||Math.floor(Math.random()*1000)};
+      });
+      asset.price=candles[candles.length-1].c;
+      console.log('TwelveData candles OK:',asset.symbol,candles.length);
+      return candles;
+    }
+    console.warn('TwelveData no data:',asset.symbol,d.message||'');
+    return null;
+  }catch(err){console.warn('TwelveData error:',err);return null;}
+}
+
+async function fetchTwelveDataPrice(asset){
+  var url='https://api.twelvedata.com/price?symbol='+encodeURIComponent(asset.tdSymbol)+'&apikey='+TD_KEY;
+  try{
+    var r=await fetch(url);
+    var d=await r.json();
+    if(d.price){asset.price=parseFloat(d.price);return asset.price;}
+    return null;
+  }catch(err){return null;}
+}
+
+/* ===== FINNHUB (WebSocket only — realtime price for ALL assets) ===== */
 var FH_KEY='d75bbupr01qk56kc4le0d75bbupr01qk56kc4leg';
 var fhLastPrices={};
 var fhWs=null;
 var fhConnected=false;
 
-/* Fetch historical candles from Finnhub */
-async function fetchFinnhubCandles(asset,resolution,count){
-  var res=resolution||'5';
-  var now=Math.floor(Date.now()/1000);
-  var from=now-(count||80)*{1:60,5:300,15:900,60:3600,240:14400,1440:86400}[res]*1.5;
-  var url='https://finnhub.io/api/v1/forex/candles?symbol='+encodeURIComponent(asset.fhSymbol)+'&resolution='+res+'&from='+Math.floor(from)+'&to='+now+'&token='+FH_KEY;
-  try{
-    var r=await fetch(url);
-    var d=await r.json();
-    if(d.s==='ok'&&d.o&&d.o.length>0){
-      var candles=[];
-      for(var i=0;i<d.o.length;i++){
-        candles.push({o:d.o[i],h:d.h[i],l:d.l[i],c:d.c[i],v:d.v?d.v[i]:Math.floor(Math.random()*1000)});
-      }
-      asset.price=candles[candles.length-1].c;
-      console.log('Finnhub candles:',asset.symbol,candles.length,'price:',asset.price);
-      return candles;
-    }
-    console.warn('Finnhub no candle data:',asset.symbol,d.s||'error');
-    return null;
-  }catch(err){console.warn('Finnhub candle error:',err);return null;}
-}
-
-/* Fetch current price from Finnhub quote */
-async function fetchFinnhubPrice(asset){
-  var url='https://finnhub.io/api/v1/quote?symbol='+encodeURIComponent(asset.fhSymbol)+'&token='+FH_KEY;
-  try{
-    var r=await fetch(url);
-    var d=await r.json();
-    if(d.c&&d.c>0){asset.price=d.c;return d.c;}
-    return null;
-  }catch(err){return null;}
-}
-
-/* Connect Finnhub WebSocket (realtime forex/gold/index + crypto) */
 function connectFinnhubWs(){
   if(fhWs)try{fhWs.close();}catch(e){}
-  
   fhWs=new WebSocket('wss://ws.finnhub.io?token='+FH_KEY);
   
   fhWs.onopen=function(){
     fhConnected=true;
     console.log('Finnhub WS connected');
-    /* Subscribe to ALL assets */
     ASSETS.forEach(function(a){
       if(a.fhSymbol){
         fhWs.send(JSON.stringify({type:'subscribe',symbol:a.fhSymbol}));
@@ -717,9 +712,7 @@ function connectFinnhubWs(){
       var msg=JSON.parse(e.data);
       if(msg.type==='trade'&&msg.data&&msg.data.length>0){
         msg.data.forEach(function(trade){
-          if(trade.s&&trade.p){
-            fhLastPrices[trade.s]=trade.p;
-          }
+          if(trade.s&&trade.p) fhLastPrices[trade.s]=trade.p;
         });
       }
     }catch(err){}
@@ -733,7 +726,7 @@ function connectFinnhubWs(){
   fhWs.onerror=function(){console.warn('Finnhub WS error');};
 }
 
-/* ===== BINANCE WEBSOCKET (FREE, Crypto — backup/fast) ===== */
+/* ===== BINANCE (Crypto — candles + WebSocket, free unlimited) ===== */
 var binanceWs=null;
 var binanceLastPrices={};
 var binanceConnected=false;
@@ -750,7 +743,6 @@ function connectBinanceWs(){
   binanceWs.onerror=function(){};
 }
 
-/* Binance REST Klines (FREE) */
 async function fetchBinanceKlines(symbol,interval,limit){
   var url='https://api.binance.com/api/v3/klines?symbol='+symbol+'&interval='+interval+'&limit='+(limit||80);
   try{
@@ -762,15 +754,15 @@ async function fetchBinanceKlines(symbol,interval,limit){
   }catch(err){return null;}
 }
 
-/* ===== GET REALTIME PRICE (Binance for crypto, Finnhub for rest) ===== */
+/* ===== GET REALTIME PRICE (priority: Binance → Finnhub) ===== */
 function getRealtimePrice(){
   var a=ASSETS[selectedAsset];
-  /* Crypto → Binance first (fastest), then Finnhub */
+  /* Crypto → Binance (fastest) */
   if(a.exchange==='crypto'&&a.binSymbol){
     var bp=binanceLastPrices[a.binSymbol];
     if(bp&&bp>0)return bp;
   }
-  /* Finnhub WS for all assets */
+  /* All assets → Finnhub WS */
   if(a.fhSymbol){
     var fp=fhLastPrices[a.fhSymbol];
     if(fp&&fp>0)return fp;
@@ -815,18 +807,22 @@ async function selectAsset(i){
   var realCandles=null;
   
   var tfBinance={'1':'1m','5':'5m','15':'15m','60':'1h','240':'4h','1440':'1d'};
-  var fhRes={'1':'1','5':'5','15':'15','60':'60','240':'D','1440':'D'};
+  var tfTD={'1':'1min','5':'5min','15':'15min','60':'1h','240':'4h','1440':'1day'};
   var binInterval=tfBinance[currentTimeframe.toString()]||'5m';
-  var finnhubRes=fhRes[currentTimeframe.toString()]||'5';
+  var tdInterval=tfTD[currentTimeframe.toString()]||'5min';
   
-  /* Crypto → Binance first (free, unlimited, fastest) */
+  /* Crypto → Binance (free, unlimited, fastest) */
   if(a.exchange==='crypto'&&a.binSymbol){
     realCandles=await fetchBinanceKlines(a.binSymbol,binInterval,80);
   }
   
-  /* All assets → Finnhub candles */
-  if(!realCandles&&a.fhSymbol){
-    realCandles=await fetchFinnhubCandles(a,finnhubRes,80);
+  /* Forex/Gold/Index → Twelve Data candles */
+  if(!realCandles&&a.tdSymbol){
+    realCandles=await fetchTwelveDataCandles(a,tdInterval);
+    if(!realCandles){
+      await new Promise(function(r){setTimeout(r,2500)});
+      realCandles=await fetchTwelveDataCandles(a,tdInterval);
+    }
   }
   
   if(realCandles&&realCandles.length>10){
@@ -834,8 +830,7 @@ async function selectAsset(i){
     priceHistory=candleData.map(function(c){return c.c});
     a.price=candleData[candleData.length-1].c;
   }else{
-    /* Fallback: try to get at least current price from Finnhub */
-    await fetchFinnhubPrice(a);
+    await fetchTwelveDataPrice(a);
     generateCandleData();
   }
   
