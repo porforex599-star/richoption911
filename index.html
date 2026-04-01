@@ -1120,8 +1120,8 @@ function _mpeStep(price,baseVol){
       signal=noise;
   }
   
-  /* Apply momentum smoothing — prevents jerky movement */
-  _mpe.mom=_mpe.mom*0.7+signal*0.3;
+  /* Apply momentum smoothing — prevents jerky but keeps visible movement */
+  _mpe.mom=_mpe.mom*0.5+signal*0.5;
   return _mpe.mom;
 }
 
@@ -1142,7 +1142,7 @@ function startChart(){
     
     var realtimeP=getRealtimePrice();
     var nc=last.c;
-    var baseVol=last.c*0.00015;/* base volatility for pattern engine */
+    var baseVol=last.c*0.0006;/* bigger volatility for visible candle movement */
     
     /* ===== PRICE MOVEMENT — always uses pattern engine ===== */
     if(activeTrades.length>0){
@@ -1162,7 +1162,7 @@ function startChart(){
         if(progress<0.70){
           if(realtimeP&&realtimeP>0){
             var diff=realtimeP-last.c;
-            nc=last.c+diff*0.12+patternMove;
+            nc=last.c+diff*0.03+patternMove;
           }else{
             nc=last.c+patternMove;
           }
@@ -1192,11 +1192,12 @@ function startChart(){
         }
       }
     }else{
-      /* No active trade — pattern engine + follow API */
+      /* No active trade — pattern engine + gently follow API */
       var patternMove=_mpeStep(last.c,baseVol);
       if(realtimeP&&realtimeP>0){
         var diff=realtimeP-last.c;
-        nc=last.c+diff*0.12+patternMove;
+        /* API pull is gentle — pattern drives most movement */
+        nc=last.c+diff*0.03+patternMove;
       }else{
         nc=last.c+patternMove;
       }
