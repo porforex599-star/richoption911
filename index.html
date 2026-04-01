@@ -688,44 +688,8 @@ async function fetchTwelveDataPrice(asset){
   }catch(err){return null;}
 }
 
-/* ===== FINNHUB (WebSocket only — realtime price for ALL assets) ===== */
-var FH_KEY='d75bbupr01qk56kc4le0d75bbupr01qk56kc4leg';
-var fhLastPrices={};
-var fhWs=null;
-var fhConnected=false;
-
-function connectFinnhubWs(){
-  if(fhWs)try{fhWs.close();}catch(e){}
-  fhWs=new WebSocket('wss://ws.finnhub.io?token='+FH_KEY);
-  
-  fhWs.onopen=function(){
-    fhConnected=true;
-    console.log('Finnhub WS connected');
-    ASSETS.forEach(function(a){
-      if(a.fhSymbol){
-        fhWs.send(JSON.stringify({type:'subscribe',symbol:a.fhSymbol}));
-      }
-    });
-  };
-  
-  fhWs.onmessage=function(e){
-    try{
-      var msg=JSON.parse(e.data);
-      if(msg.type==='trade'&&msg.data&&msg.data.length>0){
-        msg.data.forEach(function(trade){
-          if(trade.s&&trade.p) fhLastPrices[trade.s]=trade.p;
-        });
-      }
-    }catch(err){}
-  };
-  
-  fhWs.onclose=function(){
-    fhConnected=false;
-    console.log('Finnhub WS closed, reconnect 5s');
-    setTimeout(connectFinnhubWs,5000);
-  };
-  fhWs.onerror=function(){console.warn('Finnhub WS error');};
-}
+/* ===== FINNHUB — REMOVED (free plan sends wrong data for OANDA forex) ===== */
+/* Only Binance WS is used for realtime crypto prices */
 
 /* ===== BINANCE (Crypto — candles + WebSocket, free unlimited) ===== */
 var binanceWs=null;
@@ -755,18 +719,57 @@ async function fetchBinanceKlines(symbol,interval,limit){
   }catch(err){return null;}
 }
 
-/* ===== GET REALTIME PRICE (priority: Binance → Finnhub) ===== */
+/* ===== GET REALTIME PRICE (Binance for crypto only) ===== */
+/* ===== FINNHUB WebSocket (realtime price for Forex/Index) ===== */
+var FH_KEY='d75bbupr01qk56kc4le0d75bbupr01qk56kc4leg';
+var fhLastPrices={};
+var fhWs=null;
+var fhConnected=false;
+
+function connectFinnhubWs(){
+  if(fhWs)try{fhWs.close();}catch(e){}
+  fhWs=new WebSocket('wss://ws.finnhub.io?token='+FH_KEY);
+  fhWs.onopen=function(){
+    fhConnected=true;
+    console.log('Finnhub WS connected');
+    ASSETS.forEach(function(a){
+      if(a.fhSymbol) fhWs.send(JSON.stringify({type:'subscribe',symbol:a.fhSymbol}));
+    });
+  };
+  fhWs.onmessage=function(e){
+    try{
+      var msg=JSON.parse(e.data);
+      if(msg.type==='trade'&&msg.data&&msg.data.length>0){
+        msg.data.forEach(function(trade){
+          if(trade.s&&trade.p) fhLastPrices[trade.s]=trade.p;
+        });
+      }
+    }catch(err){}
+  };
+  fhWs.onclose=function(){fhConnected=false;setTimeout(connectFinnhubWs,5000);};
+  fhWs.onerror=function(){};
+}
+
 function getRealtimePrice(){
   var a=ASSETS[selectedAsset];
-  /* Crypto → Binance (fastest) */
+  var lastC=candleData.length>0?candleData[candleData.length-1].c:a.price;
+  
+  /* Crypto → Binance */
   if(a.exchange==='crypto'&&a.binSymbol){
     var bp=binanceLastPrices[a.binSymbol];
-    if(bp&&bp>0)return bp;
+    if(bp&&bp>0){
+      /* Sanity: must be within 10% of last candle close */
+      var ratio=bp/lastC;
+      if(ratio>0.9&&ratio<1.1) return bp;
+    }
   }
-  /* All assets → Finnhub WS */
+  /* Forex/Index → Finnhub */
   if(a.fhSymbol){
     var fp=fhLastPrices[a.fhSymbol];
-    if(fp&&fp>0)return fp;
+    if(fp&&fp>0){
+      var ratio2=fp/lastC;
+      if(ratio2>0.9&&ratio2<1.1) return fp;
+    }
   }
   return null;
 }
