@@ -834,58 +834,68 @@ async function selectAsset(i){
   updatePriceDisplay();startChart();generateOrderBook();
 }
 
-/* ===== REALISTIC CANDLE GENERATOR (Gaussian walk + momentum + trend phases) ===== */
-var _simMomentum=0,_simTrend=0,_simTrendStr=0,_simVolMult=1,_simTrendDur=0,_simMaxTrendDur=30;
-
-function _gaussRand(){var u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
-
-function _simPriceStep(price,basePrice,vol){
-  _simTrendDur++;
-  if(_simTrendDur>_simMaxTrendDur){
-    _simTrendDur=0;_simMaxTrendDur=15+Math.random()*50;
-    var r=Math.random();
-    if(r<0.4){_simTrend=(Math.random()-0.5)*0.2;_simTrendStr=0.1+Math.random()*0.2;_simVolMult=0.5+Math.random()*0.5;}
-    else if(r<0.75){_simTrend=(Math.random()-0.5)*0.8;_simTrendStr=0.3+Math.random()*0.3;_simVolMult=0.7+Math.random()*0.6;}
-    else{_simTrend=Math.random()>0.5?1:-1;_simTrendStr=0.5+Math.random()*0.4;_simVolMult=1+Math.random()*0.8;}
-  }
-  var noise=_gaussRand()*vol*_simVolMult;
-  _simMomentum=_simMomentum*0.8+noise*0.2;
-  var drift=_simTrend*_simTrendStr*vol*0.3;
-  var meanRev=(basePrice-price)/basePrice*0.001;
-  var step=_simMomentum+drift+meanRev;
-  var np=price*(1+step);
-  return Math.max(basePrice*0.85,Math.min(basePrice*1.15,np));
-}
+/* ===== REALISTIC CANDLE GENERATOR ===== */
+function _gRand(){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
 
 function generateCandleData(){
   candleData=[];
-  var a=ASSETS[selectedAsset],basePrice=a.price,price=basePrice;
-  var vol=a.exchange==='forex'?0.00008:a.exchange==='commodity'?0.0002:a.exchange==='index'?0.00015:0.0004;
-  _simMomentum=0;_simTrend=0;_simTrendStr=0;_simVolMult=1;_simTrendDur=0;_simMaxTrendDur=30;
+  var a=ASSETS[selectedAsset];
+  var basePrice=a.price; /* anchor price — never drift far from this */
+  var price=basePrice;
+  
+  /* Per-asset volatility per candle (% of price) */
+  var volMap={crypto:0.0015,commodity:0.0008,forex:0.0003,index:0.0006};
+  var vol=volMap[a.exchange]||0.001;
+  
+  /* State for smooth walk */
+  var mom=0;
+  var trend=0;
+  var trendLife=0;
+  var trendMax=8+Math.floor(Math.random()*15);
   
   for(var k=0;k<80;k++){
+    /* Update trend phase every N candles */
+    trendLife++;
+    if(trendLife>trendMax){
+      trendLife=0;
+      trendMax=6+Math.floor(Math.random()*20);
+      var r=Math.random();
+      if(r<0.45) trend=(Math.random()-0.5)*0.2;       /* sideways */
+      else if(r<0.8) trend=(Math.random()-0.5)*0.6;   /* mild trend */
+      else trend=(Math.random()>0.5?1:-1)*0.8;         /* strong move */
+    }
+    
     var open=price;
     var high=open,low=open,close=open;
-    /* Simulate ~25 micro-ticks per candle for natural OHLC shape */
-    var ticks=18+Math.floor(Math.random()*15);
+    
+    /* Simulate 15-25 micro ticks within this candle */
+    var ticks=15+Math.floor(Math.random()*10);
     for(var t=0;t<ticks;t++){
-      var p=_simPriceStep(price,basePrice,vol);
-      price=p;
-      if(p>high)high=p;
-      if(p<low)low=p;
-      close=p;
+      var noise=_gRand()*vol*0.25;
+      mom=mom*0.7+noise*0.3;
+      var drift=trend*vol*0.08;
+      /* Mean reversion: pulls price back toward basePrice */
+      var meanRev=(basePrice-price)/basePrice*0.008;
+      price=price*(1+mom+drift+meanRev);
+      /* Hard clamp: never exceed ±4% from base */
+      price=Math.max(basePrice*0.96,Math.min(basePrice*1.04,price));
+      if(price>high)high=price;
+      if(price<low)low=price;
     }
-    /* Constrain wick-to-body ratio so wicks aren't abnormally long */
+    close=price;
+    
+    /* Ensure wick proportions are realistic */
     var range=high-low;
     var body=Math.abs(close-open);
-    if(range>0&&body/range<0.12&&range>basePrice*vol*0.5){
+    if(range>0&&body<range*0.1){
+      /* Doji with huge wicks — compress wicks */
+      var maxWick=Math.max(body*3,basePrice*vol*0.3);
       var mid=(open+close)/2;
-      var maxWick=body*(2+Math.random()*2.5);
-      high=Math.min(high,Math.max(open,close)+maxWick);
-      low=Math.max(low,Math.min(open,close)-maxWick);
+      high=Math.min(high,mid+maxWick);
+      low=Math.max(low,mid-maxWick);
     }
-    var v=Math.floor(200+Math.random()*2000);
-    candleData.push({o:open,h:high,l:low,c:close,v:v});
+    
+    candleData.push({o:open,h:high,l:low,c:close,v:Math.floor(200+Math.random()*1500)});
   }
   priceHistory=candleData.map(function(c){return c.c});
 }
@@ -923,21 +933,22 @@ function startChart(){
   candleIntervalMs=getCandleInterval();
   candleStartTime=Date.now();
   
-  /* Smooth momentum state for live chart ticks */
-  var _tickMom=0;
-  var _tickTrendBias=0;
-  var _tickTrendCount=0;
-  var _tickTrendMax=40+Math.floor(Math.random()*60);
+  /* Smooth momentum state for live ticks */
+  var _tMom=0;
+  var _tTrend=0;
+  var _tTrendN=0;
+  var _tTrendMax=40+Math.floor(Math.random()*60);
   
   function tick(){
     var last=candleData[candleData.length-1];
     if(!last)return;
     
-    /* Base price from API or last close */
     var realtimeP=getRealtimePrice();
     var nc=last.c;
     var a=ASSETS[selectedAsset];
-    var baseVol=a.exchange==='forex'?0.000025:a.exchange==='commodity'?0.00006:a.exchange==='index'?0.00005:0.00012;
+    /* Per-asset tick volatility — much smaller than candle vol */
+    var bvMap={crypto:0.00008,commodity:0.00004,forex:0.000015,index:0.00003};
+    var baseVol=bvMap[a.exchange]||0.00006;
     
     /* ===== SMOOTH REALISTIC PRICE MOVEMENT ===== */
     if(activeTrades.length>0){
@@ -950,43 +961,38 @@ function startChart(){
         var goUp=(t.direction==='up'&&targetWin)||(t.direction==='down'&&!targetWin);
         var vol=last.c*baseVol;
         
-        /* Gaussian noise — much more natural than uniform random */
-        var noise=_gaussRand()*vol*0.6;
+        /* Gaussian noise for natural feel */
+        var noise=_gRand()*vol*0.6;
+        _tMom=_tMom*0.85+noise*0.15;
         
-        /* Momentum: 85% carry-over from previous tick → smooth trajectories */
-        _tickMom=_tickMom*0.85+noise*0.15;
-        
-        /* Trend bias: grows gradually, not in steps */
+        /* Gradual bias that grows with trade progress */
         var bias=0;
-        var phasePct=elapsed/t.duration; /* 0→1 over entire trade */
+        var phasePct=elapsed/t.duration;
         
         if(remaining>t.duration*0.3){
-          /* First 70%: nearly invisible drift, lots of natural oscillation */
+          /* First 70%: very subtle drift, lots of oscillation */
           bias=(goUp?1:-1)*vol*0.03*phasePct;
-          /* 45% counter-ticks for realistic mixing */
           if(Math.random()<0.45)bias=-bias*0.7;
         }else if(remaining>t.duration*0.1){
-          /* 70-90%: gentle drift becomes clearer, still oscillates */
-          var str=(phasePct-0.7)/0.2; /* 0→1 within this phase */
+          /* 70-90%: drift becomes noticeable */
+          var str=(phasePct-0.7)/0.2;
           bias=(goUp?1:-1)*vol*(0.08+str*0.25);
-          /* 30% counter-moves */
           if(Math.random()<0.30)bias=-bias*0.4;
         }else if(remaining>1.5){
-          /* Last 10% minus final 1.5s: clear but not forced */
+          /* Last portion before final 1.5s */
           bias=(goUp?1:-1)*vol*(0.4+Math.random()*0.2);
-          /* 20% small counter */
           if(Math.random()<0.20)bias=-bias*0.25;
         }else{
-          /* Final 1.5s: decisive, minimal counter */
+          /* Final 1.5s: decisive */
           bias=(goUp?1:-1)*vol*(0.7+Math.random()*0.3);
           if(Math.random()<0.10)bias=-bias*0.15;
         }
         
-        nc=last.c+_tickMom+bias;
+        nc=last.c+_tMom+bias;
         
-        /* Last 0.5s: guarantee correct side, but smoothly */
+        /* Last 0.5s: guarantee correct side */
         if(remaining<0.5){
-          var gap=last.c*0.00005;
+          var gap=last.c*0.00004;
           if(targetWin){
             if(t.direction==='up'&&nc<=t.open_price)nc=t.open_price+gap*(0.8+Math.random()*0.5);
             if(t.direction==='down'&&nc>=t.open_price)nc=t.open_price-gap*(0.8+Math.random()*0.5);
@@ -997,30 +1003,33 @@ function startChart(){
         }
       }
     }else{
-      /* No active trade — natural micro-movements with trend phases */
-      _tickTrendCount++;
-      if(_tickTrendCount>_tickTrendMax){
-        _tickTrendCount=0;
-        _tickTrendMax=30+Math.floor(Math.random()*80);
+      /* No active trade — natural movement with micro-trends */
+      _tTrendN++;
+      if(_tTrendN>_tTrendMax){
+        _tTrendN=0;
+        _tTrendMax=30+Math.floor(Math.random()*80);
         var r=Math.random();
-        if(r<0.5)_tickTrendBias=(Math.random()-0.5)*0.15;      /* sideways */
-        else if(r<0.8)_tickTrendBias=(Math.random()-0.5)*0.5;   /* mild drift */
-        else _tickTrendBias=(Math.random()>0.5?1:-1)*0.7;       /* push */
+        if(r<0.5)_tTrend=(Math.random()-0.5)*0.15;
+        else if(r<0.8)_tTrend=(Math.random()-0.5)*0.4;
+        else _tTrend=(Math.random()>0.5?1:-1)*0.6;
       }
       
       if(realtimeP&&realtimeP>0){
-        /* Smoothly approach real price with Gaussian noise */
+        /* Smoothly approach real price with Gaussian jitter */
         var diff=realtimeP-last.c;
-        var gNoise=_gaussRand()*last.c*baseVol*0.3;
+        var gNoise=_gRand()*last.c*baseVol*0.3;
         var step=diff*0.12+gNoise;
-        _tickMom=_tickMom*0.8+step*0.2;
-        nc=last.c+_tickMom;
+        _tMom=_tMom*0.8+step*0.2;
+        nc=last.c+_tMom;
       }else{
-        /* Gaussian random walk with momentum + micro-trends */
-        var gNoise=_gaussRand()*last.c*baseVol*0.5;
-        _tickMom=_tickMom*0.82+gNoise*0.18;
-        var drift=_tickTrendBias*last.c*baseVol*0.1;
-        nc=last.c+_tickMom+drift;
+        /* Gaussian random walk + momentum + micro-trends + mean reversion */
+        var gNoise=_gRand()*last.c*baseVol*0.5;
+        _tMom=_tMom*0.82+gNoise*0.18;
+        var drift=_tTrend*last.c*baseVol*0.08;
+        var meanRev=(a.price-last.c)/a.price*0.0005*last.c;
+        nc=last.c+_tMom+drift+meanRev;
+        /* Hard clamp: stay within ±4% of asset base price */
+        nc=Math.max(a.price*0.96,Math.min(a.price*1.04,nc));
       }
     }
     
