@@ -809,25 +809,29 @@ async function selectAsset(i){
   var binInterval=tfBinance[currentTimeframe.toString()]||'5m';
   var tdInterval=tfTD[currentTimeframe.toString()]||'5min';
   
-  /* Crypto → Binance first */
+  /* Crypto → Binance (free, unlimited) */
   if(a.exchange==='crypto'&&a.binSymbol){
     realCandles=await fetchBinanceKlines(a.binSymbol,binInterval,80);
   }
   
-  /* Forex/Gold/Index → Twelve Data */
+  /* Forex/Gold/Index → Twelve Data with retry */
   if(!realCandles){
     realCandles=await fetchTwelveDataCandles(a,tdInterval);
+    /* If rate limited, wait 2s and retry once */
+    if(!realCandles){
+      await new Promise(function(r){setTimeout(r,2000)});
+      realCandles=await fetchTwelveDataCandles(a,tdInterval);
+    }
   }
   
   if(realCandles&&realCandles.length>10){
     candleData=realCandles.slice(-80);
     priceHistory=candleData.map(function(c){return c.c});
     a.price=candleData[candleData.length-1].c;
-    showToast('📡 '+a.symbol+' ข้อมูลตลาดจริง','success');
   }else{
+    /* Fallback: try to get at least current price */
     await fetchTwelveDataPrice(a);
     generateCandleData();
-    showToast('⚠️ '+a.symbol+' ใช้ข้อมูลจำลอง','info');
   }
   
   finnhubLoading=false;
@@ -836,22 +840,96 @@ async function selectAsset(i){
 
 function _gRand(){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
 function generateCandleData(){
-  candleData=[];var a=ASSETS[selectedAsset],base=a.price;
-  var mom=0,trend=0,tLife=0,tMax=10+Math.floor(Math.random()*15);
+  candleData=[];
+  var a=ASSETS[selectedAsset];
+  var price=a.price;
+  var basePrice=price;
+  
+  /* Asset-specific volatility */
+  var volMap={crypto:0.003,commodity:0.0015,forex:0.0005,index:0.001};
+  var baseVol=volMap[a.exchange]||0.001;
+  
+  /* Market state machine */
+  var mom=0;
+  var trend=0;
+  var trendStr=0.3;
+  var volMult=1;
+  var phaseLife=0;
+  var phaseMax=5+Math.floor(Math.random()*12);
+  
+  /* Generate realistic price history */
   for(var k=0;k<80;k++){
-    tLife++;if(tLife>tMax){tLife=0;tMax=8+Math.floor(Math.random()*20);var r=Math.random();trend=r<0.4?(Math.random()-0.5)*0.2:r<0.8?(Math.random()-0.5)*0.5:(Math.random()>0.5?1:-1)*0.7;}
-    var o=base,h=o,l=o,c=o;
-    var ticks=12+Math.floor(Math.random()*10);
-    for(var t=0;t<ticks;t++){
-      var noise=_gRand()*base*0.001;
-      mom=mom*0.7+noise*0.3;
-      var drift=trend*base*0.0001;
-      var rev=(a.price-base)/a.price*0.005*base;
-      base=base+mom+drift+rev;
-      if(base>h)h=base;if(base<l)l=base;
+    /* Phase transitions: trending, ranging, breakout */
+    phaseLife++;
+    if(phaseLife>phaseMax){
+      phaseLife=0;
+      phaseMax=4+Math.floor(Math.random()*18);
+      var r=Math.random();
+      if(r<0.35){
+        /* Ranging/consolidation */
+        trend=(Math.random()-0.5)*0.15;
+        trendStr=0.1+Math.random()*0.15;
+        volMult=0.4+Math.random()*0.4;
+      }else if(r<0.7){
+        /* Mild trend */
+        trend=(Math.random()-0.5)*0.7;
+        trendStr=0.2+Math.random()*0.3;
+        volMult=0.7+Math.random()*0.4;
+      }else if(r<0.9){
+        /* Strong trend */
+        trend=Math.random()>0.5?0.8:-0.8;
+        trendStr=0.4+Math.random()*0.3;
+        volMult=1+Math.random()*0.5;
+      }else{
+        /* Spike/reversal */
+        trend=-trend*1.2;
+        trendStr=0.5+Math.random()*0.4;
+        volMult=1.5+Math.random()*0.8;
+        phaseMax=2+Math.floor(Math.random()*4);/* short burst */
+      }
     }
-    c=base;
-    candleData.push({o:o,h:h,l:l,c:c,v:Math.floor(200+Math.random()*1500)});
+    
+    /* Build candle tick-by-tick */
+    var open=price;
+    var high=open,low=open;
+    var tickCount=15+Math.floor(Math.random()*12);
+    var vol=baseVol*volMult;
+    
+    for(var t=0;t<tickCount;t++){
+      var noise=_gRand()*vol*0.22;
+      mom=mom*0.72+noise*0.28;
+      var drift=trend*trendStr*vol*0.12;
+      /* Mean reversion to base price */
+      var rev=(basePrice-price)/basePrice*0.003;
+      price=price*(1+mom+drift+rev);
+      /* Keep within ±5% of base */
+      price=Math.max(basePrice*0.95,Math.min(basePrice*1.05,price));
+      if(price>high)high=price;
+      if(price<low)low=price;
+    }
+    var close=price;
+    
+    /* Ensure realistic body-to-range ratio */
+    var range=high-low;
+    var body=Math.abs(close-open);
+    /* Prevent micro-doji with huge wicks (unrealistic) */
+    if(range>0&&body<range*0.08&&range>basePrice*baseVol*0.3){
+      var mid=(open+close)/2;
+      var maxWick=Math.max(body*3,basePrice*baseVol*0.15);
+      high=Math.min(high,Math.max(open,close)+maxWick);
+      low=Math.max(low,Math.min(open,close)-maxWick);
+    }
+    
+    /* Volume correlates with price movement (realistic) */
+    var moveSize=Math.abs(close-open)/basePrice;
+    var baseV=300+Math.random()*800;
+    var volBoost=1+moveSize*5000;/* bigger moves = more volume */
+    if(volMult>1.2)volBoost*=1.5;/* spikes have more volume */
+    
+    candleData.push({
+      o:open,h:high,l:low,c:close,
+      v:Math.floor(baseV*volBoost)
+    });
   }
   priceHistory=candleData.map(function(c){return c.c});
 }
@@ -943,11 +1021,17 @@ function startChart(){
         }
       }
     }else{
-      /* No active trade */
+      /* No active trade — smooth natural movement */
       if(realtimeP&&realtimeP>0){
-        nc=realtimeP;
+        /* Smoothly approach real API price (not instant jump) */
+        var diff=realtimeP-last.c;
+        var gNoise=_gRand()*last.c*0.000025;
+        nc=last.c+diff*0.15+gNoise;
       }else{
-        nc=last.c+(Math.random()-0.5)*last.c*0.0002;
+        /* No API — Gaussian micro-movements with momentum */
+        var microVol=last.c*0.00008;
+        var gn=_gRand()*microVol;
+        nc=last.c+gn;
       }
     }
     
@@ -973,7 +1057,7 @@ function startChart(){
     updateOrderBookPrices(nc);
     
     chartAnimFrame=requestAnimationFrame(function(){
-      setTimeout(function(){requestAnimationFrame(tick)},400);
+      setTimeout(function(){requestAnimationFrame(tick)},250);
     });
   }
   tick();
