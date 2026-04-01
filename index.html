@@ -644,19 +644,19 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
 var ASSETS=[
-  {symbol:'BTC/USD',name:'Bitcoin',price:68100,color:'#f7931a',tdSymbol:'BTC/USD',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
-  {symbol:'ETH/USD',name:'Ethereum',price:2098,color:'#627eea',tdSymbol:'ETH/USD',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
-  {symbol:'BNB/USD',name:'BNB',price:616,color:'#f0b90b',tdSymbol:'BNB/USD',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
-  {symbol:'XAU/USD',name:'Gold',price:4560,color:'#d4a437',tdSymbol:'XAU/USD',binSymbol:null,exchange:'commodity',decimals:2},
+  {symbol:'BTC/USD',name:'Bitcoin',price:67450,color:'#f7931a',tdSymbol:'BTC/USD',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
+  {symbol:'ETH/USD',name:'Ethereum',price:3520,color:'#627eea',tdSymbol:'ETH/USD',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
+  {symbol:'BNB/USD',name:'BNB',price:608,color:'#f0b90b',tdSymbol:'BNB/USD',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
+  {symbol:'XAU/USD',name:'Gold',price:2345,color:'#d4a437',tdSymbol:'XAU/USD',binSymbol:null,exchange:'commodity',decimals:2},
   {symbol:'EUR/USD',name:'Euro/Dollar',price:1.0862,color:'#0052b4',tdSymbol:'EUR/USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3235,color:'#c8102e',tdSymbol:'GBP/USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'USD/JPY',name:'Dollar/Yen',price:160.00,color:'#bc002d',tdSymbol:'USD/JPY',binSymbol:null,exchange:'forex',decimals:3},
-  {symbol:'SPX500',name:'S&P 500',price:6529,color:'#00c805',tdSymbol:'SPX',binSymbol:null,exchange:'index',decimals:2},
-  {symbol:'NAS100',name:'NASDAQ 100',price:20795,color:'#0072c6',tdSymbol:'IXIC',binSymbol:null,exchange:'index',decimals:2}
+  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.2643,color:'#c8102e',tdSymbol:'GBP/USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'USD/JPY',name:'Dollar/Yen',price:154.32,color:'#bc002d',tdSymbol:'USD/JPY',binSymbol:null,exchange:'forex',decimals:3},
+  {symbol:'SPX500',name:'S&P 500',price:5248,color:'#00c805',tdSymbol:'SPX',binSymbol:null,exchange:'index',decimals:2},
+  {symbol:'NAS100',name:'NASDAQ 100',price:18420,color:'#0072c6',tdSymbol:'IXIC',binSymbol:null,exchange:'index',decimals:2}
 ];
 
 /* ===== TWELVE DATA API (Forex, Gold, Index) ===== */
-var TD_KEY='91ff9418c8ec4aad9a875ecb7b61c138';
+var TD_KEY='faf303613acf44ec8b7fd40e9daf12b1';
 var tdLastPrices={};
 var tdWs=null;
 var tdConnected=false;
@@ -809,130 +809,32 @@ async function selectAsset(i){
   var binInterval=tfBinance[currentTimeframe.toString()]||'5m';
   var tdInterval=tfTD[currentTimeframe.toString()]||'5min';
   
-  /* Crypto → Binance (free, unlimited) */
+  /* Crypto → Binance first */
   if(a.exchange==='crypto'&&a.binSymbol){
     realCandles=await fetchBinanceKlines(a.binSymbol,binInterval,80);
   }
   
-  /* Forex/Gold/Index → Twelve Data with retry */
+  /* Forex/Gold/Index → Twelve Data */
   if(!realCandles){
     realCandles=await fetchTwelveDataCandles(a,tdInterval);
-    /* If rate limited, wait 2s and retry once */
-    if(!realCandles){
-      await new Promise(function(r){setTimeout(r,2000)});
-      realCandles=await fetchTwelveDataCandles(a,tdInterval);
-    }
   }
   
   if(realCandles&&realCandles.length>10){
     candleData=realCandles.slice(-80);
     priceHistory=candleData.map(function(c){return c.c});
     a.price=candleData[candleData.length-1].c;
+    showToast('📡 '+a.symbol+' ข้อมูลตลาดจริง','success');
   }else{
-    /* Fallback: try to get at least current price */
     await fetchTwelveDataPrice(a);
     generateCandleData();
+    showToast('⚠️ '+a.symbol+' ใช้ข้อมูลจำลอง','info');
   }
   
   finnhubLoading=false;
   updatePriceDisplay();startChart();generateOrderBook();
 }
 
-function _gRand(){var u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
-function generateCandleData(){
-  candleData=[];
-  var a=ASSETS[selectedAsset];
-  var price=a.price;
-  var basePrice=price;
-  
-  /* Asset-specific volatility */
-  var volMap={crypto:0.003,commodity:0.0015,forex:0.0005,index:0.001};
-  var baseVol=volMap[a.exchange]||0.001;
-  
-  /* Market state machine */
-  var mom=0;
-  var trend=0;
-  var trendStr=0.3;
-  var volMult=1;
-  var phaseLife=0;
-  var phaseMax=5+Math.floor(Math.random()*12);
-  
-  /* Generate realistic price history */
-  for(var k=0;k<80;k++){
-    /* Phase transitions: trending, ranging, breakout */
-    phaseLife++;
-    if(phaseLife>phaseMax){
-      phaseLife=0;
-      phaseMax=4+Math.floor(Math.random()*18);
-      var r=Math.random();
-      if(r<0.35){
-        /* Ranging/consolidation */
-        trend=(Math.random()-0.5)*0.15;
-        trendStr=0.1+Math.random()*0.15;
-        volMult=0.4+Math.random()*0.4;
-      }else if(r<0.7){
-        /* Mild trend */
-        trend=(Math.random()-0.5)*0.7;
-        trendStr=0.2+Math.random()*0.3;
-        volMult=0.7+Math.random()*0.4;
-      }else if(r<0.9){
-        /* Strong trend */
-        trend=Math.random()>0.5?0.8:-0.8;
-        trendStr=0.4+Math.random()*0.3;
-        volMult=1+Math.random()*0.5;
-      }else{
-        /* Spike/reversal */
-        trend=-trend*1.2;
-        trendStr=0.5+Math.random()*0.4;
-        volMult=1.5+Math.random()*0.8;
-        phaseMax=2+Math.floor(Math.random()*4);/* short burst */
-      }
-    }
-    
-    /* Build candle tick-by-tick */
-    var open=price;
-    var high=open,low=open;
-    var tickCount=15+Math.floor(Math.random()*12);
-    var vol=baseVol*volMult;
-    
-    for(var t=0;t<tickCount;t++){
-      var noise=_gRand()*vol*0.22;
-      mom=mom*0.72+noise*0.28;
-      var drift=trend*trendStr*vol*0.12;
-      /* Mean reversion to base price */
-      var rev=(basePrice-price)/basePrice*0.003;
-      price=price*(1+mom+drift+rev);
-      /* Keep within ±5% of base */
-      price=Math.max(basePrice*0.95,Math.min(basePrice*1.05,price));
-      if(price>high)high=price;
-      if(price<low)low=price;
-    }
-    var close=price;
-    
-    /* Ensure realistic body-to-range ratio */
-    var range=high-low;
-    var body=Math.abs(close-open);
-    /* Prevent micro-doji with huge wicks (unrealistic) */
-    if(range>0&&body<range*0.08&&range>basePrice*baseVol*0.3){
-      var mid=(open+close)/2;
-      var maxWick=Math.max(body*3,basePrice*baseVol*0.15);
-      high=Math.min(high,Math.max(open,close)+maxWick);
-      low=Math.max(low,Math.min(open,close)-maxWick);
-    }
-    
-    /* Volume correlates with price movement (realistic) */
-    var moveSize=Math.abs(close-open)/basePrice;
-    var baseV=300+Math.random()*800;
-    var volBoost=1+moveSize*5000;/* bigger moves = more volume */
-    if(volMult>1.2)volBoost*=1.5;/* spikes have more volume */
-    
-    candleData.push({
-      o:open,h:high,l:low,c:close,
-      v:Math.floor(baseV*volBoost)
-    });
-  }
-  priceHistory=candleData.map(function(c){return c.c});
-}
+function generateCandleData(){candleData=[];var a=ASSETS[selectedAsset],base=a.price;for(var k=0;k<80;k++){var o=base+(Math.random()-0.5)*base*0.008;var c=o+(Math.random()-0.5)*base*0.006;var h=Math.max(o,c)+(Math.random()*base*0.003);var l=Math.min(o,c)-(Math.random()*base*0.003);var v=Math.floor(Math.random()*1000+100);candleData.push({o:o,h:h,l:l,c:c,v:v});base=c;}priceHistory=candleData.map(function(c){return c.c});}
 function setTimeframe(el){document.querySelectorAll('.tv-tf-btn').forEach(function(b){b.classList.remove('active')});el.classList.add('active');currentTimeframe=parseInt(el.dataset.tf);selectAsset(selectedAsset);}
 function switchSidebarTab(tab,el){document.querySelectorAll('.tv-sidebar-tab').forEach(function(t){t.classList.remove('active')});el.classList.add('active');document.querySelectorAll('.tv-tab-panel').forEach(function(p){p.classList.remove('active')});document.getElementById(tab==='trade'?'tabTrade':'tabOrderbook').classList.add('active');}
 function setAmount(v){document.getElementById('tradeAmount').value=v;document.getElementById('potentialProfit').textContent='$'+(v*0.85).toFixed(2);}
@@ -1021,17 +923,11 @@ function startChart(){
         }
       }
     }else{
-      /* No active trade — smooth natural movement */
+      /* No active trade */
       if(realtimeP&&realtimeP>0){
-        /* Smoothly approach real API price (not instant jump) */
-        var diff=realtimeP-last.c;
-        var gNoise=_gRand()*last.c*0.000025;
-        nc=last.c+diff*0.15+gNoise;
+        nc=realtimeP;
       }else{
-        /* No API — Gaussian micro-movements with momentum */
-        var microVol=last.c*0.00008;
-        var gn=_gRand()*microVol;
-        nc=last.c+gn;
+        nc=last.c+(Math.random()-0.5)*last.c*0.0002;
       }
     }
     
@@ -1057,175 +953,41 @@ function startChart(){
     updateOrderBookPrices(nc);
     
     chartAnimFrame=requestAnimationFrame(function(){
-      setTimeout(function(){requestAnimationFrame(tick)},250);
+      setTimeout(function(){requestAnimationFrame(tick)},400);
     });
   }
   tick();
 }
-function drawCandlestick(ctx,w,h){
-ctx.clearRect(0,0,w,h);
-var d=candleData,len=d.length;if(len<2)return;
+function drawCandlestick(ctx,w,h){ctx.clearRect(0,0,w,h);var d=candleData,len=d.length;if(len<2)return;
 var a=ASSETS[selectedAsset],dp=a.decimals||2;
-
-/* Price range with padding */
 var allH=d.map(function(c){return c.h}),allL=d.map(function(c){return c.l});
 var mn=Math.min.apply(null,allL),mx=Math.max.apply(null,allH),rng=mx-mn||1;
-var padPrice=rng*0.08;mn-=padPrice;mx+=padPrice;rng=mx-mn;
-
-var padT=14,padB=28,padL=10,padR=68;
+/* Add 5% padding to price range */
+var padPrice=rng*0.05;mn-=padPrice;mx+=padPrice;rng=mx-mn;
+var padT=12,padB=30,padL=8,padR=65;
 var chartH=h-padT-padB,chartW=w-padL-padR;
-
-/* Candle sizing — wider, more like TradingView */
-var maxVisible=Math.min(len,80);
-var visibleData=d.slice(-maxVisible);
-len=visibleData.length;
-var candleSpace=chartW/len;
-var cw=Math.max(5,Math.floor(candleSpace*0.72));
-if(cw%2===0)cw--;/* odd width for centered wick */
-var gap=candleSpace-cw;
-
-/* ===== GRID ===== */
-ctx.strokeStyle='rgba(255,255,255,.045)';
-ctx.lineWidth=0.5;
-ctx.font='10px JetBrains Mono,monospace';
-ctx.fillStyle='rgba(255,255,255,.28)';
-var steps=6;
-for(var i=0;i<=steps;i++){
-  var y=padT+chartH*i/steps;
-  ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+4,y);ctx.stroke();
-  var pv=mx-rng*i/steps;
-  ctx.fillText(pv.toFixed(dp),w-padR+8,y+4);
-}
-
-/* ===== VOLUME BARS ===== */
-var maxV=Math.max.apply(null,visibleData.map(function(c){return c.v}))||1;
-var volH=chartH*0.15;
-for(var i=0;i<len;i++){
-  var x=padL+i*candleSpace+gap/2;
-  var vH=Math.max(1,(visibleData[i].v/maxV)*volH);
-  var bull=visibleData[i].c>=visibleData[i].o;
-  ctx.fillStyle=bull?'rgba(56,161,105,.12)':'rgba(229,62,62,.12)';
-  ctx.fillRect(x,padT+chartH-vH,cw,vH);
-}
-
-/* ===== CANDLESTICKS ===== */
-var bullUp='#22c55e',bullUpLight='#4ade80';
-var bearDown='#ef4444',bearDownLight='#f87171';
-
-for(var i=0;i<len;i++){
-  var c=visibleData[i];
-  var x=padL+i*candleSpace+gap/2;
-  var bull=c.c>=c.o;
-  var yO=padT+(1-(c.o-mn)/rng)*chartH;
-  var yC=padT+(1-(c.c-mn)/rng)*chartH;
-  var yH=padT+(1-(c.h-mn)/rng)*chartH;
-  var yL=padT+(1-(c.l-mn)/rng)*chartH;
-  var cx=x+cw/2;
-
-  /* Wick — slightly thicker than 1px */
-  ctx.strokeStyle=bull?bullUp:bearDown;
-  ctx.lineWidth=Math.max(1,Math.min(1.8,cw*0.12));
-  ctx.beginPath();
-  ctx.moveTo(cx,yH);
-  ctx.lineTo(cx,yL);
-  ctx.stroke();
-
-  /* Body */
-  var bodyTop=Math.min(yO,yC);
-  var bodyH=Math.max(Math.abs(yC-yO),2);
-
-  /* Gradient fill for body */
-  var grd=ctx.createLinearGradient(x,bodyTop,x,bodyTop+bodyH);
-  if(bull){
-    grd.addColorStop(0,bullUpLight);
-    grd.addColorStop(1,bullUp);
-  }else{
-    grd.addColorStop(0,bearDownLight);
-    grd.addColorStop(1,bearDown);
-  }
-  ctx.fillStyle=grd;
-
-  /* Rounded rect body */
-  var r=Math.min(2.5,cw/5,bodyH/4);
-  if(r<1||bodyH<4){
-    ctx.fillRect(x,bodyTop,cw,bodyH);
-  }else{
-    ctx.beginPath();
-    ctx.moveTo(x+r,bodyTop);
-    ctx.lineTo(x+cw-r,bodyTop);
-    ctx.arcTo(x+cw,bodyTop,x+cw,bodyTop+r,r);
-    ctx.lineTo(x+cw,bodyTop+bodyH-r);
-    ctx.arcTo(x+cw,bodyTop+bodyH,x+cw-r,bodyTop+bodyH,r);
-    ctx.lineTo(x+r,bodyTop+bodyH);
-    ctx.arcTo(x,bodyTop+bodyH,x,bodyTop+bodyH-r,r);
-    ctx.lineTo(x,bodyTop+r);
-    ctx.arcTo(x,bodyTop,x+r,bodyTop,r);
-    ctx.fill();
-  }
-
-  /* Subtle body border for depth */
-  if(cw>=6){
-    ctx.strokeStyle=bull?'rgba(34,197,94,.3)':'rgba(239,68,68,.3)';
-    ctx.lineWidth=0.5;
-    if(r>=1&&bodyH>=4){
-      ctx.stroke();/* stroke the rounded path already set */
-    }else{
-      ctx.strokeRect(x,bodyTop,cw,bodyH);
-    }
-  }
-}
-
-/* ===== ENTRY LINES for active trades ===== */
-for(var ti=0;ti<activeTrades.length;ti++){
-  var t=activeTrades[ti];
-  if(t.assetIndex===selectedAsset){
-    var yEntry=padT+(1-(t.open_price-mn)/rng)*chartH;
-    ctx.setLineDash([6,4]);
-    ctx.strokeStyle=t.direction==='up'?'rgba(56,161,105,.6)':'rgba(229,62,62,.6)';
-    ctx.lineWidth=1.2;
-    ctx.beginPath();ctx.moveTo(padL,yEntry);ctx.lineTo(w-padR,yEntry);ctx.stroke();
-    ctx.setLineDash([]);
-    /* Entry label */
-    ctx.fillStyle=t.direction==='up'?'rgba(56,161,105,.8)':'rgba(229,62,62,.8)';
-    ctx.font='bold 9px JetBrains Mono,monospace';
-    ctx.fillText((t.direction==='up'?'▲ BUY ':'▼ SELL ')+t.open_price.toFixed(dp),padL+4,yEntry-5);
-  }
-}
-
-/* ===== CURRENT PRICE LINE ===== */
-var lastC=visibleData[len-1].c;
-var yLast=padT+(1-(lastC-mn)/rng)*chartH;
-var lastBull=visibleData[len-1].c>=visibleData[len-1].o;
-ctx.setLineDash([5,3]);
-ctx.strokeStyle=lastBull?'rgba(34,197,94,.45)':'rgba(239,68,68,.45)';
-ctx.lineWidth=1;
-ctx.beginPath();ctx.moveTo(padL,yLast);ctx.lineTo(w-padR,yLast);ctx.stroke();
-ctx.setLineDash([]);
-
-/* Price badge */
-var lblColor=lastBull?'#22c55e':'#ef4444';
-ctx.fillStyle=lblColor;
-var lblW=padR-4;
-/* Rounded badge */
-var by=yLast-11,bh=22,br=4;
-ctx.beginPath();
-ctx.moveTo(w-padR+br,by);
-ctx.lineTo(w-padR+lblW-br,by);
-ctx.arcTo(w-padR+lblW,by,w-padR+lblW,by+br,br);
-ctx.lineTo(w-padR+lblW,by+bh-br);
-ctx.arcTo(w-padR+lblW,by+bh,w-padR+lblW-br,by+bh,br);
-ctx.lineTo(w-padR+br,by+bh);
-ctx.arcTo(w-padR,by+bh,w-padR,by+bh-br,br);
-ctx.lineTo(w-padR,by+br);
-ctx.arcTo(w-padR,by,w-padR+br,by,br);
-ctx.fill();
-
-ctx.fillStyle='#fff';
-ctx.font='bold 10.5px JetBrains Mono,monospace';
-ctx.textAlign='center';
-ctx.fillText(lastC.toFixed(dp),w-padR+lblW/2,yLast+4);
-ctx.textAlign='left';
-}
+/* Candle sizing — thicker for fewer candles */
+var maxCW=Math.floor(chartW/len);
+var cw=Math.max(4,Math.floor(maxCW*0.65));
+var gap=maxCW-cw;
+var totalW=maxCW*len;
+var startX=padL+chartW-totalW;
+/* grid */
+ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.font='10px JetBrains Mono,monospace';ctx.fillStyle='rgba(255,255,255,.25)';var steps=6;for(var i=0;i<=steps;i++){var y=padT+chartH*i/steps;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR+5,y);ctx.stroke();var pv=mx-rng*i/steps;ctx.fillText(pv.toFixed(dp),w-padR+8,y+4);}
+/* volume bars */
+var maxV=Math.max.apply(null,d.map(function(c){return c.v}))||1;var volH=chartH*0.12;for(var i=0;i<len;i++){var x=startX+i*maxCW+gap/2;var vH=(d[i].v/maxV)*volH;var bull=d[i].c>=d[i].o;ctx.fillStyle=bull?'rgba(56,161,105,.1)':'rgba(229,62,62,.1)';ctx.fillRect(x,padT+chartH-vH,cw,vH);}
+/* candles */
+for(var i=0;i<len;i++){var c=d[i],x=startX+i*maxCW+gap/2,bull=c.c>=c.o;var yO=padT+(1-(c.o-mn)/rng)*chartH,yC=padT+(1-(c.c-mn)/rng)*chartH,yH=padT+(1-(c.h-mn)/rng)*chartH,yL=padT+(1-(c.l-mn)/rng)*chartH;
+/* wick */
+ctx.strokeStyle=bull?'#38a169':'#e53e3e';ctx.lineWidth=1.5;var cx=x+cw/2;ctx.beginPath();ctx.moveTo(cx,yH);ctx.lineTo(cx,yL);ctx.stroke();
+/* body */
+var bodyTop=Math.min(yO,yC),bodyH=Math.max(Math.abs(yC-yO),1.5);ctx.fillStyle=bull?'#38a169':'#e53e3e';ctx.fillRect(x,bodyTop,cw,bodyH);}
+/* entry lines for active trades */
+for(var ti=0;ti<activeTrades.length;ti++){var t=activeTrades[ti];if(t.assetIndex===selectedAsset){var yEntry=padT+(1-(t.open_price-mn)/rng)*chartH;ctx.setLineDash([6,4]);ctx.strokeStyle=t.direction==='up'?'rgba(56,161,105,.5)':'rgba(229,62,62,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,yEntry);ctx.lineTo(w-padR,yEntry);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=t.direction==='up'?'rgba(56,161,105,.7)':'rgba(229,62,62,.7)';ctx.font='bold 9px JetBrains Mono,monospace';ctx.fillText((t.direction==='up'?'▲ BUY ':'▼ SELL ')+t.open_price.toFixed(2),padL+4,yEntry-4);}}
+/* current price line */
+var lastC=d[len-1].c,yLast=padT+(1-(lastC-mn)/rng)*chartH;ctx.setLineDash([4,3]);ctx.strokeStyle=d[len-1].c>=d[len-1].o?'rgba(56,161,105,.5)':'rgba(229,62,62,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(padL,yLast);ctx.lineTo(w-padR,yLast);ctx.stroke();ctx.setLineDash([]);
+/* price label */
+var lblColor=d[len-1].c>=d[len-1].o?'#38a169':'#e53e3e';ctx.fillStyle=lblColor;var lblW=padR-2;ctx.fillRect(w-padR,yLast-10,lblW,20);ctx.fillStyle='#fff';ctx.font='bold 10px JetBrains Mono,monospace';ctx.textAlign='center';ctx.fillText(lastC.toFixed(dp),w-padR+lblW/2,yLast+4);ctx.textAlign='left';}
 
 function generateOrderBook(){if(!candleData.length)return;var last=candleData[candleData.length-1].c;updateOrderBookPrices(last);}
 function updateOrderBookPrices(price){var a=ASSETS[selectedAsset],d=a.decimals||2;var spread=price*0.0002;var asks='',bids='',maxSize=0;var askData=[],bidData=[];for(var i=8;i>=1;i--){var p=price+spread*i*0.5+Math.random()*price*0.0001;var s=(Math.random()*5+0.1).toFixed(3);var t=(parseFloat(s)*p).toFixed(2);askData.push({p:p,s:s,t:t});if(parseFloat(s)>maxSize)maxSize=parseFloat(s);}for(var i=1;i<=8;i++){var p=price-spread*i*0.5-Math.random()*price*0.0001;var s=(Math.random()*5+0.1).toFixed(3);var t=(parseFloat(s)*p).toFixed(2);bidData.push({p:p,s:s,t:t});if(parseFloat(s)>maxSize)maxSize=parseFloat(s);}asks=askData.map(function(r){var w=(parseFloat(r.s)/maxSize*100).toFixed(0);return '<div class="tv-ob-row ask"><span class="price">'+r.p.toFixed(d)+'</span><span class="size">'+r.s+'</span><span class="total">'+r.t+'</span><div class="depth-bar" style="width:'+w+'%"></div></div>'}).join('');bids=bidData.map(function(r){var w=(parseFloat(r.s)/maxSize*100).toFixed(0);return '<div class="tv-ob-row bid"><span class="price">'+r.p.toFixed(d)+'</span><span class="size">'+r.s+'</span><span class="total">'+r.t+'</span><div class="depth-bar" style="width:'+w+'%"></div></div>'}).join('');document.getElementById('obAsks').innerHTML=asks;document.getElementById('obBids').innerHTML=bids;document.getElementById('obSpread').textContent=(spread).toFixed(d);}
