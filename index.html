@@ -378,7 +378,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 </div>
 
 <!-- REGISTER -->
-<div class="page" id="page-register"><div class="auth-page"><div class="auth-card"><div class="text-center"><h2>สร้างบัญชีใหม่</h2><p class="subtitle">เริ่มต้นเทรดกับ StreetWeath</p></div><form onsubmit="handleRegister(event)"><div class="form-group"><label>ชื่อ-นามสกุล</label><input type="text" class="form-input" id="regName" required></div><div class="form-group"><label>อีเมล</label><input type="email" class="form-input" id="regEmail" required></div><div class="form-group"><label>รหัสผ่าน</label><input type="password" class="form-input" id="regPassword" required minlength="6"></div><div class="form-group"><label>รหัสแนะนำ (ถ้ามี)</label><input type="text" class="form-input" id="regReferral"></div><button type="submit" class="btn btn-gold btn-full" id="regBtn">สมัครสมาชิก</button></form><div class="form-divider">หรือ</div><p class="text-center text-muted" style="font-size:.9rem">มีบัญชีอยู่แล้ว? <a href="#" onclick="navigate('login')">เข้าสู่ระบบ</a></p></div></div></div>
+<div class="page" id="page-register"><div class="auth-page"><div class="auth-card"><div class="text-center"><h2>สร้างบัญชีใหม่</h2><p class="subtitle">เริ่มต้นเทรดกับ StreetWeath</p></div><form onsubmit="handleRegister(event)"><div class="form-group"><label>ชื่อ-นามสกุล</label><input type="text" class="form-input" id="regName" required></div><div class="form-group"><label>อีเมล</label><input type="email" class="form-input" id="regEmail" required></div><div class="form-group"><label>รหัสผ่าน</label><input type="password" class="form-input" id="regPassword" required minlength="6"></div><div class="form-group"><label>รหัสแนะนำ (ถ้ามี)</label><input type="text" class="form-input" id="regReferral"></div><div class="form-group" style="margin-top:12px"><label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.85rem;color:var(--text2);line-height:1.5"><input type="checkbox" id="agreeTerms" style="margin-top:4px;min-width:18px;min-height:18px;accent-color:var(--gold)"> <span>ข้าพเจ้ายอมรับ <a href="#" onclick="event.preventDefault();openModal('termsModal')" style="color:var(--gold);text-decoration:underline">ข้อกำหนดและเงื่อนไขการใช้งาน</a> รวมถึงนโยบายการเทรด นโยบายฝาก-ถอน และนโยบายความเป็นส่วนตัว</span></label></div><button type="submit" class="btn btn-gold btn-full" id="regBtn">สมัครสมาชิก</button></form><div class="form-divider">หรือ</div><p class="text-center text-muted" style="font-size:.9rem">มีบัญชีอยู่แล้ว? <a href="#" onclick="navigate('login')">เข้าสู่ระบบ</a></p></div></div></div>
 <!-- LOGIN -->
 <div class="page" id="page-login"><div class="auth-page"><div class="auth-card"><div class="text-center"><h2>เข้าสู่ระบบ</h2><p class="subtitle">ยินดีต้อนรับกลับ</p></div><form onsubmit="handleLogin(event)"><div class="form-group"><label>อีเมล</label><input type="email" class="form-input" id="loginEmail" required></div><div class="form-group"><label>รหัสผ่าน</label><input type="password" class="form-input" id="loginPassword" required></div><button type="submit" class="btn btn-gold btn-full" id="loginBtn">เข้าสู่ระบบ</button></form><div class="form-divider">หรือ</div><p class="text-center text-muted" style="font-size:.9rem">ยังไม่มีบัญชี? <a href="#" onclick="navigate('register')">สมัครเลย</a></p></div></div></div>
 <!-- DASHBOARD -->
@@ -540,6 +540,89 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 <div class="modal-overlay" id="depositModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('depositModal')">✕</button><h3>⬆ ฝากเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ฝากผ่าน Crypto หรือ Demo (ทดสอบ)</p><form onsubmit="handleCryptoDeposit(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="depositAmount" min="5" step="0.01" required placeholder="ขั้นต่ำ $5"></div><div class="form-group"><label>เลือกช่องทางฝากเงิน</label><select class="form-input" id="depositCurrency" onchange="toggleDepositMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ต้องจ่ายจริง)</option><option value="">Crypto อัตโนมัติ (เลือกตอนจ่าย)</option><option value="USDT">USDT (TRC20/ERC20/BEP20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option><option value="USDC">USDC</option><option value="LTC">Litecoin (LTC)</option><option value="TRX">TRON (TRX)</option></select></div><button type="submit" class="btn btn-gold btn-full" id="depositBtn">📤 ส่งคำขอฝากเงิน</button></form><div id="depositResult" style="display:none;margin-top:16px;text-align:center"><p id="depositResultMsg" style="color:var(--green);font-weight:600;margin-bottom:8px">✅ สร้างลิงก์สำเร็จ!</p><a id="depositPayLink" href="#" target="_blank" class="btn btn-gold btn-full" style="margin-bottom:8px;display:none">💳 ไปหน้าชำระเงิน</a><p id="depositResultSub" style="color:var(--text3);font-size:.75rem">เงินจะเข้าบัญชีหลังจาก Admin ตรวจสอบ</p></div></div></div>
 <div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น Crypto หรือ Demo (ทดสอบ)</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>เลือกช่องทางถอนเงิน</label><select class="form-input" id="withdrawCurrency" onchange="toggleWithdrawMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ถอนจริง)</option><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div><div id="withdrawCryptoFields" style="display:none"><div class="form-group"><label>Wallet Address ปลายทาง</label><input type="text" class="form-input" id="withdrawWallet" placeholder="วาง Wallet Address ที่นี่"></div><div class="form-group"><label>Network (ตรวจสอบให้ตรงกัน)</label><select class="form-input" id="withdrawNetwork"><option value="TRC20">TRC20 (Tron)</option><option value="BEP20">BEP20 (BSC)</option><option value="ERC20">ERC20 (Ethereum)</option><option value="BTC">Bitcoin</option></select></div></div><button type="submit" class="btn btn-gold btn-full" id="withdrawBtn">📤 ส่งคำขอถอนเงิน</button></form></div></div>
 
+<!-- TERMS & CONDITIONS MODAL -->
+<div class="modal-overlay" id="termsModal"><div class="modal" style="position:relative;max-width:640px;max-height:85vh;overflow-y:auto">
+<button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none;z-index:2" onclick="closeModal('termsModal')">✕</button>
+<h2 style="color:var(--gold);margin-bottom:4px">📜 ข้อกำหนดและเงื่อนไขการใช้งาน</h2>
+<p style="color:var(--text3);font-size:.82rem;margin-bottom:20px">StreetWeath Trading Platform — อัปเดตล่าสุด 2024</p>
+
+<div style="color:var(--text2);font-size:.88rem;line-height:1.8">
+
+<h3 style="color:var(--gold);margin:18px 0 8px">1. ข้อตกลงทั่วไป</h3>
+<p>1.1 การสมัครสมาชิกและใช้งานแพลตฟอร์ม StreetWeath ถือว่าท่านได้อ่าน เข้าใจ และยอมรับข้อกำหนดทั้งหมดแล้ว</p>
+<p>1.2 ผู้ใช้ต้องมีอายุ 18 ปีขึ้นไป และมีสิทธิ์ทางกฎหมายในการทำธุรกรรมทางการเงิน</p>
+<p>1.3 แพลตฟอร์มขอสงวนสิทธิ์ในการเปลี่ยนแปลงข้อกำหนดได้ทุกเมื่อโดยไม่ต้องแจ้งล่วงหน้า</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">2. นโยบายการเทรด</h3>
+<p>2.1 <strong style="color:#ff6666">ห้ามใช้รูปแบบการเทรดที่ไม่เหมาะสม</strong> รวมถึงแต่ไม่จำกัดเพียง:</p>
+<ul style="margin:8px 0 8px 20px;list-style:disc">
+<li>การเทรดแบบ Arbitrage หรือใช้ประโยชน์จากความล่าช้าของราคา (Latency Arbitrage)</li>
+<li>การใช้บอทหรือซอฟต์แวร์อัตโนมัติในการเทรดโดยไม่ได้รับอนุญาต</li>
+<li>การเปิดออเดอร์จำนวนมากในเวลาสั้นๆ เพื่อรบกวนระบบ (Spam Trading)</li>
+<li>การใช้หลายบัญชีเพื่อเทรดคู่กัน (Hedging ข้ามบัญชี)</li>
+<li>การ Scalping ในช่วงเวลาสั้นมาก (ต่ำกว่า 30 วินาที) อย่างต่อเนื่อง</li>
+<li>การใช้ประโยชน์จากข้อผิดพลาดของระบบ (Bug Exploitation)</li>
+</ul>
+<p>2.2 หากตรวจพบพฤติกรรมการเทรดที่ผิดปกติ แพลตฟอร์มมีสิทธิ์ระงับบัญชี ยกเลิกออเดอร์ หรือริบกำไรที่ได้จากการเทรดผิดกฎได้ทันที</p>
+<p>2.3 ผลการเทรดทั้งหมดเป็นที่สุด (Final) ไม่สามารถขอแก้ไขหรืออุทธรณ์ได้</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">3. นโยบายการฝาก-ถอนเงิน</h3>
+<p>3.1 การฝากเงินทุกรายการต้องผ่านการตรวจสอบและอนุมัติจากทีมงาน</p>
+<p>3.2 การถอนเงินจะดำเนินการภายใน 1-3 วันทำการ หลังจาก Admin อนุมัติ</p>
+<p>3.3 <strong style="color:#ff6666">ผู้ใช้ต้องทำ KYC (ยืนยันตัวตน) ก่อนถอนเงิน</strong> โดยต้องส่งเอกสารยืนยันตัวตนที่ถูกต้อง</p>
+<p>3.4 จำนวนเงินฝากขั้นต่ำ $5 USD / ถอนขั้นต่ำ $10 USD</p>
+<p>3.5 แพลตฟอร์มมีสิทธิ์ปฏิเสธการถอนเงินหากตรวจพบกิจกรรมที่น่าสงสัยหรือผิดกฎ</p>
+<p>3.6 ในกรณีที่มีการทำธุรกรรมที่ผิดปกติ เงินในบัญชีอาจถูกอายัดเพื่อตรวจสอบ</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">4. นโยบายบัญชีผู้ใช้</h3>
+<p>4.1 ผู้ใช้ 1 คน มีได้ 1 บัญชีเท่านั้น หากพบว่ามีหลายบัญชี ทุกบัญชีจะถูกระงับ</p>
+<p>4.2 ห้ามแชร์บัญชี ซื้อขาย หรือโอนบัญชีให้ผู้อื่น</p>
+<p>4.3 ผู้ใช้ต้องรักษาข้อมูลการเข้าสู่ระบบ (อีเมล/รหัสผ่าน) เป็นความลับ</p>
+<p>4.4 แพลตฟอร์มมีสิทธิ์ระงับหรือปิดบัญชีได้ทุกเมื่อหากพบการกระทำผิดกฎ</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">5. ความเสี่ยงในการลงทุน</h3>
+<p>5.1 <strong style="color:#ff6666">การเทรดมีความเสี่ยงสูง</strong> ผู้ใช้อาจสูญเสียเงินลงทุนทั้งหมด</p>
+<p>5.2 ผลตอบแทนในอดีตไม่ได้รับประกันผลตอบแทนในอนาคต</p>
+<p>5.3 ผู้ใช้ควรเทรดด้วยเงินที่สามารถรับความเสี่ยงจากการสูญเสียได้</p>
+<p>5.4 แพลตฟอร์มไม่รับผิดชอบต่อการสูญเสียที่เกิดจากการตัดสินใจเทรดของผู้ใช้</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">6. นโยบายป้องกันการฟอกเงิน (AML)</h3>
+<p>6.1 แพลตฟอร์มปฏิบัติตามกฎหมายป้องกันการฟอกเงินอย่างเคร่งครัด</p>
+<p>6.2 ผู้ใช้ต้องยืนยันตัวตนผ่าน KYC ก่อนทำธุรกรรม</p>
+<p>6.3 ธุรกรรมที่น่าสงสัยจะถูกรายงานต่อหน่วยงานที่เกี่ยวข้อง</p>
+<p>6.4 ห้ามใช้แพลตฟอร์มเพื่อฟอกเงิน สนับสนุนการก่อการร้าย หรือกิจกรรมผิดกฎหมาย</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">7. นโยบายความเป็นส่วนตัว</h3>
+<p>7.1 ข้อมูลส่วนบุคคลของผู้ใช้จะถูกเก็บรักษาอย่างปลอดภัย</p>
+<p>7.2 ข้อมูลจะไม่ถูกแบ่งปันให้บุคคลภายนอกยกเว้นตามที่กฎหมายกำหนด</p>
+<p>7.3 ผู้ใช้ยินยอมให้แพลตฟอร์มเก็บ ใช้ และวิเคราะห์ข้อมูลเพื่อปรับปรุงบริการ</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">8. โปรแกรมแนะนำเพื่อน (Referral)</h3>
+<p>8.1 ห้ามสร้างบัญชีปลอมเพื่อรับโบนัส Referral</p>
+<p>8.2 แพลตฟอร์มมีสิทธิ์ยกเลิกโบนัสหากตรวจพบการทุจริต</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">9. การระงับและยกเลิกบัญชี</h3>
+<p>9.1 แพลตฟอร์มมีสิทธิ์ระงับบัญชีได้ทันทีหากพบการกระทำดังต่อไปนี้:</p>
+<ul style="margin:8px 0 8px 20px;list-style:disc">
+<li>ละเมิดข้อกำหนดและเงื่อนไขข้อใดข้อหนึ่ง</li>
+<li>ใช้รูปแบบการเทรดที่ไม่เหมาะสม</li>
+<li>ให้ข้อมูลเท็จในการสมัครหรือ KYC</li>
+<li>มีพฤติกรรมฉ้อโกงหรือทุจริต</li>
+<li>พยายามเจาะระบบหรือทำให้ระบบเสียหาย</li>
+</ul>
+<p>9.2 เมื่อบัญชีถูกระงับ เงินในบัญชีอาจถูกอายัดเพื่อตรวจสอบ</p>
+
+<h3 style="color:var(--gold);margin:18px 0 8px">10. ข้อจำกัดความรับผิดชอบ</h3>
+<p>10.1 แพลตฟอร์มไม่รับผิดชอบต่อความสูญเสียจากเหตุสุดวิสัย เช่น ระบบล่ม ปัญหาเครือข่าย หรือเหตุการณ์ที่อยู่นอกเหนือการควบคุม</p>
+<p>10.2 การตัดสินของแพลตฟอร์มถือเป็นที่สิ้นสุด</p>
+
+</div>
+
+<div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);text-align:center">
+<button class="btn btn-gold" onclick="closeModal('termsModal')">✅ ฉันเข้าใจและยอมรับ</button>
+</div>
+</div></div>
+
 <!-- TRADE RESULT POPUP -->
 <div class="tv-result-overlay" id="resultOverlay">
   <div class="tv-result-card" id="resultCard">
@@ -689,7 +772,7 @@ function updateNav(){var n=document.getElementById('navLinks');if(currentUser){n
 function toggleMobileMenu(){document.getElementById('navLinks').classList.toggle('open')}function closeMobileMenu(){document.getElementById('navLinks').classList.remove('open')}
 function showToast(m,t){t=t||'info';var e=document.createElement('div');e.className='toast toast-'+t;e.textContent=m;document.getElementById('toastContainer').appendChild(e);setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},300)},3500);}
 function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
-async function handleRegister(e){e.preventDefault();var btn=document.getElementById('regBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signUp({email:document.getElementById('regEmail').value.trim(),password:document.getElementById('regPassword').value});if(r.error)throw r.error;if(r.data.user){var rc='RO'+r.data.user.id.substring(0,8).toUpperCase();await sb.from('profiles').upsert({id:r.data.user.id,full_name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),balance:0,referral_code:rc,referred_by:document.getElementById('regReferral').value.trim()||null,created_at:new Date().toISOString()});}showToast('สมัครสำเร็จ!','success');navigate('login');}catch(err){showToast(err.message||'เกิดข้อผิดพลาด','error');}finally{btn.innerHTML='สมัครสมาชิก';btn.disabled=false;}}
+async function handleRegister(e){e.preventDefault();if(!document.getElementById('agreeTerms').checked){showToast('กรุณายอมรับข้อกำหนดและเงื่อนไขก่อนสมัคร','error');return;}var btn=document.getElementById('regBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signUp({email:document.getElementById('regEmail').value.trim(),password:document.getElementById('regPassword').value});if(r.error)throw r.error;if(r.data.user){var rc='RO'+r.data.user.id.substring(0,8).toUpperCase();await sb.from('profiles').upsert({id:r.data.user.id,full_name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),balance:0,referral_code:rc,referred_by:document.getElementById('regReferral').value.trim()||null,created_at:new Date().toISOString()});}showToast('สมัครสำเร็จ!','success');navigate('login');}catch(err){showToast(err.message||'เกิดข้อผิดพลาด','error');}finally{btn.innerHTML='สมัครสมาชิก';btn.disabled=false;}}
 async function handleLogin(e){e.preventDefault();var btn=document.getElementById('loginBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signInWithPassword({email:document.getElementById('loginEmail').value.trim(),password:document.getElementById('loginPassword').value});if(r.error)throw r.error;currentUser=r.data.user;await loadUserProfile();showToast('ยินดีต้อนรับ!','success');navigate('dashboard');}catch(err){showToast(err.message||'ผิดพลาด','error');}finally{btn.innerHTML='เข้าสู่ระบบ';btn.disabled=false;}}
 async function handleLogout(){await sb.auth.signOut();currentUser=null;currentProfile=null;activeTrades=[];if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);if(tdWs)try{tdWs.close();}catch(e){}if(binanceWs)try{binanceWs.close();}catch(e){}tdConnected=false;binanceConnected=false;showToast('ออกจากระบบแล้ว','info');navigate('landing');}
 async function loadUserProfile(){if(!currentUser)return;var r=await sb.from('profiles').select('*').eq('id',currentUser.id).single();if(!r.error&&r.data)currentProfile=r.data;}
