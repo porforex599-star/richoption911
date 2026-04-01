@@ -777,7 +777,7 @@ function showToast(m,t){t=t||'info';var e=document.createElement('div');e.classN
 function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
 async function handleRegister(e){e.preventDefault();if(!document.getElementById('agreeTerms').checked){showToast('กรุณายอมรับข้อกำหนดและเงื่อนไขก่อนสมัคร','error');return;}var btn=document.getElementById('regBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signUp({email:document.getElementById('regEmail').value.trim(),password:document.getElementById('regPassword').value});if(r.error)throw r.error;if(r.data.user){var rc='RO'+r.data.user.id.substring(0,8).toUpperCase();await sb.from('profiles').upsert({id:r.data.user.id,full_name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),balance:0,referral_code:rc,referred_by:document.getElementById('regReferral').value.trim()||null,created_at:new Date().toISOString()});}showToast('สมัครสำเร็จ!','success');navigate('login');}catch(err){showToast(err.message||'เกิดข้อผิดพลาด','error');}finally{btn.innerHTML='สมัครสมาชิก';btn.disabled=false;}}
 async function handleLogin(e){e.preventDefault();var btn=document.getElementById('loginBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signInWithPassword({email:document.getElementById('loginEmail').value.trim(),password:document.getElementById('loginPassword').value});if(r.error)throw r.error;currentUser=r.data.user;await loadUserProfile();showToast('ยินดีต้อนรับ!','success');navigate('dashboard');}catch(err){showToast(err.message||'ผิดพลาด','error');}finally{btn.innerHTML='เข้าสู่ระบบ';btn.disabled=false;}}
-async function handleLogout(){await sb.auth.signOut();currentUser=null;currentProfile=null;activeTrades=[];if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);if(fhWs)try{fhWs.close();}catch(e){}if(binanceWs)try{binanceWs.close();}catch(e){}fhConnected=false;binanceConnected=false;showToast('ออกจากระบบแล้ว','info');navigate('landing');}
+async function handleLogout(){await sb.auth.signOut();currentUser=null;currentProfile=null;activeTrades=[];_tickRunning++;if(chartAnimFrame){clearTimeout(chartAnimFrame);chartAnimFrame=null;}if(fhWs)try{fhWs.close();}catch(e){}if(binanceWs)try{binanceWs.close();}catch(e){}fhConnected=false;binanceConnected=false;_candleCache={};showToast('ออกจากระบบแล้ว','info');navigate('landing');}
 async function loadUserProfile(){if(!currentUser)return;var r=await sb.from('profiles').select('*').eq('id',currentUser.id).single();if(!r.error&&r.data)currentProfile=r.data;}
 function loadProfile(){if(!currentProfile)return;document.getElementById('profileName').textContent=currentProfile.full_name||'ไม่ระบุ';document.getElementById('profileEmail').textContent=currentProfile.email||'';document.getElementById('profileAvatar').textContent=(currentProfile.full_name||'?')[0].toUpperCase();document.getElementById('editName').value=currentProfile.full_name||'';document.getElementById('editPhone').value=currentProfile.phone||'';
 /* Update account status based on KYC */
@@ -978,20 +978,28 @@ function getCandleInterval(){
 
 /* ===== SMOOTH TICK ENGINE — API-first, consistent every time ===== */
 var _tickMom=0; /* momentum for smooth movement */
+var _tickRunning=0; /* unique ID to prevent tick stacking */
 
 function startChart(){
-  if(chartAnimFrame)cancelAnimationFrame(chartAnimFrame);
+  /* Stop any existing tick loop completely */
+  _tickRunning++;
+  var myTickId=_tickRunning;
+  if(chartAnimFrame){cancelAnimationFrame(chartAnimFrame);chartAnimFrame=null;}
+  
   var cv=document.getElementById('priceChart'),ctx=cv.getContext('2d');
   function resize(){cv.width=cv.parentElement.offsetWidth*2;cv.height=cv.parentElement.offsetHeight*2;ctx.scale(2,2);}
   resize();
   
   candleIntervalMs=getCandleInterval();
   candleStartTime=Date.now();
-  _tickMom=0;
+  _tickMom=0;/* reset momentum on every switch */
   
   function tick(){
+    /* If a newer startChart was called, stop this loop */
+    if(myTickId!==_tickRunning)return;
+    
     var last=candleData[candleData.length-1];
-    if(!last)return;
+    if(!last){chartAnimFrame=requestAnimationFrame(tick);return;}
     
     var realtimeP=getRealtimePrice();
     var nc=last.c;
@@ -1089,9 +1097,10 @@ function startChart(){
     processActiveTrades(nc);
     updateOrderBookPrices(nc);
     
-    chartAnimFrame=requestAnimationFrame(function(){
-      setTimeout(function(){requestAnimationFrame(tick)},currentTimeframe===0?100:250);
-    });
+    /* Simple clean animation loop — no nesting */
+    chartAnimFrame=setTimeout(function(){
+      if(myTickId===_tickRunning) tick();
+    },currentTimeframe===0?120:280);
   }
   tick();
 }
