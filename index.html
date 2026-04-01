@@ -644,15 +644,15 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
 var ASSETS=[
-  {symbol:'BTC/USD',name:'Bitcoin',price:68100,color:'#f7931a',tdSymbol:'BTC/USD',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
-  {symbol:'ETH/USD',name:'Ethereum',price:2098,color:'#627eea',tdSymbol:'ETH/USD',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
-  {symbol:'BNB/USD',name:'BNB',price:616,color:'#f0b90b',tdSymbol:'BNB/USD',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
-  {symbol:'XAU/USD',name:'Gold',price:4560,color:'#d4a437',tdSymbol:'XAU/USD',binSymbol:null,exchange:'commodity',decimals:2},
-  {symbol:'EUR/USD',name:'Euro/Dollar',price:1.1500,color:'#0052b4',tdSymbol:'EUR/USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3235,color:'#c8102e',tdSymbol:'GBP/USD',binSymbol:null,exchange:'forex',decimals:4},
-  {symbol:'USD/JPY',name:'Dollar/Yen',price:160.00,color:'#bc002d',tdSymbol:'USD/JPY',binSymbol:null,exchange:'forex',decimals:3},
-  {symbol:'SPX500',name:'S&P 500',price:6529,color:'#00c805',tdSymbol:'SPX',binSymbol:null,exchange:'index',decimals:2},
-  {symbol:'NAS100',name:'NASDAQ 100',price:20795,color:'#0072c6',tdSymbol:'IXIC',binSymbol:null,exchange:'index',decimals:2}
+  {symbol:'BTC/USD',name:'Bitcoin',price:68100,_basePrice:68100,color:'#f7931a',tdSymbol:'BTC/USD',binSymbol:'BTCUSDT',exchange:'crypto',decimals:2},
+  {symbol:'ETH/USD',name:'Ethereum',price:2098,_basePrice:2098,color:'#627eea',tdSymbol:'ETH/USD',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
+  {symbol:'BNB/USD',name:'BNB',price:616,_basePrice:616,color:'#f0b90b',tdSymbol:'BNB/USD',binSymbol:'BNBUSDT',exchange:'crypto',decimals:2},
+  {symbol:'XAU/USD',name:'Gold',price:4560,_basePrice:4560,color:'#d4a437',tdSymbol:'XAU/USD',binSymbol:null,exchange:'commodity',decimals:2},
+  {symbol:'EUR/USD',name:'Euro/Dollar',price:1.1500,_basePrice:1.1500,color:'#0052b4',tdSymbol:'EUR/USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'GBP/USD',name:'Pound/Dollar',price:1.3235,_basePrice:1.3235,color:'#c8102e',tdSymbol:'GBP/USD',binSymbol:null,exchange:'forex',decimals:4},
+  {symbol:'USD/JPY',name:'Dollar/Yen',price:160.00,_basePrice:160.00,color:'#bc002d',tdSymbol:'USD/JPY',binSymbol:null,exchange:'forex',decimals:3},
+  {symbol:'SPX500',name:'S&P 500',price:6529,_basePrice:6529,color:'#00c805',tdSymbol:'SPX',binSymbol:null,exchange:'index',decimals:2},
+  {symbol:'NAS100',name:'NASDAQ 100',price:20795,_basePrice:20795,color:'#0072c6',tdSymbol:'IXIC',binSymbol:null,exchange:'index',decimals:2}
 ];
 
 /* ===== TWELVE DATA API (Forex, Gold, Index) ===== */
@@ -672,8 +672,15 @@ async function fetchTwelveDataCandles(asset,interval){
       var candles=d.values.reverse().map(function(v){
         return {o:parseFloat(v.open),h:parseFloat(v.high),l:parseFloat(v.low),c:parseFloat(v.close),v:parseInt(v.volume)||Math.floor(Math.random()*1000)};
       });
-      asset.price=candles[candles.length-1].c;
-      console.log('TwelveData candles:',asset.symbol,candles.length);
+      /* Sanity check: verify last candle close is within reasonable range of base price */
+      var lastClose=candles[candles.length-1].c;
+      var base=asset._basePrice||asset.price;
+      if(!_isPriceSane(lastClose,base)){
+        console.warn('TwelveData candles REJECTED — price',lastClose,'too far from base',base,'for',asset.symbol);
+        return null;
+      }
+      asset.price=lastClose;
+      console.log('TwelveData candles:',asset.symbol,candles.length,'price:',lastClose);
       return candles;
     }
     console.warn('TwelveData no data:',asset.symbol,d.status,d.message||'');
@@ -687,7 +694,17 @@ async function fetchTwelveDataPrice(asset){
   try{
     var r=await fetch(url);
     var d=await r.json();
-    if(d.price){asset.price=parseFloat(d.price);return asset.price;}
+    if(d.price){
+      var p=parseFloat(d.price);
+      var base=asset._basePrice||asset.price;
+      if(_isPriceSane(p,base)){
+        asset.price=p;
+        return p;
+      }else{
+        console.warn('TwelveData price REJECTED:',p,'for',asset.symbol,'base:',base);
+        return null;
+      }
+    }
     return null;
   }catch(err){return null;}
 }
@@ -755,16 +772,24 @@ async function fetchBinanceKlines(symbol,interval,limit){
 }
 
 /* ===== GET REALTIME PRICE (Binance for crypto, TwelveData for rest) ===== */
+/* Sanity check: reject prices that deviate too far from base */
+function _isPriceSane(apiPrice,basePrice){
+  if(!apiPrice||apiPrice<=0||!basePrice||basePrice<=0)return false;
+  var ratio=apiPrice/basePrice;
+  return ratio>0.5&&ratio<2.0; /* accept within 50%-200% of base */
+}
+
 function getRealtimePrice(){
   var a=ASSETS[selectedAsset];
+  var base=a._basePrice||a.price;
   /* Crypto → Binance */
   if(a.exchange==='crypto'&&a.binSymbol){
     var bp=binanceLastPrices[a.binSymbol];
-    if(bp&&bp>0)return bp;
+    if(bp&&bp>0&&_isPriceSane(bp,base))return bp;
   }
   /* Forex/Gold/Index → Twelve Data */
   var tp=tdLastPrices[a.tdSymbol];
-  if(tp&&tp>0)return tp;
+  if(tp&&tp>0&&_isPriceSane(tp,base))return tp;
   return null;
 }
 function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(p==='dashboard')loadDashboard();if(p==='trading')initTrading();if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
