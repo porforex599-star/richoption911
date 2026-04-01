@@ -400,6 +400,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
           <span class="tv-symbol-change up" id="priceChange">+0.00%</span>
         </div>
         <div class="tv-timeframes" id="tvTimeframes">
+          <button class="tv-tf-btn" data-tf="0" onclick="setTimeframe(this)" style="color:var(--gold)">Tick</button>
           <button class="tv-tf-btn" data-tf="1" onclick="setTimeframe(this)">1m</button>
           <button class="tv-tf-btn active" data-tf="5" onclick="setTimeframe(this)">5m</button>
           <button class="tv-tf-btn" data-tf="15" onclick="setTimeframe(this)">15m</button>
@@ -806,10 +807,25 @@ async function selectAsset(i){
   finnhubLoading=true;
   var realCandles=null;
   
-  var tfBinance={'1':'1m','5':'5m','15':'15m','60':'1h','240':'4h','1440':'1d'};
-  var tfTD={'1':'1min','5':'5min','15':'15min','60':'1h','240':'4h','1440':'1day'};
+  var tfBinance={'0':'1m','1':'1m','5':'5m','15':'15m','60':'1h','240':'4h','1440':'1d'};
+  var tfTD={'0':'1min','1':'1min','5':'5min','15':'15min','60':'1h','240':'4h','1440':'1day'};
   var binInterval=tfBinance[currentTimeframe.toString()]||'5m';
   var tdInterval=tfTD[currentTimeframe.toString()]||'5min';
+  
+  /* Tick mode: generate fast candles from current price */
+  if(currentTimeframe===0){
+    /* Get current price from API first */
+    if(a.exchange==='crypto'&&a.binSymbol){
+      var klines=await fetchBinanceKlines(a.binSymbol,'1m',5);
+      if(klines&&klines.length>0) a.price=klines[klines.length-1].c;
+    }else if(a.tdSymbol){
+      await fetchTwelveDataPrice(a);
+    }
+    generateCandleData();
+    finnhubLoading=false;
+    updatePriceDisplay();startChart();generateOrderBook();
+    return;
+  }
   
   /* Crypto → Binance (free, unlimited, fastest) */
   if(a.exchange==='crypto'&&a.binSymbol){
@@ -949,6 +965,7 @@ var candleIntervalMs=60000; /* default 1m per candle */
 function getCandleInterval(){
   /* REAL timeframe intervals */
   var map={
+    '0':5000,        /* Tick = 5 second candles (fast action) */
     '1':60000,       /* 1m = 60 seconds */
     '5':300000,      /* 5m = 5 minutes */
     '15':900000,     /* 15m = 15 minutes */
@@ -997,7 +1014,8 @@ function startChart(){
           /* Pure natural movement — no bias at all */
           if(realtimeP&&realtimeP>0){
             var diff=realtimeP-last.c;
-            nc=last.c+diff*0.12+gNoise;
+            var approachSpeed=currentTimeframe===0?0.22:0.12;
+            nc=last.c+diff*approachSpeed+gNoise;
           }else{
             nc=last.c+gNoise;
           }
@@ -1041,17 +1059,28 @@ function startChart(){
         }
       }
     }else{
-      /* No active trade — smooth natural movement */
+      /* No active trade — follow real market price faithfully */
       if(realtimeP&&realtimeP>0){
-        /* Smoothly approach real API price (not instant jump) */
         var diff=realtimeP-last.c;
-        var gNoise=_gRand()*last.c*0.000025;
-        nc=last.c+diff*0.15+gNoise;
+        if(currentTimeframe===0){
+          /* Tick mode: approach API fast + add micro-noise for excitement */
+          var microNoise=_gRand()*last.c*0.000015;
+          nc=last.c+diff*0.25+microNoise;
+        }else{
+          /* Normal modes: smooth approach */
+          var gNoise=_gRand()*last.c*0.000025;
+          nc=last.c+diff*0.15+gNoise;
+        }
       }else{
-        /* No API — Gaussian micro-movements with momentum */
-        var microVol=last.c*0.00008;
-        var gn=_gRand()*microVol;
-        nc=last.c+gn;
+        /* No API — Gaussian micro-movements */
+        if(currentTimeframe===0){
+          /* Tick: slightly more active movement */
+          var microVol=last.c*0.00005;
+          nc=last.c+_gRand()*microVol;
+        }else{
+          var microVol=last.c*0.00008;
+          nc=last.c+_gRand()*microVol;
+        }
       }
     }
     
@@ -1077,7 +1106,7 @@ function startChart(){
     updateOrderBookPrices(nc);
     
     chartAnimFrame=requestAnimationFrame(function(){
-      setTimeout(function(){requestAnimationFrame(tick)},250);
+      setTimeout(function(){requestAnimationFrame(tick)},currentTimeframe===0?100:250);
     });
   }
   tick();
@@ -1135,7 +1164,11 @@ for(var i=0;i<len;i++){
     var dt=new Date(ts);
     var hh=('0'+dt.getHours()).slice(-2);
     var mm=('0'+dt.getMinutes()).slice(-2);
-    if(currentTimeframe>=1440){
+    var ss=('0'+dt.getSeconds()).slice(-2);
+    if(currentTimeframe===0){
+      /* Tick: show HH:MM:SS */
+      timeStr=hh+':'+mm+':'+ss;
+    }else if(currentTimeframe>=1440){
       /* Daily: show date */
       timeStr=('0'+dt.getDate()).slice(-2)+'/'+('0'+(dt.getMonth()+1)).slice(-2);
     }else if(currentTimeframe>=60){
@@ -1151,7 +1184,10 @@ for(var i=0;i<len;i++){
     var dt2=new Date(estTime);
     var hh2=('0'+dt2.getHours()).slice(-2);
     var mm2=('0'+dt2.getMinutes()).slice(-2);
-    if(currentTimeframe>=1440){
+    var ss2=('0'+dt2.getSeconds()).slice(-2);
+    if(currentTimeframe===0){
+      timeStr=hh2+':'+mm2+':'+ss2;
+    }else if(currentTimeframe>=1440){
       timeStr=('0'+dt2.getDate()).slice(-2)+'/'+('0'+(dt2.getMonth()+1)).slice(-2);
     }else{
       timeStr=hh2+':'+mm2;
@@ -1249,11 +1285,33 @@ ctx.lineWidth=1;
 ctx.beginPath();ctx.moveTo(padL,yLast);ctx.lineTo(w-padR,yLast);ctx.stroke();
 ctx.setLineDash([]);
 
-/* Price badge */
+/* Calculate candle countdown */
+var candleElapsed=Date.now()-candleStartTime;
+var candleRemaining=Math.max(0,candleIntervalMs-candleElapsed);
+var cdSec=Math.floor(candleRemaining/1000);
+var cdMin=Math.floor(cdSec/60);
+var cdSecR=cdSec%60;
+var cdStr='';
+if(currentTimeframe===0){
+  /* Tick mode: show seconds with decimal */
+  var cdSecF=(candleRemaining/1000).toFixed(1);
+  cdStr=cdSecF+'s';
+}else if(candleIntervalMs>=3600000){
+  var cdHr=Math.floor(cdMin/60);
+  var cdMinR=cdMin%60;
+  cdStr=('0'+cdHr).slice(-2)+':'+('0'+cdMinR).slice(-2)+':'+('0'+cdSecR).slice(-2);
+}else{
+  cdStr=('0'+cdMin).slice(-2)+':'+('0'+cdSecR).slice(-2);
+}
+
+/* Price badge + countdown (taller to fit both lines) */
 var lblColor=lastBull?'#22c55e':'#ef4444';
-ctx.fillStyle=lblColor;
 var lblW=padR-4;
-var by=yLast-11,bh=22,br=4;
+var bh=34;/* taller for 2 lines */
+var by=yLast-12;
+var br=4;
+
+ctx.fillStyle=lblColor;
 ctx.beginPath();
 ctx.moveTo(w-padR+br,by);ctx.lineTo(w-padR+lblW-br,by);
 ctx.arcTo(w-padR+lblW,by,w-padR+lblW,by+br,br);ctx.lineTo(w-padR+lblW,by+bh-br);
@@ -1261,10 +1319,16 @@ ctx.arcTo(w-padR+lblW,by+bh,w-padR+lblW-br,by+bh,br);ctx.lineTo(w-padR+br,by+bh)
 ctx.arcTo(w-padR,by+bh,w-padR,by+bh-br,br);ctx.lineTo(w-padR,by+br);
 ctx.arcTo(w-padR,by,w-padR+br,by,br);ctx.fill();
 
+/* Price text */
 ctx.fillStyle='#fff';
-ctx.font='bold 10.5px JetBrains Mono,monospace';
+ctx.font='bold 10px JetBrains Mono,monospace';
 ctx.textAlign='center';
-ctx.fillText(lastC.toFixed(dp),w-padR+lblW/2,yLast+4);
+ctx.fillText(lastC.toFixed(dp),w-padR+lblW/2,yLast+1);
+
+/* Countdown text below price */
+ctx.font='9px JetBrains Mono,monospace';
+ctx.fillStyle='rgba(255,255,255,.75)';
+ctx.fillText(cdStr,w-padR+lblW/2,yLast+13);
 ctx.textAlign='left';
 }
 
