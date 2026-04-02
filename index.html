@@ -539,7 +539,22 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 
 <!-- MODALS -->
 <div class="modal-overlay" id="depositModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('depositModal')">✕</button><h3>⬆ ฝากเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ฝากผ่าน Crypto หรือ Demo (ทดสอบ)</p><form onsubmit="handleCryptoDeposit(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="depositAmount" min="5" step="0.01" required placeholder="ขั้นต่ำ $5"></div><div class="form-group"><label>เลือกช่องทางฝากเงิน</label><select class="form-input" id="depositCurrency" onchange="toggleDepositMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ต้องจ่ายจริง)</option><option value="">Crypto อัตโนมัติ (เลือกตอนจ่าย)</option><option value="USDT">USDT (TRC20/ERC20/BEP20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option><option value="USDC">USDC</option><option value="LTC">Litecoin (LTC)</option><option value="TRX">TRON (TRX)</option></select></div><button type="submit" class="btn btn-gold btn-full" id="depositBtn">📤 ส่งคำขอฝากเงิน</button></form><div id="depositResult" style="display:none;margin-top:16px;text-align:center"><p id="depositResultMsg" style="color:var(--green);font-weight:600;margin-bottom:8px">✅ สร้างลิงก์สำเร็จ!</p><a id="depositPayLink" href="#" target="_blank" class="btn btn-gold btn-full" style="margin-bottom:8px;display:none">💳 ไปหน้าชำระเงิน</a><p id="depositResultSub" style="color:var(--text3);font-size:.75rem">เงินจะเข้าบัญชีหลังจาก Admin ตรวจสอบ</p></div></div></div>
-<div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น Crypto หรือ Demo (ทดสอบ)</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>เลือกช่องทางถอนเงิน</label><select class="form-input" id="withdrawCurrency" onchange="toggleWithdrawMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ถอนจริง)</option><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div><div id="withdrawCryptoFields" style="display:none"><div class="form-group"><label>Wallet Address ปลายทาง</label><input type="text" class="form-input" id="withdrawWallet" placeholder="วาง Wallet Address ที่นี่"></div><div class="form-group"><label>Network (ตรวจสอบให้ตรงกัน)</label><select class="form-input" id="withdrawNetwork"><option value="TRC20">TRC20 (Tron)</option><option value="BEP20">BEP20 (BSC)</option><option value="ERC20">ERC20 (Ethereum)</option><option value="BTC">Bitcoin</option></select></div></div><button type="submit" class="btn btn-gold btn-full" id="withdrawBtn">📤 ส่งคำขอถอนเงิน</button></form></div></div>
+<div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น Crypto, เงินบาท (PromptPay) หรือ Demo</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>เลือกช่องทางถอนเงิน</label><select class="form-input" id="withdrawCurrency" onchange="toggleWithdrawMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ถอนจริง)</option><option value="PROMPTPAY">🇹🇭 เงินบาท — PromptPay (เร็วที่สุด!)</option><option value="BANK_TH">🏦 โอนเข้าบัญชีธนาคารไทย</option><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div>
+<!-- PromptPay Fields -->
+<div id="withdrawPromptPayFields" style="display:none">
+<div class="form-group"><label>เบอร์มือถือ / เลขบัตรประชาชน (PromptPay)</label><input type="text" class="form-input" id="withdrawPromptPay" placeholder="เช่น 089-xxx-xxxx หรือ เลข 13 หลัก"></div>
+<div class="form-group"><label>ชื่อบัญชี (เพื่อตรวจสอบ)</label><input type="text" class="form-input" id="withdrawPromptPayName" placeholder="ชื่อ-นามสกุล เจ้าของบัญชี"></div>
+<div style="background:var(--gold-glow);border:1px solid rgba(212,164,55,.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:.82rem"><span style="color:var(--gold);font-weight:600">⚡ PromptPay:</span> <span style="color:var(--text2)">Admin จะโอนเงินให้ภายใน 5-30 นาที (ในเวลาทำการ)</span></div>
+</div>
+<!-- Bank Transfer Fields -->
+<div id="withdrawBankFields" style="display:none">
+<div class="form-group"><label>ธนาคาร</label><select class="form-input" id="withdrawBankName"><option value="KBANK">ธนาคารกสิกรไทย (KBANK)</option><option value="SCB">ธนาคารไทยพาณิชย์ (SCB)</option><option value="KTB">ธนาคารกรุงไทย (KTB)</option><option value="BBL">ธนาคารกรุงเทพ (BBL)</option><option value="BAY">ธนาคารกรุงศรี (BAY)</option><option value="TMB">ธนาคารทหารไทยธนชาต (TTB)</option><option value="GSB">ธนาคารออมสิน (GSB)</option><option value="OTHER">อื่นๆ</option></select></div>
+<div class="form-group"><label>เลขบัญชีธนาคาร</label><input type="text" class="form-input" id="withdrawBankAccount" placeholder="เลขบัญชี 10-12 หลัก"></div>
+<div class="form-group"><label>ชื่อบัญชี</label><input type="text" class="form-input" id="withdrawBankAccName" placeholder="ชื่อ-นามสกุล เจ้าของบัญชี"></div>
+<div style="background:var(--blue-glow);border:1px solid rgba(49,130,206,.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:.82rem"><span style="color:var(--blue);font-weight:600">🏦 โอนธนาคาร:</span> <span style="color:var(--text2)">Admin จะโอนเงินให้ภายใน 1-24 ชั่วโมง (ในเวลาทำการ)</span></div>
+</div>
+<!-- Crypto Fields -->
+<div id="withdrawCryptoFields" style="display:none"><div class="form-group"><label>Wallet Address ปลายทาง</label><input type="text" class="form-input" id="withdrawWallet" placeholder="วาง Wallet Address ที่นี่"></div><div class="form-group"><label>Network (ตรวจสอบให้ตรงกัน)</label><select class="form-input" id="withdrawNetwork"><option value="TRC20">TRC20 (Tron)</option><option value="BEP20">BEP20 (BSC)</option><option value="ERC20">ERC20 (Ethereum)</option><option value="BTC">Bitcoin</option></select></div></div><button type="submit" class="btn btn-gold btn-full" id="withdrawBtn">📤 ส่งคำขอถอนเงิน</button></form></div></div>
 
 <!-- TERMS & CONDITIONS MODAL -->
 <div class="modal-overlay" id="termsModal"><div class="modal" style="position:relative;max-width:640px;max-height:85vh;overflow-y:auto">
@@ -1735,15 +1750,50 @@ async function handleCryptoDeposit(e){
 }
 
 /* ===== CRYPTO WITHDRAW ===== */
+/* ===== TELEGRAM NOTIFICATION ===== */
+var TELEGRAM_BOT_TOKEN='8682855734:AAHH__xa0lCm9YZkZdMYgdIRinqq-i3iRAM';
+var TELEGRAM_CHAT_ID='7741305488';
+
+async function sendTelegramNotify(message){
+  if(TELEGRAM_BOT_TOKEN==='YOUR_BOT_TOKEN_HERE')return; /* Skip if not configured */
+  try{
+    await fetch('https://api.telegram.org/bot'+TELEGRAM_BOT_TOKEN+'/sendMessage',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        chat_id:TELEGRAM_CHAT_ID,
+        text:message,
+        parse_mode:'HTML'
+      })
+    });
+  }catch(e){console.log('Telegram notify failed:',e);}
+}
+
 function toggleWithdrawMethod(){
   var sel=document.getElementById('withdrawCurrency').value;
-  var fields=document.getElementById('withdrawCryptoFields');
+  var cryptoFields=document.getElementById('withdrawCryptoFields');
+  var promptPayFields=document.getElementById('withdrawPromptPayFields');
+  var bankFields=document.getElementById('withdrawBankFields');
   var walletInput=document.getElementById('withdrawWallet');
-  if(sel==='DEMO'){
-    fields.style.display='none';
-    if(walletInput)walletInput.removeAttribute('required');
-  }else{
-    fields.style.display='block';
+  var ppInput=document.getElementById('withdrawPromptPay');
+  var bankAccInput=document.getElementById('withdrawBankAccount');
+  
+  /* Hide all */
+  cryptoFields.style.display='none';
+  promptPayFields.style.display='none';
+  bankFields.style.display='none';
+  if(walletInput)walletInput.removeAttribute('required');
+  if(ppInput)ppInput.removeAttribute('required');
+  if(bankAccInput)bankAccInput.removeAttribute('required');
+  
+  if(sel==='PROMPTPAY'){
+    promptPayFields.style.display='block';
+    if(ppInput)ppInput.setAttribute('required','');
+  }else if(sel==='BANK_TH'){
+    bankFields.style.display='block';
+    if(bankAccInput)bankAccInput.setAttribute('required','');
+  }else if(sel!=='DEMO'){
+    cryptoFields.style.display='block';
     if(walletInput)walletInput.setAttribute('required','');
   }
 }
@@ -1756,11 +1806,39 @@ async function handleCryptoWithdraw(e){
   var amt=parseFloat(document.getElementById('withdrawAmount').value);
   var currency=document.getElementById('withdrawCurrency').value;
   var isDemo=(currency==='DEMO');
-  var wallet=isDemo?'DEMO':document.getElementById('withdrawWallet').value.trim();
-  var network=isDemo?'DEMO':document.getElementById('withdrawNetwork').value;
+  var isPromptPay=(currency==='PROMPTPAY');
+  var isBank=(currency==='BANK_TH');
+  var isCrypto=(!isDemo&&!isPromptPay&&!isBank);
+  
+  /* Determine account/destination info */
+  var accountInfo='';
+  var methodName='';
+  
+  if(isDemo){
+    accountInfo='DEMO-'+Date.now();
+    methodName='demo';
+  }else if(isPromptPay){
+    var ppNumber=document.getElementById('withdrawPromptPay').value.trim();
+    var ppName=document.getElementById('withdrawPromptPayName').value.trim();
+    if(!ppNumber){showToast('กรุณากรอกเบอร์ PromptPay','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
+    accountInfo='PromptPay: '+ppNumber+' | ชื่อ: '+(ppName||'ไม่ระบุ');
+    methodName='promptpay_thb';
+  }else if(isBank){
+    var bankName=document.getElementById('withdrawBankName').value;
+    var bankAcc=document.getElementById('withdrawBankAccount').value.trim();
+    var bankAccName=document.getElementById('withdrawBankAccName').value.trim();
+    if(!bankAcc){showToast('กรุณากรอกเลขบัญชีธนาคาร','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
+    accountInfo='ธนาคาร: '+bankName+' | บัญชี: '+bankAcc+' | ชื่อ: '+(bankAccName||'ไม่ระบุ');
+    methodName='bank_thb';
+  }else{
+    var wallet=document.getElementById('withdrawWallet').value.trim();
+    var network=document.getElementById('withdrawNetwork').value;
+    if(!wallet){showToast('กรุณาใส่ Wallet Address','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
+    accountInfo=wallet+' | '+network;
+    methodName='crypto_'+currency;
+  }
   
   if(!amt||amt<10){showToast('ขั้นต่ำ $10','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
-  if(!isDemo&&!wallet){showToast('กรุณาใส่ Wallet Address','error');btn.innerHTML='📤 ส่งคำขอถอนเงิน';btn.disabled=false;return;}
   
   try{
     await loadUserProfile();
@@ -1773,13 +1851,28 @@ async function handleCryptoWithdraw(e){
       user_id:currentUser.id,
       type:'withdrawal',
       amount:amt,
-      method:isDemo?'demo':'crypto_'+currency,
-      account:isDemo?'DEMO-'+Date.now():wallet+' | '+network,
+      method:methodName,
+      account:accountInfo,
       status:'pending',
       created_at:new Date().toISOString()
     });
     
     currentProfile.balance=nb;
+    
+    /* === SEND TELEGRAM NOTIFICATION === */
+    var userName=currentProfile.full_name||currentProfile.email||'ไม่ระบุ';
+    var channelEmoji=isPromptPay?'🇹🇭 PromptPay':isBank?'🏦 โอนธนาคาร':isDemo?'🧪 Demo':'💰 Crypto';
+    var telegramMsg='🔔 <b>คำขอถอนเงินใหม่!</b>\n'+
+      '━━━━━━━━━━━━━━━\n'+
+      '👤 ลูกค้า: <b>'+userName+'</b>\n'+
+      '💰 จำนวน: <b>$'+amt.toFixed(2)+'</b>\n'+
+      '📱 ช่องทาง: '+channelEmoji+'\n'+
+      '📋 ปลายทาง: '+accountInfo+'\n'+
+      '🕐 เวลา: '+new Date().toLocaleString('th-TH')+'\n'+
+      '━━━━━━━━━━━━━━━\n'+
+      '⚡ กรุณาโอนเงินแล้วกด Approve ในระบบ Admin';
+    sendTelegramNotify(telegramMsg);
+    
     showToast('✅ ส่งคำขอถอน $'+amt.toFixed(2)+' สำเร็จ รอ Admin อนุมัติ','success');
     closeModal('withdrawModal');
     loadTransactions();
