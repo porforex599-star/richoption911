@@ -2,8 +2,18 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>StreetWeath — Smart Trading Platform</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d4a437">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StreetWeath">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="description" content="StreetWeath — Smart Trading Platform เทรดอัจฉริยะ กำไรมั่นคง">
+<meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -2033,6 +2043,67 @@ async function submitKYC(e){
 }
 
 init();
+
+// === PWA Service Worker & Install ===
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    console.log('SW registered:', reg.scope);
+  }).catch(err => console.log('SW error:', err));
+}
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  if (document.getElementById('pwa-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'pwa-banner';
+  banner.innerHTML = `
+    <div style="position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1a1a1e,#252529);
+      border-top:2px solid #d4a437;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+      z-index:99999;gap:12px;font-family:'Kanit',sans-serif;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="icon-192.png" style="width:44px;height:44px;border-radius:10px;" alt="StreetWeath">
+        <div>
+          <div style="color:#f5f5f0;font-weight:600;font-size:14px;">ติดตั้ง StreetWeath</div>
+          <div style="color:#a0a0a0;font-size:12px;">เพิ่มลงหน้าจอ ใช้เหมือนแอป</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="installPWA()" style="background:linear-gradient(135deg,#d4a437,#b8912e);color:#09090b;
+          border:none;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;
+          font-family:'Kanit',sans-serif;">ติดตั้ง</button>
+        <button onclick="dismissBanner()" style="background:transparent;color:#666;border:1px solid #333;
+          padding:10px 14px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'Kanit',sans-serif;">ปิด</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(banner);
+}
+
+async function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log('Install:', outcome);
+  deferredPrompt = null;
+  dismissBanner();
+}
+
+function dismissBanner() {
+  const b = document.getElementById('pwa-banner');
+  if (b) b.remove();
+}
+
+window.addEventListener('appinstalled', () => {
+  console.log('StreetWeath installed!');
+  dismissBanner();
+});
+
 </script>
 </body>
 </html>
