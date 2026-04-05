@@ -136,6 +136,19 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 
 .wallet-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px}
 .wallet-balance{font-size:2.2rem;font-weight:900}.wallet-actions{display:flex;gap:10px}
+
+/* Account Mode Switcher */
+.account-mode-bar{display:none;background:var(--bg2);border-bottom:1px solid rgba(255,255,255,.06);padding:8px 0;position:fixed;top:56px;left:0;right:0;z-index:999}
+.account-mode-bar.show{display:block}
+.account-mode-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:center;gap:8px}
+.mode-btn{padding:8px 24px;border-radius:20px;font-weight:700;font-size:.85rem;cursor:pointer;transition:var(--transition);border:2px solid transparent}
+.mode-btn.demo{background:rgba(59,130,246,.1);color:#60a5fa;border-color:rgba(59,130,246,.3)}
+.mode-btn.demo.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.mode-btn.live{background:rgba(34,197,94,.1);color:#22c55e;border-color:rgba(34,197,94,.3)}
+.mode-btn.live.active{background:#22c55e;color:#fff;border-color:#22c55e}
+.mode-balance{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;margin-left:12px;color:var(--gold)}
+.mode-label{font-size:.7rem;color:var(--text3);margin-left:4px}
+.has-mode-bar{padding-top:100px !important}
 .tx-tabs{display:flex;gap:4px;margin-bottom:18px}
 .tx-tab{padding:9px 20px;border-radius:var(--radius-sm);background:transparent;color:var(--text2);font-weight:600;font-size:.88rem;cursor:pointer;transition:var(--transition)}.tx-tab.active{background:var(--bg3);color:var(--text)}
 
@@ -326,6 +339,16 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
   <button class="hamburger" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
 </div></nav>
 
+<!-- ACCOUNT MODE SWITCHER -->
+<div class="account-mode-bar" id="accountModeBar">
+<div class="account-mode-inner">
+<button class="mode-btn demo active" id="modeBtnDemo" onclick="switchAccountMode('demo')">🧪 Demo</button>
+<button class="mode-btn live" id="modeBtnLive" onclick="switchAccountMode('live')">💰 Live</button>
+<span class="mode-balance" id="modeBalanceDisplay">$10,000.00</span>
+<span class="mode-label" id="modeLabelDisplay">(Demo)</span>
+</div>
+</div>
+
 <!-- LANDING -->
 <div class="page active" id="page-landing">
 
@@ -502,7 +525,17 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 
 </div></div>
 <!-- WALLET -->
-<div class="page" id="page-wallet"><div class="container"><div class="page-header"><h1>💰 กระเป๋าเงิน</h1><p>ฝาก-ถอน และดูประวัติธุรกรรม</p></div><div class="wallet-header"><div><div class="text-muted" style="font-size:.83rem">ยอดคงเหลือทั้งหมด</div><div class="wallet-balance mono text-gold" id="walletBalance">$0.00</div></div><div class="wallet-actions"><button class="btn btn-gold" onclick="openModal('depositModal')">⬆ ฝากเงิน</button><button class="btn btn-outline" onclick="openModal('withdrawModal')">⬇ ถอนเงิน</button></div></div><div class="card"><div class="tx-tabs"><div class="tx-tab active" onclick="filterTx('all',this)">ทั้งหมด</div><div class="tx-tab" onclick="filterTx('deposit',this)">ฝากเงิน</div><div class="tx-tab" onclick="filterTx('withdrawal',this)">ถอนเงิน</div></div><div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>จำนวน</th><th>สถานะ</th></tr></thead><tbody id="txHistory"><tr><td colspan="4" class="text-center text-muted" style="padding:36px">ยังไม่มีธุรกรรม</td></tr></tbody></table></div></div></div></div>
+<div class="page" id="page-wallet"><div class="container"><div class="page-header"><h1>💰 กระเป๋าเงิน</h1><p>ฝาก-ถอน และดูประวัติธุรกรรม</p></div><div class="wallet-header"><div><div class="text-muted" style="font-size:.83rem" id="walletModeLabel">ยอดคงเหลือทั้งหมด</div><div class="wallet-balance mono text-gold" id="walletBalance">$0.00</div></div><div class="wallet-actions" id="walletActions">
+<!-- Demo Mode Buttons -->
+<div id="walletDemoActions">
+<button class="btn btn-gold" onclick="openModal('demoTopupModal')">🧪 เติมเงิน Demo</button>
+</div>
+<!-- Live Mode Buttons -->
+<div id="walletLiveActions" style="display:none">
+<button class="btn btn-gold" onclick="openModal('depositModal')">⬆ ฝากเงิน</button>
+<button class="btn btn-outline" onclick="openModal('withdrawModal')">⬇ ถอนเงิน</button>
+</div>
+</div></div><div class="card"><div class="tx-tabs"><div class="tx-tab active" onclick="filterTx('all',this)">ทั้งหมด</div><div class="tx-tab" onclick="filterTx('deposit',this)">ฝากเงิน</div><div class="tx-tab" onclick="filterTx('withdrawal',this)">ถอนเงิน</div></div><div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ประเภท</th><th>จำนวน</th><th>สถานะ</th></tr></thead><tbody id="txHistory"><tr><td colspan="4" class="text-center text-muted" style="padding:36px">ยังไม่มีธุรกรรม</td></tr></tbody></table></div></div></div></div>
 <!-- REFERRAL -->
 <div class="page" id="page-referral"><div class="container"><div class="page-header"><h1>🎁 แนะนำเพื่อน</h1><p>แชร์ลิงก์และรับค่าคอมมิชชัน 10%</p></div><div class="card"><h3 style="font-weight:700">รหัสแนะนำของคุณ</h3><div class="ref-code-box"><span class="code" id="myRefCode">---</span><button class="btn btn-sm btn-gold" onclick="copyRefCode()">📋 คัดลอก</button></div><div class="ref-code-box mt-2"><span class="code" id="myRefLink" style="font-size:.8rem;word-break:break-all">---</span><button class="btn btn-sm btn-outline" onclick="copyRefLink()">📋 คัดลอก</button></div></div><div class="ref-stats"><div class="ref-stat-card"><div class="val text-gold" id="refCount">0</div><div class="label">เพื่อนที่แนะนำ</div></div><div class="ref-stat-card"><div class="val" style="color:var(--gold-light)" id="refEarnings">$0.00</div><div class="label">รายได้</div></div><div class="ref-stat-card"><div class="val" id="refRate">10%</div><div class="label">คอมมิชชัน</div></div></div><div class="card mt-3"><h3 style="font-weight:700;margin-bottom:14px">รายชื่อผู้ถูกแนะนำ</h3><div class="table-wrap"><table><thead><tr><th>ชื่อ</th><th>วันที่</th><th>สถานะ</th></tr></thead><tbody id="refList"><tr><td colspan="3" class="text-center text-muted" style="padding:36px">ยังไม่มี</td></tr></tbody></table></div></div></div></div>
 <!-- PROFILE -->
@@ -548,6 +581,26 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 </div></div>
 
 <!-- MODALS -->
+
+<!-- Demo Topup Modal -->
+<div class="modal-overlay" id="demoTopupModal"><div class="modal" style="position:relative;max-width:440px">
+<button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('demoTopupModal')">✕</button>
+<h3>🧪 เติมเงิน Demo</h3>
+<p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">เติมเงินทดสอบ — ไม่ใช่เงินจริง ใช้ฝึกเทรดได้เลย</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+<button class="btn btn-outline" onclick="demoTopup(1000)" style="font-size:.9rem">+$1,000</button>
+<button class="btn btn-outline" onclick="demoTopup(5000)" style="font-size:.9rem">+$5,000</button>
+<button class="btn btn-outline" onclick="demoTopup(10000)" style="font-size:.9rem">+$10,000</button>
+<button class="btn btn-outline" onclick="demoTopup(50000)" style="font-size:.9rem">+$50,000</button>
+</div>
+<div style="text-align:center;margin-top:8px">
+<button class="btn btn-gold btn-full" onclick="demoTopup(100000)">🔥 เติม $100,000</button>
+</div>
+<div style="margin-top:16px;padding:12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:10px">
+<p style="color:#60a5fa;font-size:.8rem;text-align:center">💡 เงิน Demo ใช้ฝึกเทรดเท่านั้น ไม่สามารถถอนได้<br>เมื่อพร้อมเทรดจริง ให้สลับไปโหมด Live</p>
+</div>
+</div></div>
+
 <div class="modal-overlay" id="depositModal"><div class="modal" style="position:relative;max-width:480px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('depositModal')">✕</button><h3>⬆ ฝากเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">เลือกช่องทางฝากเงิน</p>
 
 <!-- Deposit Method Tabs -->
@@ -717,6 +770,89 @@ var SUPABASE_URL='https://ixuznqiptfgcdykmdlkg.supabase.co';
 var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4dXpucWlwdGZnY2R5a21kbGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODA3MDIsImV4cCI6MjA5MDQ1NjcwMn0.EAN4SXdaJTTCeH4FnclIHpRp2nOgta-nKPxZJXkAuck';
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
+var accountMode='demo'; /* 'demo' or 'live' */
+
+/* ===== ACCOUNT MODE SYSTEM ===== */
+function switchAccountMode(mode){
+  accountMode=mode;
+  document.getElementById('modeBtnDemo').className='mode-btn demo'+(mode==='demo'?' active':'');
+  document.getElementById('modeBtnLive').className='mode-btn live'+(mode==='live'?' active':'');
+  updateModeDisplay();
+  /* Save mode to DB */
+  if(currentUser&&currentProfile){
+    sb.from('profiles').update({account_mode:mode}).eq('id',currentUser.id);
+  }
+  /* Refresh current page data */
+  updateWalletUI();
+  if(currentPage==='dashboard')loadDashboard();
+  if(currentPage==='trading')updateTradingBalance();
+  if(currentPage==='wallet')loadTransactions();
+}
+
+function getActiveBalance(){
+  if(!currentProfile)return 0;
+  return accountMode==='demo'?(currentProfile.demo_balance||10000):(currentProfile.balance||0);
+}
+
+function setActiveBalance(val){
+  if(!currentProfile)return;
+  if(accountMode==='demo'){
+    currentProfile.demo_balance=val;
+  }else{
+    currentProfile.balance=val;
+  }
+}
+
+function updateModeDisplay(){
+  var bal=getActiveBalance();
+  document.getElementById('modeBalanceDisplay').textContent='$'+bal.toFixed(2);
+  document.getElementById('modeLabelDisplay').textContent=accountMode==='demo'?'(Demo)':'(Live)';
+  /* Update all balance displays */
+  var dashBal=document.getElementById('dashBalance');
+  if(dashBal)dashBal.textContent='$'+bal.toFixed(2);
+  var tradeBal=document.getElementById('tradingBalance');
+  if(tradeBal)tradeBal.textContent='$'+bal.toFixed(2);
+  var walletBal=document.getElementById('walletBalance');
+  if(walletBal)walletBal.textContent='$'+bal.toFixed(2);
+}
+
+function showModeBar(){
+  document.getElementById('accountModeBar').classList.add('show');
+  document.querySelectorAll('.page').forEach(function(p){p.classList.add('has-mode-bar');});
+}
+function hideModeBar(){
+  document.getElementById('accountModeBar').classList.remove('show');
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('has-mode-bar');});
+}
+
+/* ===== DEMO TOPUP ===== */
+async function demoTopup(amount){
+  if(!currentUser||!currentProfile)return;
+  currentProfile.demo_balance=(currentProfile.demo_balance||0)+amount;
+  await sb.from('profiles').update({demo_balance:currentProfile.demo_balance}).eq('id',currentUser.id);
+  updateModeDisplay();
+  closeModal('demoTopupModal');
+  showToast('✅ เติมเงิน Demo +$'+amount.toLocaleString()+' สำเร็จ!','success');
+  if(currentPage==='wallet')loadTransactions();
+}
+
+/* ===== UPDATE WALLET UI BASED ON MODE ===== */
+function updateWalletUI(){
+  var demoActions=document.getElementById('walletDemoActions');
+  var liveActions=document.getElementById('walletLiveActions');
+  var modeLabel=document.getElementById('walletModeLabel');
+  if(demoActions&&liveActions){
+    if(accountMode==='demo'){
+      demoActions.style.display='block';
+      liveActions.style.display='none';
+      if(modeLabel)modeLabel.textContent='ยอดคงเหลือ Demo';
+    }else{
+      demoActions.style.display='none';
+      liveActions.style.display='flex';
+      if(modeLabel)modeLabel.textContent='ยอดคงเหลือ (เงินจริง)';
+    }
+  }
+}
 var ASSETS=[
   {symbol:'AUD/USD',name:'Aussie/Dollar',price:0.6853,color:'#003f87',tdSymbol:'AUD/USD',fhSymbol:'OANDA:AUD_USD',binSymbol:null,exchange:'forex',decimals:4},
   {symbol:'ETH/USD',name:'Ethereum',price:2098,color:'#627eea',tdSymbol:'ETH/USD',fhSymbol:'BINANCE:ETHUSDT',binSymbol:'ETHUSDT',exchange:'crypto',decimals:2},
@@ -846,14 +982,14 @@ function getRealtimePrice(){
   }
   return null;
 }
-function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(p==='dashboard')loadDashboard();if(p==='trading')initTrading();if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
+function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(a.indexOf(p)!==-1){showModeBar();updateModeDisplay();}else{hideModeBar();}if(p==='dashboard')loadDashboard();if(p==='trading')initTrading();if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
 function updateNav(){var n=document.getElementById('navLinks');if(currentUser){n.innerHTML='<a href="#" class="'+(currentPage==='dashboard'?'active':'')+'" onclick="navigate(\'dashboard\')">📊 แดชบอร์ด</a><a href="#" class="'+(currentPage==='trading'?'active':'')+'" onclick="navigate(\'trading\')">📈 เทรด</a><a href="#" class="'+(currentPage==='wallet'?'active':'')+'" onclick="navigate(\'wallet\')">💰 กระเป๋าเงิน</a><a href="#" class="'+(currentPage==='referral'?'active':'')+'" onclick="navigate(\'referral\')">🎁 แนะนำเพื่อน</a><a href="#" class="'+(currentPage==='profile'?'active':'')+'" onclick="navigate(\'profile\')">👤 โปรไฟล์</a><button onclick="handleLogout()" style="color:var(--red)">🚪 ออก</button>';}else{n.innerHTML='<a href="#" class="'+(currentPage==='login'?'active':'')+'" onclick="navigate(\'login\')">เข้าสู่ระบบ</a><button class="btn btn-gold btn-sm" onclick="navigate(\'register\')">สมัครสมาชิก</button>';}}
 function toggleMobileMenu(){document.getElementById('navLinks').classList.toggle('open')}function closeMobileMenu(){document.getElementById('navLinks').classList.remove('open')}
 function showToast(m,t){t=t||'info';var e=document.createElement('div');e.className='toast toast-'+t;e.textContent=m;document.getElementById('toastContainer').appendChild(e);setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},300)},3500);}
 function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
-async function handleRegister(e){e.preventDefault();if(!document.getElementById('agreeTerms').checked){showToast('กรุณายอมรับข้อกำหนดและเงื่อนไขก่อนสมัคร','error');return;}var btn=document.getElementById('regBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signUp({email:document.getElementById('regEmail').value.trim(),password:document.getElementById('regPassword').value});if(r.error)throw r.error;if(r.data.user){var rc='RO'+r.data.user.id.substring(0,8).toUpperCase();await sb.from('profiles').upsert({id:r.data.user.id,full_name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),balance:0,referral_code:rc,referred_by:document.getElementById('regReferral').value.trim()||null,created_at:new Date().toISOString()});}showToast('สมัครสำเร็จ!','success');navigate('login');}catch(err){showToast(err.message||'เกิดข้อผิดพลาด','error');}finally{btn.innerHTML='สมัครสมาชิก';btn.disabled=false;}}
-async function handleLogin(e){e.preventDefault();var btn=document.getElementById('loginBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signInWithPassword({email:document.getElementById('loginEmail').value.trim(),password:document.getElementById('loginPassword').value});if(r.error)throw r.error;currentUser=r.data.user;await loadUserProfile();showToast('ยินดีต้อนรับ!','success');navigate('dashboard');}catch(err){showToast(err.message||'ผิดพลาด','error');}finally{btn.innerHTML='เข้าสู่ระบบ';btn.disabled=false;}}
-async function handleLogout(){await sb.auth.signOut();currentUser=null;currentProfile=null;activeTrades=[];_tickRunning++;if(chartAnimFrame){clearTimeout(chartAnimFrame);chartAnimFrame=null;}if(fhWs)try{fhWs.close();}catch(e){}if(binanceWs)try{binanceWs.close();}catch(e){}fhConnected=false;binanceConnected=false;_candleCache={};showToast('ออกจากระบบแล้ว','info');navigate('landing');}
+async function handleRegister(e){e.preventDefault();if(!document.getElementById('agreeTerms').checked){showToast('กรุณายอมรับข้อกำหนดและเงื่อนไขก่อนสมัคร','error');return;}var btn=document.getElementById('regBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signUp({email:document.getElementById('regEmail').value.trim(),password:document.getElementById('regPassword').value});if(r.error)throw r.error;if(r.data.user){var rc='RO'+r.data.user.id.substring(0,8).toUpperCase();await sb.from('profiles').upsert({id:r.data.user.id,full_name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),balance:0,demo_balance:10000,account_mode:'demo',referral_code:rc,referred_by:document.getElementById('regReferral').value.trim()||null,created_at:new Date().toISOString()});}showToast('สมัครสำเร็จ!','success');navigate('login');}catch(err){showToast(err.message||'เกิดข้อผิดพลาด','error');}finally{btn.innerHTML='สมัครสมาชิก';btn.disabled=false;}}
+async function handleLogin(e){e.preventDefault();var btn=document.getElementById('loginBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signInWithPassword({email:document.getElementById('loginEmail').value.trim(),password:document.getElementById('loginPassword').value});if(r.error)throw r.error;currentUser=r.data.user;await loadUserProfile();accountMode=currentProfile&&currentProfile.account_mode?currentProfile.account_mode:'demo';switchAccountMode(accountMode);showToast('ยินดีต้อนรับ!','success');navigate('dashboard');}catch(err){showToast(err.message||'ผิดพลาด','error');}finally{btn.innerHTML='เข้าสู่ระบบ';btn.disabled=false;}}
+async function handleLogout(){await sb.auth.signOut();currentUser=null;currentProfile=null;activeTrades=[];accountMode='demo';hideModeBar();_tickRunning++;if(chartAnimFrame){clearTimeout(chartAnimFrame);chartAnimFrame=null;}if(fhWs)try{fhWs.close();}catch(e){}if(binanceWs)try{binanceWs.close();}catch(e){}fhConnected=false;binanceConnected=false;_candleCache={};showToast('ออกจากระบบแล้ว','info');navigate('landing');}
 async function loadUserProfile(){if(!currentUser)return;var r=await sb.from('profiles').select('*').eq('id',currentUser.id).single();if(!r.error&&r.data)currentProfile=r.data;}
 function loadProfile(){if(!currentProfile)return;document.getElementById('profileName').textContent=currentProfile.full_name||'ไม่ระบุ';document.getElementById('profileEmail').textContent=currentProfile.email||'';document.getElementById('profileAvatar').textContent=(currentProfile.full_name||'?')[0].toUpperCase();document.getElementById('editName').value=currentProfile.full_name||'';document.getElementById('editPhone').value=currentProfile.phone||'';
 /* Update account status based on KYC */
@@ -868,7 +1004,7 @@ titleEl.innerHTML='⚠️ โซนอันตราย';titleEl.style.color='v
 msgEl.style.display='none';
 }}
 async function updateProfile(e){e.preventDefault();var btn=document.getElementById('updateProfileBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{await sb.from('profiles').update({full_name:document.getElementById('editName').value.trim(),phone:document.getElementById('editPhone').value.trim(),updated_at:new Date().toISOString()}).eq('id',currentUser.id);currentProfile.full_name=document.getElementById('editName').value.trim();showToast('บันทึกแล้ว','success');loadProfile();}catch(err){showToast(err.message,'error');}finally{btn.innerHTML='💾 บันทึก';btn.disabled=false;}}
-async function loadDashboard(){await loadUserProfile();if(!currentProfile)return;document.getElementById('dashBalance').textContent='$'+(currentProfile.balance||0).toFixed(2);try{var r=await sb.from('trades').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(!r.error&&r.data){var t=r.data;var w=t.filter(function(x){return (x.result||x.status||x.outcome)==='win'}).length;var l=t.filter(function(x){return (x.result||x.status||x.outcome)==='loss'}).length;document.getElementById('dashTotalTrades').textContent=t.length;document.getElementById('dashWins').textContent=w;document.getElementById('dashLosses').textContent=l;var tb=document.getElementById('dashTradeHistory');tb.innerHTML=t.length===0?'<tr><td colspan="5" class="text-center text-muted" style="padding:36px">ยังไม่มีประวัติ</td></tr>':t.slice(0,10).map(function(x){var xAsset=x.asset||x.symbol||x.pair||'-';var xDir=x.direction||x.side||'up';var xAmt=x.amount||x.trade_amount||x.stake||0;var xRes=x.result||x.status||x.outcome||'pending';return '<tr><td class="mono" style="font-size:.8rem">'+new Date(x.created_at).toLocaleString('th-TH')+'</td><td style="font-weight:600">'+xAsset+'</td><td><span class="badge '+(xDir==='up'?'badge-green':'badge-red')+'">'+(xDir==='up'?'📈':'📉')+'</span></td><td class="mono">$'+(parseFloat(xAmt)||0).toFixed(2)+'</td><td><span class="badge '+(xRes==='win'?'badge-green':xRes==='loss'?'badge-red':'badge-blue')+'">'+(xRes==='win'?'✅':xRes==='loss'?'❌':'⏳')+'</span></td></tr>'}).join('');}else{console.warn('trades query error:',r.error?r.error.message:'no data');}}catch(err){console.error('loadDashboard error:',err);}}
+async function loadDashboard(){await loadUserProfile();if(!currentProfile)return;document.getElementById('dashBalance').textContent='$'+getActiveBalance().toFixed(2);updateModeDisplay();try{var r=await sb.from('trades').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(!r.error&&r.data){var t=r.data;var w=t.filter(function(x){return (x.result||x.status||x.outcome)==='win'}).length;var l=t.filter(function(x){return (x.result||x.status||x.outcome)==='loss'}).length;document.getElementById('dashTotalTrades').textContent=t.length;document.getElementById('dashWins').textContent=w;document.getElementById('dashLosses').textContent=l;var tb=document.getElementById('dashTradeHistory');tb.innerHTML=t.length===0?'<tr><td colspan="5" class="text-center text-muted" style="padding:36px">ยังไม่มีประวัติ</td></tr>':t.slice(0,10).map(function(x){var xAsset=x.asset||x.symbol||x.pair||'-';var xDir=x.direction||x.side||'up';var xAmt=x.amount||x.trade_amount||x.stake||0;var xRes=x.result||x.status||x.outcome||'pending';return '<tr><td class="mono" style="font-size:.8rem">'+new Date(x.created_at).toLocaleString('th-TH')+'</td><td style="font-weight:600">'+xAsset+'</td><td><span class="badge '+(xDir==='up'?'badge-green':'badge-red')+'">'+(xDir==='up'?'📈':'📉')+'</span></td><td class="mono">$'+(parseFloat(xAmt)||0).toFixed(2)+'</td><td><span class="badge '+(xRes==='win'?'badge-green':xRes==='loss'?'badge-red':'badge-blue')+'">'+(xRes==='win'?'✅':xRes==='loss'?'❌':'⏳')+'</span></td></tr>'}).join('');}else{console.warn('trades query error:',r.error?r.error.message:'no data');}}catch(err){console.error('loadDashboard error:',err);}}
 function initTrading(){renderAssetTabs();connectFinnhubWs();connectBinanceWs();selectAsset(0);updateTradingBalance();generateOrderBook();startCountdownUI();}
 function renderAssetTabs(){document.getElementById('assetTabs').innerHTML=ASSETS.map(function(a,i){return '<div class="asset-tab '+(i===selectedAsset?'active':'')+'" onclick="selectAsset('+i+')">'+a.symbol+'</div>'}).join('');}
 var currentTimeframe=0,candleData=[],tradeCooldown=false;
@@ -1402,7 +1538,7 @@ function updateOrderBookPrices(price){var a=ASSETS[selectedAsset],d=a.decimals||
 
 function setTradeDirection(dir){tradeDirection=dir;document.getElementById('btnUp').className='tv-buy-btn '+(dir==='up'?'active':'');document.getElementById('btnDown').className='tv-sell-btn '+(dir==='down'?'active':'');var btn=document.getElementById('placeTradeBtn');if(dir==='up'){btn.className='tv-place-btn buy';btn.textContent='Buy / Long';}else{btn.className='tv-place-btn sell';btn.textContent='Sell / Short';}}
 function setTimer(el){document.querySelectorAll('.tv-timer-btn').forEach(function(o){o.classList.remove('active')});el.classList.add('active');tradeTimer=parseInt(el.dataset.time);}
-function updateTradingBalance(){document.getElementById('tradingBalance').textContent='$'+(currentProfile?currentProfile.balance||0:0).toFixed(2);}
+function updateTradingBalance(){document.getElementById('tradingBalance').textContent='$'+getActiveBalance().toFixed(2);updateModeDisplay();}
 document.addEventListener('DOMContentLoaded',function(){var inp=document.getElementById('tradeAmount');if(inp)inp.addEventListener('input',function(){document.getElementById('potentialProfit').textContent='$'+(parseFloat(this.value||0)*0.85).toFixed(2);});});
 
 /* ===== TRADE DB HELPER — with local fallback ===== */
@@ -1450,7 +1586,7 @@ async function placeTrade(){
   if(!amt||amt<1)return showToast('ใส่จำนวนเงินขั้นต่ำ $1','error');
   if(amt>10000)return showToast('จำนวนเงินสูงสุด $10,000','error');
   await loadUserProfile();
-  if(amt>(currentProfile?currentProfile.balance||0:0))return showToast('ยอดเงินไม่เพียงพอ','error');
+  if(amt>(getActiveBalance()))return showToast('ยอดเงินไม่เพียงพอ','error');
   
   tradeCooldown=true;
   var btn=document.getElementById('placeTradeBtn');
@@ -1460,8 +1596,14 @@ async function placeTrade(){
   var dp=asset.decimals||2;
   
   try{
-    await sb.from('profiles').update({balance:currentProfile.balance-amt}).eq('id',currentUser.id);
-    currentProfile.balance-=amt;updateTradingBalance();
+    if(accountMode==='demo'){
+      currentProfile.demo_balance=(currentProfile.demo_balance||10000)-amt;
+      await sb.from('profiles').update({demo_balance:currentProfile.demo_balance}).eq('id',currentUser.id);
+    }else{
+      await sb.from('profiles').update({balance:currentProfile.balance-amt}).eq('id',currentUser.id);
+      currentProfile.balance-=amt;
+    }
+    updateTradingBalance();
     
     var tradeId='local_'+localTradeId++;
     
@@ -1481,8 +1623,13 @@ async function placeTrade(){
     showToast((tradeDirection==='up'?'📈 BUY':'📉 SELL')+' '+asset.symbol+' | $'+amt.toFixed(2)+' | '+tradeTimer+'s','success');
     renderOpenTrades();
   }catch(err){
-    currentProfile.balance+=amt;
-    try{await sb.from('profiles').update({balance:currentProfile.balance}).eq('id',currentUser.id);}catch(e){}
+    if(accountMode==='demo'){
+      currentProfile.demo_balance=(currentProfile.demo_balance||0)+amt;
+      try{await sb.from('profiles').update({demo_balance:currentProfile.demo_balance}).eq('id',currentUser.id);}catch(e){}
+    }else{
+      currentProfile.balance+=amt;
+      try{await sb.from('profiles').update({balance:currentProfile.balance}).eq('id',currentUser.id);}catch(e){}
+    }
     updateTradingBalance();
     showToast('เกิดข้อผิดพลาด: '+err.message,'error');
   }
@@ -1617,8 +1764,13 @@ async function processActiveTrades(cp){
   /* Update balance */
   if(won){
     await loadUserProfile();
-    await sb.from('profiles').update({balance:currentProfile.balance+pay}).eq('id',currentUser.id);
-    currentProfile.balance+=pay;
+    if(accountMode==='demo'){
+      currentProfile.demo_balance=(currentProfile.demo_balance||0)+pay;
+      await sb.from('profiles').update({demo_balance:currentProfile.demo_balance}).eq('id',currentUser.id);
+    }else{
+      await sb.from('profiles').update({balance:currentProfile.balance+pay}).eq('id',currentUser.id);
+      currentProfile.balance+=pay;
+    }
     updateTradingBalance();
   }
   
@@ -1878,6 +2030,7 @@ function toggleWithdrawMethod(){
 
 async function handleCryptoWithdraw(e){
   e.preventDefault();
+  if(accountMode==='demo'){showToast('❌ บัญชี Demo ไม่สามารถถอนเงินได้ กรุณาสลับไปโหมด Live','error');return;}
   var btn=document.getElementById('withdrawBtn');
   btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
   
@@ -1964,7 +2117,9 @@ async function handleCryptoWithdraw(e){
 var txFilter='all';function filterTx(type,el){txFilter=type;document.querySelectorAll('.tx-tab').forEach(function(t){t.classList.remove('active')});if(el)el.classList.add('active');loadTransactions();}
 async function loadTransactions(){
   await loadUserProfile();
-  document.getElementById('walletBalance').textContent='$'+(currentProfile?currentProfile.balance||0:0).toFixed(2);
+  document.getElementById('walletBalance').textContent='$'+getActiveBalance().toFixed(2);
+  updateModeDisplay();
+  updateWalletUI();
   try{
     var q=sb.from('transactions').select('*').eq('user_id',currentUser.id);
     if(txFilter!=='all')q=q.eq('type',txFilter);
@@ -1996,7 +2151,7 @@ async function loadReferrals(){if(!currentProfile)await loadUserProfile();var rc
 function copyRefCode(){navigator.clipboard.writeText(document.getElementById('myRefCode').textContent).then(function(){showToast('คัดลอกแล้ว','success')})}
 function copyRefLink(){navigator.clipboard.writeText(document.getElementById('myRefLink').textContent).then(function(){showToast('คัดลอกลิงก์แล้ว','success')})}
 function checkReferralFromUrl(){var p=new URLSearchParams(window.location.search),ref=p.get('ref');if(ref){navigate('register');setTimeout(function(){var inp=document.getElementById('regReferral');if(inp)inp.value=ref;},100);}}
-async function init(){try{var r=await sb.auth.getSession();if(r.data.session&&r.data.session.user){currentUser=r.data.session.user;await loadUserProfile();navigate('dashboard');}else{checkReferralFromUrl();}}catch(err){console.error(err);}updateNav();setTimeout(function(){var ls=document.getElementById('loadingScreen');if(ls){ls.classList.add('hidden');setTimeout(function(){ls.remove()},400);}},600);sb.auth.onAuthStateChange(function(ev){if(ev==='SIGNED_OUT'){currentUser=null;currentProfile=null;navigate('landing');}});}
+async function init(){try{var r=await sb.auth.getSession();if(r.data.session&&r.data.session.user){currentUser=r.data.session.user;await loadUserProfile();accountMode=currentProfile&&currentProfile.account_mode?currentProfile.account_mode:'demo';switchAccountMode(accountMode);navigate('dashboard');}else{checkReferralFromUrl();}}catch(err){console.error(err);}updateNav();setTimeout(function(){var ls=document.getElementById('loadingScreen');if(ls){ls.classList.add('hidden');setTimeout(function(){ls.remove()},400);}},600);sb.auth.onAuthStateChange(function(ev){if(ev==='SIGNED_OUT'){currentUser=null;currentProfile=null;accountMode='demo';hideModeBar();navigate('landing');}});}
 /* ===== KYC SYSTEM ===== */
 var kycFile=null;
 
