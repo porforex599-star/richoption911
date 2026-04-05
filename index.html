@@ -138,7 +138,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 .wallet-balance{font-size:2.2rem;font-weight:900}.wallet-actions{display:flex;gap:10px}
 
 /* Account Mode Switcher */
-.account-mode-bar{display:none;background:var(--bg2);border-bottom:1px solid rgba(255,255,255,.06);padding:8px 0;position:fixed;top:56px;left:0;right:0;z-index:999}
+.account-mode-bar{display:none;background:var(--bg2);border-bottom:1px solid rgba(255,255,255,.06);padding:8px 0;position:fixed;top:56px;left:0;right:0;z-index:99}
 .account-mode-bar.show{display:block}
 .account-mode-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:center;gap:8px}
 .mode-btn{padding:8px 24px;border-radius:20px;font-weight:700;font-size:.85rem;cursor:pointer;transition:var(--transition);border:2px solid transparent}
@@ -166,9 +166,9 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 .toast-success{background:var(--green-glow);color:var(--green)}.toast-error{background:var(--red-glow);color:var(--red)}.toast-info{background:var(--blue-glow);color:var(--blue)}
 @keyframes slideIn{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
 
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:24px}
 .modal-overlay.show{display:flex}
-.modal{background:var(--bg2);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-lg);padding:30px;max-width:460px;width:100%;animation:fadeUp .3s ease}
+.modal{background:var(--bg2);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-lg);padding:30px;max-width:460px;width:100%;animation:fadeUp .3s ease;max-height:90vh;overflow-y:auto}
 .modal h3{font-size:1.2rem;font-weight:700;margin-bottom:18px}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.15);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle}
@@ -650,7 +650,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 <!-- Result -->
 <div id="depositResult" style="display:none;margin-top:16px;text-align:center"><p id="depositResultMsg" style="color:var(--green);font-weight:600;margin-bottom:8px">✅ สร้างลิงก์สำเร็จ!</p><a id="depositPayLink" href="#" target="_blank" class="btn btn-gold btn-full" style="margin-bottom:8px;display:none">💳 ไปหน้าชำระเงิน</a><p id="depositResultSub" style="color:var(--text3);font-size:.75rem">เงินจะเข้าบัญชีหลังจาก Admin ตรวจสอบ</p></div>
 </div></div>
-<div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น Crypto, เงินบาท (PromptPay) หรือ Demo</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>เลือกช่องทางถอนเงิน</label><select class="form-input" id="withdrawCurrency" onchange="toggleWithdrawMethod()"><option value="DEMO">🧪 Demo (ทดสอบ — ไม่ถอนจริง)</option><option value="PROMPTPAY">🇹🇭 เงินบาท — PromptPay (เร็วที่สุด!)</option><option value="BANK_TH">🏦 โอนเข้าบัญชีธนาคารไทย</option><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div>
+<div class="modal-overlay" id="withdrawModal"><div class="modal" style="position:relative;max-width:440px"><button style="position:absolute;top:14px;right:14px;background:none;color:var(--text2);font-size:1.1rem;cursor:pointer;border:none" onclick="closeModal('withdrawModal')">✕</button><h3>⬇ ถอนเงิน</h3><p style="color:var(--text2);font-size:.82rem;margin-bottom:16px">ถอนเป็น Crypto หรือ เงินบาท (PromptPay)</p><form onsubmit="handleCryptoWithdraw(event)"><div class="form-group"><label>จำนวน (USD)</label><input type="number" class="form-input" id="withdrawAmount" min="10" step="0.01" required placeholder="ขั้นต่ำ $10"></div><div class="form-group"><label>เลือกช่องทางถอนเงิน</label><select class="form-input" id="withdrawCurrency" onchange="toggleWithdrawMethod()"><option value="PROMPTPAY">🇹🇭 เงินบาท — PromptPay (เร็วที่สุด!)</option><option value="BANK_TH">🏦 โอนเข้าบัญชีธนาคารไทย</option><option value="USDT_TRC20">USDT (TRC20) — ค่า gas ถูก</option><option value="USDT_BEP20">USDT (BEP20) — ค่า gas ถูก</option><option value="USDT_ERC20">USDT (ERC20)</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="BNB">BNB</option></select></div>
 <!-- PromptPay Fields -->
 <div id="withdrawPromptPayFields" style="display:none">
 <div class="form-group"><label>เบอร์มือถือ / เลขบัตรประชาชน (PromptPay)</label><input type="text" class="form-input" id="withdrawPromptPay" placeholder="เช่น 089-xxx-xxxx หรือ เลข 13 หลัก"></div>
