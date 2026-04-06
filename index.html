@@ -372,10 +372,10 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 .rv.vis{opacity:1;transform:translateY(0)}
 
 /* ========== FULL-SCREEN HERO ========== */
-.fh{position:relative;width:100vw;margin-left:calc(-50vw + 50%);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#080c18}
+.fh{position:relative;width:100vw;margin-left:calc(-50vw + 50%);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(160deg,#060a14 0%,#0c1222 30%,#0a0f1c 60%,#080e1a 100%)}
 
 /* Grid BG */
-.fh-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(212,164,55,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(212,164,55,.03) 1px,transparent 1px);background-size:55px 55px;animation:gridPulse 5s ease-in-out infinite}
+.fh-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(212,164,55,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(212,164,55,.04) 1px,transparent 1px);background-size:55px 55px;animation:gridPulse 5s ease-in-out infinite}
 
 /* Orbs */
 .fh-orb{position:absolute;border-radius:50%;pointer-events:none}
@@ -388,7 +388,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 .fh-waves svg{position:absolute;bottom:0;left:0;width:100%;height:100%}
 
 /* Candles */
-.fh-candles{position:absolute;bottom:100px;left:0;width:100%;height:280px;pointer-events:none;display:flex;justify-content:space-around;align-items:flex-end;padding:0 5%;opacity:.2}
+.fh-candles{opacity:.3;position:absolute;bottom:100px;left:0;width:100%;height:280px;pointer-events:none;display:flex;justify-content:space-around;align-items:flex-end;padding:0 5%;opacity:.2}
 .fh-cd{width:5px;border-radius:2px;transform-origin:bottom}
 .fh-cd.g{background:rgba(34,197,94,.5)}.fh-cd.r{background:rgba(239,68,68,.35)}.fh-cd.au{background:rgba(212,164,55,.4)}
 
@@ -486,7 +486,40 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 .bt-i span:hover{color:var(--gold)}
 .ft-s{padding:18px 0;border-top:1px solid rgba(255,255,255,.03);text-align:center;font-family:'DM Sans',sans-serif;color:var(--text3);font-size:.68rem}
 
-@media(max-width:768px){.fh-stats{flex-wrap:wrap}.fh-st{max-width:50%}.tr-g,.tm-sts{grid-template-columns:repeat(2,1fr)}.rg-in{gap:10px}.fh-candles{display:none}}
+
+/* Extra hero visuals */
+.fh-line-chart{position:absolute;top:15%;left:0;width:100%;height:60%;pointer-events:none;opacity:.12}
+.fh-line-chart svg{width:100%;height:100%}
+@keyframes drawChart{0%{stroke-dashoffset:2000}100%{stroke-dashoffset:0}}
+@keyframes floatA{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-15px) rotate(1deg)}}
+@keyframes floatB{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-20px) rotate(-1deg)}}
+
+/* Floating mini cards */
+.fh-minicard{position:absolute;background:rgba(14,18,30,.7);border:1px solid rgba(212,164,55,.08);border-radius:12px;padding:12px 16px;backdrop-filter:blur(8px);pointer-events:none;z-index:1}
+.fh-mc1{top:18%;left:8%;animation:floatA 10s ease-in-out infinite;opacity:0;animation-delay:1s;animation-fill-mode:forwards}
+.fh-mc2{top:22%;right:6%;animation:floatB 12s 1.5s ease-in-out infinite;opacity:0;animation-delay:1.5s;animation-fill-mode:forwards}
+.fh-mc3{bottom:25%;left:5%;animation:floatA 11s 2s ease-in-out infinite;opacity:0;animation-delay:2s;animation-fill-mode:forwards}
+.fh-mc4{bottom:22%;right:8%;animation:floatB 9s 2.5s ease-in-out infinite;opacity:0;animation-delay:2.5s;animation-fill-mode:forwards}
+@keyframes cardAppear{0%{opacity:0;transform:translateY(20px)}100%{opacity:.6;transform:translateY(0)}}
+.fh-mc1,.fh-mc2,.fh-mc3,.fh-mc4{animation:cardAppear .8s cubic-bezier(.22,1,.36,1) forwards,floatA 10s ease-in-out infinite}
+.fh-mc2,.fh-mc4{animation:cardAppear .8s cubic-bezier(.22,1,.36,1) forwards,floatB 12s ease-in-out infinite}
+.fh-minicard .mc-label{font-size:.55rem;color:var(--text3);font-family:'DM Sans',sans-serif}
+.fh-minicard .mc-val{font-size:.85rem;font-weight:700;font-family:'DM Sans',sans-serif;margin-top:2px}
+.fh-minicard .mc-val.green{color:#22c55e}
+.fh-minicard .mc-val.gold{color:var(--gold)}
+.fh-minicard .mc-val.blue{color:#3b82f6}
+
+/* Animated rings */
+.fh-ring{position:absolute;border:1px solid rgba(212,164,55,.04);border-radius:50%;pointer-events:none}
+.fh-ring1{width:500px;height:500px;top:10%;left:-10%;animation:orbGlow 8s ease-in-out infinite}
+.fh-ring2{width:350px;height:350px;bottom:15%;right:-5%;border-color:rgba(59,130,246,.03);animation:orbGlow 10s 3s ease-in-out infinite}
+
+/* Horizontal scan line */
+@keyframes scanLine{0%{top:-2px;opacity:0}10%{opacity:.4}90%{opacity:.4}100%{top:100%;opacity:0}}
+.fh-scan{position:absolute;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,164,55,.15),transparent);animation:scanLine 8s 2s infinite;pointer-events:none}
+
+@media(max-width:768px){.fh-stats{flex-wrap:wrap}.fh-minicard{display:none}
+.fh-st{max-width:50%}.tr-g,.tm-sts{grid-template-columns:repeat(2,1fr)}.rg-in{gap:10px}.fh-candles{opacity:.3;display:none}}
 @media(max-width:500px){.tr-g{grid-template-columns:1fr}}
 </style>
 
@@ -500,7 +533,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
   <!-- Animated Waves -->
   <div class="fh-waves"><svg viewBox="0 0 1440 400" preserveAspectRatio="none">
     <defs>
-      <linearGradient id="w1g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(212,164,55,0)"/><stop offset="30%" stop-color="rgba(212,164,55,.12)"/><stop offset="70%" stop-color="rgba(212,164,55,.15)"/><stop offset="100%" stop-color="rgba(212,164,55,0)"/></linearGradient>
+      <linearGradient id="w1g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(212,164,55,0)"/><stop offset="30%" stop-color="rgba(212,164,55,.18)"/><stop offset="70%" stop-color="rgba(212,164,55,.22)"/><stop offset="100%" stop-color="rgba(212,164,55,0)"/></linearGradient>
       <linearGradient id="w2g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(212,164,55,0)"/><stop offset="40%" stop-color="rgba(212,164,55,.07)"/><stop offset="60%" stop-color="rgba(212,164,55,.09)"/><stop offset="100%" stop-color="rgba(212,164,55,0)"/></linearGradient>
       <linearGradient id="w3g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(212,164,55,0)"/><stop offset="50%" stop-color="rgba(212,164,55,.05)"/><stop offset="100%" stop-color="rgba(212,164,55,0)"/></linearGradient>
     </defs>
@@ -508,6 +541,39 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
     <path fill="url(#w2g)" stroke="rgba(212,164,55,.08)" stroke-width=".5" d="M0 220 C200 180 400 260 600 220 C800 180 1000 260 1200 220 L1440 240 L1440 400 L0 400Z" style="animation:wave2 11s ease-in-out infinite"/>
     <path fill="url(#w3g)" d="M0 260 C240 230 480 290 720 260 C960 230 1200 290 1440 260 L1440 400 L0 400Z" style="animation:wave3 14s ease-in-out infinite"/>
   </svg></div>
+
+  <!-- Animated Line Chart Background -->
+  <div class="fh-line-chart"><svg viewBox="0 0 1440 600" fill="none" preserveAspectRatio="none">
+    <defs><linearGradient id="lcg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(212,164,55,0)"/><stop offset="50%" stop-color="rgba(212,164,55,.8)"/><stop offset="100%" stop-color="rgba(212,164,55,0)"/></linearGradient>
+    <linearGradient id="lcf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(212,164,55,.22)"/><stop offset="100%" stop-color="rgba(212,164,55,0)"/></linearGradient></defs>
+    <path d="M0 500 C100 480 200 460 300 420 C400 380 450 350 500 300 C550 250 600 280 700 240 C800 200 850 220 900 180 C950 140 1000 160 1100 120 C1200 80 1300 100 1440 60" stroke="url(#lcg)" stroke-width="2" fill="none" stroke-dasharray="2000" style="animation:drawChart 4s 1s ease forwards"/>
+    <path d="M0 500 C100 480 200 460 300 420 C400 380 450 350 500 300 C550 250 600 280 700 240 C800 200 850 220 900 180 C950 140 1000 160 1100 120 C1200 80 1300 100 1440 60 L1440 600 L0 600Z" fill="url(#lcf)" style="opacity:0;animation:fadeIn 1s 4s forwards"/>
+  </svg></div>
+
+  <!-- Floating Mini Cards -->
+  <div class="fh-minicard fh-mc1" style="animation-delay:.8s">
+    <div class="mc-label">XAUUSD</div>
+    <div class="mc-val gold">$2,345.68 ↑</div>
+  </div>
+  <div class="fh-minicard fh-mc2" style="animation-delay:1.2s">
+    <div class="mc-label">Portfolio P&L</div>
+    <div class="mc-val green">+$12,450.00</div>
+  </div>
+  <div class="fh-minicard fh-mc3" style="animation-delay:1.6s">
+    <div class="mc-label">Win Rate</div>
+    <div class="mc-val blue">78.5%</div>
+  </div>
+  <div class="fh-minicard fh-mc4" style="animation-delay:2s">
+    <div class="mc-label">Active Traders</div>
+    <div class="mc-val gold">12,847 online</div>
+  </div>
+
+  <!-- Animated Rings -->
+  <div class="fh-ring fh-ring1"></div>
+  <div class="fh-ring fh-ring2"></div>
+  
+  <!-- Scan Line -->
+  <div class="fh-scan"></div>
 
   <!-- Candles -->
   <div class="fh-candles">
