@@ -1531,7 +1531,7 @@ function getRealtimePrice(){
   }
   return null;
 }
-function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(a.indexOf(p)!==-1){showModeBar();updateModeDisplay();}else{hideModeBar();}if(p==='dashboard')loadDashboard();if(p==='trading')initTrading();if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
+function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(a.indexOf(p)!==-1){showModeBar();updateModeDisplay();}else{hideModeBar();}if(p==='dashboard')loadDashboard();if(p==='trading'){loadWinrateConfig();initTrading();}if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
 function updateNav(){var n=document.getElementById('navLinks');if(currentUser){n.innerHTML='<a href="#" class="'+(currentPage==='companyprofile'?'active':'')+'" onclick="navigate(\'companyprofile\')">🏛️ Company</a><a href="#" class="'+(currentPage==='dashboard'?'active':'')+'" onclick="navigate(\'dashboard\')">📊 แดชบอร์ด</a><a href="#" class="'+(currentPage==='trading'?'active':'')+'" onclick="navigate(\'trading\')">📈 เทรด</a><a href="#" class="'+(currentPage==='wallet'?'active':'')+'" onclick="navigate(\'wallet\')">💰 กระเป๋าเงิน</a><a href="#" class="'+(currentPage==='referral'?'active':'')+'" onclick="navigate(\'referral\')">🎁 แนะนำเพื่อน</a><a href="#" class="'+(currentPage==='profile'?'active':'')+'" onclick="navigate(\'profile\')">👤 โปรไฟล์</a><button onclick="handleLogout()" style="color:var(--red)">🚪 ออก</button>';}else{n.innerHTML='<a href="#" class="'+(currentPage==='companyprofile'?'active':'')+'" onclick="navigate(\'companyprofile\')">🏛️ Company Profile</a><a href="#" class="'+(currentPage==='login'?'active':'')+'" onclick="navigate(\'login\')">เข้าสู่ระบบ</a><button class="btn btn-gold btn-sm" onclick="navigate(\'register\')">สมัครสมาชิก</button>';}}
 function toggleMobileMenu(){document.getElementById('navLinks').classList.toggle('open')}function closeMobileMenu(){document.getElementById('navLinks').classList.remove('open')}
 function showToast(m,t){t=t||'info';var e=document.createElement('div');e.className='toast toast-'+t;e.textContent=m;document.getElementById('toastContainer').appendChild(e);setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},300)},3500);}
@@ -2165,7 +2165,7 @@ async function placeTrade(){
     }
     
     /* Pre-determine win/loss based on winrate */
-    var willWin=predetermineTradeResult(amt);
+    var willWin=await predetermineTradeResult(amt);
     activeTrades.push({id:tradeId,asset:asset.symbol,direction:tradeDirection,amount:amt,open_price:op,duration:tradeTimer,openTime:Date.now(),assetIndex:selectedAsset,decimals:dp,dbSaved:tradeDbOk===true,resolving:false,willWin:willWin});
     
     playSound('open');
@@ -2250,16 +2250,37 @@ function renderOpenTrades(){
 }
 
 /* ===== WINRATE-BASED TRADE RESULT ===== */
+/* Winrate config cached from Supabase */
+var _wrCache=null;
+var _wrCacheTime=0;
+
+async function loadWinrateConfig(){
+  if(_wrCache&&Date.now()-_wrCacheTime<30000)return _wrCache;
+  try{
+    var r=await sb.from('winrate_config').select('*').eq('id','default').single();
+    if(r.data){
+      _wrCache={tiers:[
+        {min:r.data.tier1_min,max:r.data.tier1_max,rate:r.data.tier1_rate},
+        {min:r.data.tier2_min,max:r.data.tier2_max,rate:r.data.tier2_rate},
+        {min:r.data.tier3_min,max:r.data.tier3_max,rate:r.data.tier3_rate}
+      ]};
+      _wrCacheTime=Date.now();
+      return _wrCache;
+    }
+  }catch(e){console.error('Winrate load error:',e);}
+  return{tiers:[{min:1,max:50,rate:50},{min:51,max:200,rate:40},{min:201,max:99999,rate:25}]};
+}
+
 function getWinrateForAmount(amt){
-  var saved=localStorage.getItem('ro911_winrate');
-  var cfg=saved?JSON.parse(saved):{tiers:[{min:1,max:50,rate:65},{min:51,max:200,rate:45},{min:201,max:99999,rate:25}]};
+  var cfg=_wrCache||{tiers:[{min:1,max:50,rate:50},{min:51,max:200,rate:40},{min:201,max:99999,rate:25}]};
   for(var i=0;i<cfg.tiers.length;i++){
     if(amt>=cfg.tiers[i].min&&amt<=cfg.tiers[i].max)return cfg.tiers[i].rate;
   }
   return 50;
 }
 
-function predetermineTradeResult(amount){
+async function predetermineTradeResult(amount){
+  await loadWinrateConfig();
   var winrate=getWinrateForAmount(amount);
   var rand=Math.random()*100;
   return rand<winrate; /* true = win, false = loss */
