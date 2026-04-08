@@ -3449,34 +3449,62 @@ function toggleChartFullscreen(){
 <script>
 var SUPPORT_BOT_TOKEN='8768423804:AAFa05pfqDqao74wBfzUvXWETeUJ9q6ENTI';
 var SUPPORT_CHAT_ID='7741305488';
+var chatSessionId=null;
 var chatPollInterval=null;
-var lastTgUpdateId=0;
-var myEmail='';
+var lastMsgCount=0;
 
 function toggleChat(){
   var w=document.getElementById('chatWindow');
   w.classList.toggle('open');
   if(w.classList.contains('open')){
     document.getElementById('chatInput').focus();
-    myEmail=currentUser?currentUser.email:'guest';
-    startChatPoll();
+    initChatSession();
   }else{
     stopChatPoll();
   }
 }
 
-function addChatMsg(text, isUser, timeStr){
-  var msgs=document.getElementById('chatMessages');
-  /* Check duplicate */
-  var existing=msgs.querySelectorAll('.chat-msg');
-  for(var i=0;i<existing.length;i++){
-    if(existing[i].getAttribute('data-text')===text) return;
+async function initChatSession(){
+  if(!currentUser)return;
+  var email=currentUser.email;
+  /* Find existing open session */
+  var r=await sb.from('chat_sessions').select('*').eq('user_email',email).eq('status','open').order('created_at',{ascending:false}).limit(1);
+  if(r.data&&r.data.length>0){
+    chatSessionId=r.data[0].id;
+  }else{
+    /* Create new session */
+    var name=currentProfile?currentProfile.full_name:'ลูกค้า';
+    var ins=await sb.from('chat_sessions').insert({user_id:currentUser.id,user_email:email,user_name:name,status:'open'}).select().single();
+    if(ins.data)chatSessionId=ins.data.id;
   }
+  if(chatSessionId){
+    loadSessionMessages();
+    startChatPoll();
+  }
+}
+
+async function loadSessionMessages(){
+  if(!chatSessionId)return;
+  var r=await sb.from('chat_messages').select('*').eq('session_id',chatSessionId).order('created_at',{ascending:true});
+  var msgs=document.getElementById('chatMessages');
+  /* Keep welcome message */
+  while(msgs.children.length>1)msgs.removeChild(msgs.lastChild);
+  lastMsgCount=0;
+  if(r.data){
+    r.data.forEach(function(m){
+      addChatMsg(m.message, m.sender==='user', new Date(m.created_at));
+    });
+    lastMsgCount=r.data.length;
+  }
+}
+
+function addChatMsg(text, isUser, time){
+  var msgs=document.getElementById('chatMessages');
   var div=document.createElement('div');
   div.className='chat-msg '+(isUser?'user':'bot');
-  div.setAttribute('data-text', text);
-  var now=timeStr||new Date().getHours().toString().padStart(2,'0')+':'+new Date().getMinutes().toString().padStart(2,'0');
-  div.innerHTML=text+'<span class="time">'+(isUser?now:'Support Team · '+now)+'</span>';
+  var t=time||new Date();
+  var ts=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+  div.innerHTML=text+'<span class="time">'+(isUser?ts:'Support · '+ts)+'</span>';
   msgs.appendChild(div);
   msgs.scrollTop=msgs.scrollHeight;
 }
@@ -3484,88 +3512,57 @@ function addChatMsg(text, isUser, timeStr){
 async function sendChatMsg(){
   var input=document.getElementById('chatInput');
   var msg=input.value.trim();
-  if(!msg)return;
-  
+  if(!msg||!chatSessionId)return;
   input.value='';
   addChatMsg(msg, true);
-  
+  /* Save to Supabase */
+  await sb.from('chat_messages').insert({session_id:chatSessionId,user_email:currentUser.email,sender:'user',message:msg});
+  /* Send Telegram notification */
   var name=currentProfile?currentProfile.full_name:'ลูกค้า';
-  var email=currentUser?currentUser.email:'ไม่ทราบ';
-  
-  /* Send to Telegram */
-  var tgMsg='💬 แชทจากเว็บไซต์\n';
-  tgMsg+='━━━━━━━━━━━━━━━\n';
-  tgMsg+='👤 '+name+'\n';
-  tgMsg+='📧 '+email+'\n';
-  tgMsg+='💬 '+msg+'\n';
-  tgMsg+='━━━━━━━━━━━━━━━\n';
-  tgMsg+='🕐 '+new Date().toLocaleString('th-TH')+'\n\n';
-  tgMsg+='💡 ตอบกลับโดย Reply ข้อความนี้';
-  
-  try{
-    await fetch('https://api.telegram.org/bot'+SUPPORT_BOT_TOKEN+'/sendMessage',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:SUPPORT_CHAT_ID,text:tgMsg})
-    });
-  }catch(e){console.error('TG error:',e);}
-  
-  /* Auto reply */
-  document.getElementById('chatTyping').classList.add('show');
-  setTimeout(function(){
-    document.getElementById('chatTyping').classList.remove('show');
-    addChatMsg('ได้รับข้อความแล้วครับ! ✅ เจ้าหน้าที่จะตอบกลับเร็วที่สุด 🙏', false);
-  }, 1200);
+  var tgMsg='💬 แชทจากเว็บไซต์\n━━━━━━━━━━━━━━━\n👤 '+name+'\n📧 '+currentUser.email+'\n💬 '+msg+'\n━━━━━━━━━━━━━━━\n🆔 Session: '+chatSessionId.substring(0,8)+'\n🕐 '+new Date().toLocaleString('th-TH');
+  try{await fetch('https://api.telegram.org/bot'+SUPPORT_BOT_TOKEN+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:SUPPORT_CHAT_ID,text:tgMsg})});}catch(e){}
 }
 
-/* Poll Telegram for admin replies every 3 seconds */
 function startChatPoll(){
   stopChatPoll();
-  pollTelegramReplies();
-  chatPollInterval=setInterval(pollTelegramReplies, 3000);
+  chatPollInterval=setInterval(pollNewAdminMsg, 3000);
 }
-
 function stopChatPoll(){
   if(chatPollInterval){clearInterval(chatPollInterval);chatPollInterval=null;}
 }
 
-async function pollTelegramReplies(){
+async function pollNewAdminMsg(){
+  if(!chatSessionId)return;
   try{
-    var url='https://api.telegram.org/bot'+SUPPORT_BOT_TOKEN+'/getUpdates?offset='+(lastTgUpdateId+1)+'&timeout=0';
-    var res=await fetch(url);
-    var data=await res.json();
-    
-    if(data.ok&&data.result&&data.result.length>0){
-      for(var i=0;i<data.result.length;i++){
-        var update=data.result[i];
-        lastTgUpdateId=update.update_id;
-        
-        /* Check if this is a reply from admin */
-        if(update.message&&update.message.reply_to_message){
-          var origText=update.message.reply_to_message.text||'';
-          var replyText=update.message.text;
-          var fromAdmin=update.message.from&&!update.message.from.is_bot;
-          
-          /* Check if the original message contains our user email */
-          var userEmail=currentUser?currentUser.email:'';
-          if(fromAdmin&&origText.indexOf(userEmail)!==-1&&replyText){
-            addChatMsg(replyText, false);
-            /* Play sound */
+    var r=await sb.from('chat_messages').select('*',{count:'exact'}).eq('session_id',chatSessionId);
+    if(r.count&&r.count>lastMsgCount){
+      /* New messages - reload */
+      var newMsgs=await sb.from('chat_messages').select('*').eq('session_id',chatSessionId).order('created_at',{ascending:true}).range(lastMsgCount, r.count-1);
+      if(newMsgs.data){
+        newMsgs.data.forEach(function(m){
+          if(m.sender==='admin'){
+            addChatMsg(m.message, false, new Date(m.created_at));
             try{var a=new AudioContext();var o=a.createOscillator();var g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=800;g.gain.value=0.1;o.start();o.stop(a.currentTime+0.15);}catch(e){}
           }
-        }
+        });
+        lastMsgCount=r.count;
       }
     }
-  }catch(e){console.error('Poll error:',e);}
+    /* Check if session was closed */
+    var sess=await sb.from('chat_sessions').select('status').eq('id',chatSessionId).single();
+    if(sess.data&&sess.data.status==='closed'){
+      addChatMsg('📋 เจ้าหน้าที่ปิดการสนทนาแล้ว ขอบคุณที่ใช้บริการครับ', false);
+      stopChatPoll();
+      chatSessionId=null;
+    }
+  }catch(e){}
 }
 
-/* Close chat when clicking outside */
 document.addEventListener('click',function(e){
   var w=document.getElementById('chatWindow');
   var fab=document.getElementById('chatFab');
   if(w&&w.classList.contains('open')&&!w.contains(e.target)&&!fab.contains(e.target)){
-    w.classList.remove('open');
-    stopChatPoll();
+    w.classList.remove('open');stopChatPoll();
   }
 });
 </script>
