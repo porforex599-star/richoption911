@@ -1359,7 +1359,7 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 </div>
 
 <script>
-var SUPABASE_URL='https://auth.weathtechlimited.com';
+var SUPABASE_URL='https://streetweath.supabase.co';
 var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4dXpucWlwdGZnY2R5a21kbGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODA3MDIsImV4cCI6MjA5MDQ1NjcwMn0.EAN4SXdaJTTCeH4FnclIHpRp2nOgta-nKPxZJXkAuck';
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var currentUser=null,currentProfile=null,currentPage='landing',tradeDirection='up',tradeTimer=30,selectedAsset=0,priceHistory=[],chartAnimFrame=null,activeTrades=[];
@@ -2476,7 +2476,7 @@ function playSound(type){
 }
 /* ===== CRYPTO DEPOSIT via OxaPay ===== */
 /* ===== SUPABASE EDGE FUNCTION URL ===== */
-var SUPABASE_FUNC_URL='https://auth.weathtechlimited.com/functions/v1';
+var SUPABASE_FUNC_URL='https://streetweath.supabase.co/functions/v1';
 
 /* ===== DEPOSIT TAB SWITCHING ===== */
 function switchDepositTab(tab){
