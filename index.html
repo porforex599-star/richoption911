@@ -1575,7 +1575,7 @@ function getRealtimePrice(){
   }
   return null;
 }
-function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(a.indexOf(p)!==-1){showModeBar();updateModeDisplay();}else{hideModeBar();}if(p==='dashboard')loadDashboard();if(p==='trading'){loadWinrateConfig();initTrading();}if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
+function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(a.indexOf(p)!==-1){showModeBar();updateModeDisplay();}else{hideModeBar();}if(p==='dashboard')loadDashboard();if(p==='trading'){initTrading();}if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
 function updateNav(){var n=document.getElementById('navLinks');if(currentUser){n.innerHTML='<a href="#" class="'+(currentPage==='companyprofile'?'active':'')+'" onclick="navigate(\'companyprofile\')">🏛️ Company</a><a href="#" class="'+(currentPage==='dashboard'?'active':'')+'" onclick="navigate(\'dashboard\')">📊 แดชบอร์ด</a><a href="#" class="'+(currentPage==='trading'?'active':'')+'" onclick="navigate(\'trading\')">📈 เทรด</a><a href="#" class="'+(currentPage==='wallet'?'active':'')+'" onclick="navigate(\'wallet\')">💰 กระเป๋าเงิน</a><a href="#" class="'+(currentPage==='referral'?'active':'')+'" onclick="navigate(\'referral\')">🎁 แนะนำเพื่อน</a><a href="#" class="'+(currentPage==='profile'?'active':'')+'" onclick="navigate(\'profile\')">👤 โปรไฟล์</a><button onclick="handleLogout()" style="color:var(--red)">🚪 ออก</button>';}else{n.innerHTML='<a href="#" class="'+(currentPage==='companyprofile'?'active':'')+'" onclick="navigate(\'companyprofile\')">🏛️ Company Profile</a><a href="#" class="'+(currentPage==='login'?'active':'')+'" onclick="navigate(\'login\')">เข้าสู่ระบบ</a><button class="btn btn-gold btn-sm" onclick="navigate(\'register\')">สมัครสมาชิก</button>';}}
 function toggleMobileMenu(){document.getElementById('navLinks').classList.toggle('open')}function closeMobileMenu(){document.getElementById('navLinks').classList.remove('open')}
 function showToast(m,t){t=t||'info';var e=document.createElement('div');e.className='toast toast-'+t;e.textContent=m;document.getElementById('toastContainer').appendChild(e);setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},300)},3500);}
@@ -2339,41 +2339,12 @@ function renderOpenTrades(){
   }).join('');
 }
 
-/* ===== WINRATE-BASED TRADE RESULT ===== */
-/* Winrate config cached from Supabase */
-var _wrCache=null;
-var _wrCacheTime=0;
-
-async function loadWinrateConfig(){
-  if(_wrCache&&Date.now()-_wrCacheTime<30000)return _wrCache;
-  try{
-    var r=await sb.from('winrate_config').select('*').eq('id','default').single();
-    if(r.data){
-      _wrCache={tiers:[
-        {min:r.data.tier1_min,max:r.data.tier1_max,rate:r.data.tier1_rate},
-        {min:r.data.tier2_min,max:r.data.tier2_max,rate:r.data.tier2_rate},
-        {min:r.data.tier3_min,max:r.data.tier3_max,rate:r.data.tier3_rate}
-      ]};
-      _wrCacheTime=Date.now();
-      return _wrCache;
-    }
-  }catch(e){console.error('Winrate load error:',e);}
-  return{tiers:[{min:1,max:50,rate:50},{min:51,max:200,rate:40},{min:201,max:99999,rate:25}]};
-}
-
-function getWinrateForAmount(amt){
-  var cfg=_wrCache||{tiers:[{min:1,max:50,rate:50},{min:51,max:200,rate:40},{min:201,max:99999,rate:25}]};
-  for(var i=0;i<cfg.tiers.length;i++){
-    if(amt>=cfg.tiers[i].min&&amt<=cfg.tiers[i].max)return cfg.tiers[i].rate;
-  }
-  return 50;
-}
+/* ===== WINRATE-BASED TRADE RESULT (via Edge Function) ===== */
+/* Client no longer holds winrate logic — resolved server-side */
 
 async function predetermineTradeResult(amount){
-  await loadWinrateConfig();
-  var winrate=getWinrateForAmount(amount);
-  var rand=Math.random()*100;
-  return rand<winrate; /* true = win, false = loss */
+  /* Placeholder — actual resolution happens server-side via resolve-trade */
+  return Math.random()<0.5;
 }
 
 /* ===== PROCESS TRADES — single execution lock ===== */
@@ -2406,33 +2377,44 @@ async function processActiveTrades(cp){
   isProcessingTrade=true;
   
   var t=tradeToResolve;
-  /* Determine result from ACTUAL price on chart — must match what user sees */
-  var won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
-  var res=won?'win':'loss';
-  var pay=won?t.amount*1.85:0;
   var dp=t.decimals||2;
+  var won,res,pay;
   
-  /* DB update */
+  /* === Call resolve-trade Edge Function (server-side winrate + balance update) === */
   if(t.dbSaved){
     try{
-      await sb.from('trades').update({result:res,close_price:cp,payout:pay}).eq('id',t.id);
-    }catch(dbErr){
-      try{await sb.from('trades').update({result:res}).eq('id',t.id);}catch(e){}
+      var rfRes=await fetch(SUPABASE_FUNC_URL+'/resolve-trade',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+sb.supabaseKey},
+        body:JSON.stringify({trade_id:t.id,close_price:cp,mode:accountMode})
+      });
+      var rfData=await rfRes.json();
+      if(rfData&&rfData.result){
+        won=rfData.result==='win';
+        res=rfData.result;
+        pay=rfData.payout||0;
+      }else{
+        /* Fallback if edge function fails */
+        won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
+        res=won?'win':'loss';
+        pay=won?t.amount*1.85:0;
+      }
+    }catch(efErr){
+      console.error('resolve-trade error:',efErr);
+      won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
+      res=won?'win':'loss';
+      pay=won?t.amount*1.85:0;
     }
+  }else{
+    /* Trade not saved to DB — resolve locally */
+    won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
+    res=won?'win':'loss';
+    pay=won?t.amount*1.85:0;
   }
   
-  /* Update balance */
-  if(won){
-    await loadUserProfile();
-    if(accountMode==='demo'){
-      currentProfile.demo_balance=(currentProfile.demo_balance||0)+pay;
-      await sb.from('profiles').update({demo_balance:currentProfile.demo_balance}).eq('id',currentUser.id);
-    }else{
-      await sb.from('profiles').update({balance:currentProfile.balance+pay}).eq('id',currentUser.id);
-      currentProfile.balance+=pay;
-    }
-    updateTradingBalance();
-  }
+  /* Reload balance from server (Edge Function already updated it) */
+  await loadUserProfile();
+  updateTradingBalance();
   
   /* Remove from active trades BEFORE showing popup */
   activeTrades=activeTrades.filter(function(x){return x.id!==t.id});
@@ -2636,21 +2618,13 @@ async function handleDemoDeposit(e){
 }
 
 /* ===== CRYPTO WITHDRAW ===== */
-/* ===== TELEGRAM NOTIFICATION ===== */
-var TELEGRAM_BOT_TOKEN='8682855734:AAHH__xa0lCm9YZkZdMYgdIRinqq-i3iRAM';
-var TELEGRAM_CHAT_ID='7741305488';
-
+/* ===== TELEGRAM NOTIFICATION (via Edge Function) ===== */
 async function sendTelegramNotify(message){
-  if(TELEGRAM_BOT_TOKEN==='YOUR_BOT_TOKEN_HERE')return; /* Skip if not configured */
   try{
-    await fetch('https://api.telegram.org/bot'+TELEGRAM_BOT_TOKEN+'/sendMessage',{
+    await fetch(SUPABASE_FUNC_URL+'/telegram-notify',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        chat_id:TELEGRAM_CHAT_ID,
-        text:message,
-        parse_mode:'HTML'
-      })
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+sb.supabaseKey},
+      body:JSON.stringify({message:message})
     });
   }catch(e){console.log('Telegram notify failed:',e);}
 }
@@ -3453,7 +3427,6 @@ function toggleChartFullscreen(){
 </div>
 
 <script>
-var SUPPORT_BOT_TOKEN='8768423804:AAFa05pfqDqao74wBfzUvXWETeUJ9q6ENTI';
 var SUPPORT_CHAT_ID='7741305488';
 var chatSessionId=null;
 var chatPollInterval=null;
@@ -3526,7 +3499,7 @@ async function sendChatMsg(){
   /* Send Telegram notification */
   var name=currentProfile?currentProfile.full_name:'ลูกค้า';
   var tgMsg='💬 แชทจากเว็บไซต์\n━━━━━━━━━━━━━━━\n👤 '+name+'\n📧 '+currentUser.email+'\n💬 '+msg+'\n━━━━━━━━━━━━━━━\n🆔 Session: '+chatSessionId.substring(0,8)+'\n🕐 '+new Date().toLocaleString('th-TH');
-  try{await fetch('https://api.telegram.org/bot'+SUPPORT_BOT_TOKEN+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:SUPPORT_CHAT_ID,text:tgMsg})});}catch(e){}
+  try{await fetch(SUPABASE_FUNC_URL+'/telegram-notify',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+sb.supabaseKey},body:JSON.stringify({message:tgMsg})});}catch(e){}
 }
 
 function startChatPoll(){
