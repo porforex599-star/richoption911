@@ -2542,63 +2542,51 @@ async function processActiveTrades(cp){
         res=rfData.result;
         pay=rfData.payout||0;
       }else{
-        /* Fallback if edge function fails */
         won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
         res=won?'win':'loss';
         pay=won?t.amount*1.85:0;
-        /* Update balance in DB */
-        var newBal=won?(getActiveBalance()+pay):(getActiveBalance());
-        if(accountMode==='demo'){
-          currentProfile.demo_balance=newBal;
-          await sb.from('profiles').update({demo_balance:newBal}).eq('id',currentUser.id);
-        }else{
-          currentProfile.balance=newBal;
-          await sb.from('profiles').update({balance:newBal}).eq('id',currentUser.id);
-        }
-        /* Update trade result in DB */
-        try{await sb.from('trades').update({result:res,close_price:cp,payout:pay}).eq('id',t.id);}catch(e){}
       }
     }catch(efErr){
       console.error('resolve-trade error:',efErr);
       won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
       res=won?'win':'loss';
       pay=won?t.amount*1.85:0;
-      /* Update balance in DB */
-      var newBal2=won?(getActiveBalance()+pay):(getActiveBalance());
-      if(accountMode==='demo'){
-        currentProfile.demo_balance=newBal2;
-        await sb.from('profiles').update({demo_balance:newBal2}).eq('id',currentUser.id);
-      }else{
-        currentProfile.balance=newBal2;
-        await sb.from('profiles').update({balance:newBal2}).eq('id',currentUser.id);
-      }
-      try{await sb.from('trades').update({result:res,close_price:cp,payout:pay}).eq('id',t.id);}catch(e){}
     }
   }else{
-    /* Trade not saved to DB — resolve locally */
     won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
     res=won?'win':'loss';
     pay=won?t.amount*1.85:0;
-    /* Update balance in DB even for local trades */
-    var newBal3=won?(getActiveBalance()+pay):(getActiveBalance());
-    if(accountMode==='demo'){
-      currentProfile.demo_balance=newBal3;
-      try{await sb.from('profiles').update({demo_balance:newBal3}).eq('id',currentUser.id);}catch(e){}
-    }else{
-      currentProfile.balance=newBal3;
-      try{await sb.from('profiles').update({balance:newBal3}).eq('id',currentUser.id);}catch(e){}
-    }
   }
   
-  /* Reload balance from server (Edge Function already updated it) */
+  /* === ALWAYS update balance in DB after trade result === */
+  var balNow=getActiveBalance();
+  var balNew=won?(balNow+pay):balNow;
+  console.log('[TRADE RESOLVE] result:',res,'balNow:',balNow,'pay:',pay,'balNew:',balNew,'mode:',accountMode);
+  if(accountMode==='demo'){
+    currentProfile.demo_balance=balNew;
+    try{
+      var ubr=await sb.from('profiles').update({demo_balance:balNew}).eq('id',currentUser.id);
+      console.log('[BALANCE UPDATE] demo result:',ubr);
+      if(ubr.error)console.error('[BALANCE UPDATE] demo error:',ubr.error);
+    }catch(e){console.error('balance update err:',e);}
+  }else{
+    currentProfile.balance=balNew;
+    try{
+      var ubr2=await sb.from('profiles').update({balance:balNew}).eq('id',currentUser.id);
+      console.log('[BALANCE UPDATE] live result:',ubr2);
+      if(ubr2.error)console.error('[BALANCE UPDATE] live error:',ubr2.error);
+    }catch(e){console.error('balance update err:',e);}
+  }
+  /* Update trade result in DB */
+  if(t.dbSaved){try{await sb.from('trades').update({result:res,close_price:cp,payout:pay}).eq('id',t.id);}catch(e){}}
+  
+  /* Reload balance from server to confirm */
   await loadUserProfile();
   updateTradingBalance();
   
   /* Remove from active trades BEFORE showing popup */
   activeTrades=activeTrades.filter(function(x){return x.id!==t.id});
   renderOpenTrades();
-  await loadUserProfile();
-  updateTradingBalance();
   
   /* Show result popup ONCE */
   showResultPopup(won,t,cp,pay,dp);
