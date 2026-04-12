@@ -1669,7 +1669,9 @@ async function handleVerifyOtp(){
   var btn=document.getElementById('verifyOtpBtn');
   btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
   try{
-    var r=await sb.auth.verifyOtp({email:_pendingEmail,token:code,type:'signup'});
+    /* Use 'email' type for Google OTP, 'signup' type for normal signup */
+    var otpType=_googleOtpPending?'email':'signup';
+    var r=await sb.auth.verifyOtp({email:_pendingEmail,token:code,type:otpType});
     if(r.error)throw r.error;
     /* OTP verified — auto login */
     if(r.data.session&&r.data.user){
@@ -1678,11 +1680,11 @@ async function handleVerifyOtp(){
       accountMode=currentProfile&&currentProfile.account_mode?currentProfile.account_mode:'demo';
       switchAccountMode(accountMode);
       showToast('ยืนยันอีเมลสำเร็จ! ยินดีต้อนรับ 🎉','success');
-      _pendingEmail='';_pendingPassword='';
+      _pendingEmail='';_pendingPassword='';_googleOtpPending=false;
       navigate('dashboard');
     }else{
       showToast('ยืนยันสำเร็จ! กรุณาเข้าสู่ระบบ','success');
-      _pendingEmail='';_pendingPassword='';
+      _pendingEmail='';_pendingPassword='';_googleOtpPending=false;
       navigate('login');
     }
   }catch(err){
@@ -1698,8 +1700,15 @@ async function handleResendOtp(){
   var btn=document.getElementById('resendOtpBtn');
   btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
   try{
-    var r=await sb.auth.resend({type:'signup',email:_pendingEmail});
-    if(r.error)throw r.error;
+    if(_googleOtpPending){
+      /* Google login — resend via signInWithOtp */
+      var r=await sb.auth.signInWithOtp({email:_pendingEmail,options:{shouldCreateUser:false}});
+      if(r.error)throw r.error;
+    }else{
+      /* Normal signup — resend signup confirmation */
+      var r=await sb.auth.resend({type:'signup',email:_pendingEmail});
+      if(r.error)throw r.error;
+    }
     showToast('ส่ง OTP ใหม่แล้ว! กรุณาตรวจสอบอีเมล','success');
     startOtpCountdown();
   }catch(err){
@@ -1725,6 +1734,7 @@ async function handleGoogleAuth(){
 }
 
 /* Handle OAuth callback — create profile if new user */
+var _googleOtpPending=false;
 async function handleOAuthCallback(){
   var s=await sb.auth.getSession();
   if(s.data.session&&s.data.session.user){
@@ -1746,11 +1756,21 @@ async function handleOAuthCallback(){
         avatar_url:user.user_metadata.avatar_url||null
       });
     }
-    /* Reload to logged-in state */
-    currentUser=user;
-    await loadProfile();
-    navigate('dashboard');
-    showToast('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ '+((currentProfile&&currentProfile.full_name)||user.email),'success');
+    /* ===== OTP VERIFICATION FOR GOOGLE LOGIN ===== */
+    _pendingEmail=user.email;
+    _googleOtpPending=true;
+    /* Sign out so user can't access dashboard yet */
+    await sb.auth.signOut();
+    currentUser=null;currentProfile=null;
+    /* Send OTP to user's email */
+    try{
+      var otpRes=await sb.auth.signInWithOtp({email:_pendingEmail,options:{shouldCreateUser:false}});
+      if(otpRes.error)throw otpRes.error;
+      showToast('กรุณายืนยัน OTP ที่ส่งไปยัง '+_pendingEmail,'info');
+    }catch(otpErr){
+      showToast('ส่ง OTP ไม่สำเร็จ: '+otpErr.message,'error');
+    }
+    navigate('verify-otp');
   }
 }
 
@@ -2887,7 +2907,7 @@ function copyRefLink(){navigator.clipboard.writeText(document.getElementById('my
 function checkReferralFromUrl(){var p=new URLSearchParams(window.location.search),ref=p.get('ref');if(ref){navigate('register');setTimeout(function(){var inp=document.getElementById('regReferral');if(inp)inp.value=ref;},100);}}
 async function init(){try{var r=await sb.auth.getSession();if(r.data.session&&r.data.session.user){currentUser=r.data.session.user;await loadUserProfile();accountMode=currentProfile&&currentProfile.account_mode?currentProfile.account_mode:'demo';switchAccountMode(accountMode);navigate('dashboard');}else{checkReferralFromUrl();}}catch(err){console.error(err);}updateNav();setTimeout(function(){var ls=document.getElementById('loadingScreen');if(ls){ls.classList.add('hidden');setTimeout(function(){ls.remove()},400);}},600);sb.auth.onAuthStateChange(function(ev,session){
 if(ev==='SIGNED_OUT'){currentUser=null;currentProfile=null;accountMode='demo';hideModeBar();navigate('landing');}
-if(ev==='SIGNED_IN'&&session&&session.user){handleOAuthCallback();}
+if(ev==='SIGNED_IN'&&session&&session.user&&!_googleOtpPending){handleOAuthCallback();}
 });}
 /* ===== KYC SYSTEM ===== */
 var kycFile=null;
