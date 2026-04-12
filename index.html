@@ -851,12 +851,40 @@ td{padding:10px 14px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.
 <div class="ft-s"><div class="container"><p>&copy; 2026 StreetWeath. Best Liquidity Provider Limited. All rights reserved.</p></div></div>
 
 </div>
-<div class="page" id="page-register"><div class="auth-page"><div class="auth-card"><div class="text-center"><h2>สร้างบัญชีใหม่</h2><p class="subtitle">เริ่มต้นเทรดกับ StreetWeath</p></div><form onsubmit="handleRegister(event)"><div class="form-group"><label>ชื่อ-นามสกุล</label><input type="text" class="form-input" id="regName" required></div><div class="form-group"><label>อีเมล</label><input type="email" class="form-input" id="regEmail" required></div><div class="form-group"><label>รหัสผ่าน</label><input type="password" class="form-input" id="regPassword" required minlength="6"></div><div class="form-group"><label>รหัสแนะนำ (ถ้ามี)</label><input type="text" class="form-input" id="regReferral"></div><div class="form-group" style="margin-top:12px"><label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.85rem;color:var(--text2);line-height:1.5"><input type="checkbox" id="agreeTerms" style="margin-top:4px;min-width:18px;min-height:18px;accent-color:var(--gold)"> <span>ข้าพเจ้ายอมรับ <a href="#" onclick="event.preventDefault();openModal('termsModal')" style="color:var(--gold);text-decoration:underline">ข้อกำหนดและเงื่อนไขการใช้งาน</a> รวมถึงนโยบายการเทรด นโยบายฝาก-ถอน และนโยบายความเป็นส่วนตัว</span></label></div><button type="submit" class="btn btn-gold btn-full" id="regBtn">สมัครสมาชิก</button></form><div class="form-divider">หรือ</div>
+<div class="page" id="page-register"><div class="auth-page"><div class="auth-card"><div class="text-center"><h2>Create Account</h2><p class="subtitle">Start trading with StreetWeath</p></div><form onsubmit="handleRegister(event)"><div class="form-group"><label>First Name</label><input type="text" class="form-input" id="regFirstName" placeholder="e.g. John" required></div><div class="form-group"><label>Last Name</label><input type="text" class="form-input" id="regLastName" placeholder="e.g. Smith" required></div><div class="form-group"><label>Email</label><input type="email" class="form-input" id="regEmail" placeholder="e.g. john@email.com" required></div><div class="form-group"><label>Password</label><input type="password" class="form-input" id="regPassword" required minlength="6"></div><div class="form-group"><label>Referral Code (optional)</label><input type="text" class="form-input" id="regReferral"></div><div class="form-group" style="margin-top:12px"><label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.85rem;color:var(--text2);line-height:1.5"><input type="checkbox" id="agreeTerms" style="margin-top:4px;min-width:18px;min-height:18px;accent-color:var(--gold)"> <span>I agree to the <a href="#" onclick="event.preventDefault();openModal('termsModal')" style="color:var(--gold);text-decoration:underline">Terms and Conditions</a>, including Trading Policy, Deposit/Withdrawal Policy, and Privacy Policy.</span></label></div><button type="submit" class="btn btn-gold btn-full" id="regBtn">Create Account</button></form><div class="form-divider">or</div>
 <button onclick="handleGoogleAuth()" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;width:100%;font-family:inherit;margin-bottom:14px" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.borderColor='rgba(212,164,55,.3)'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.borderColor='rgba(255,255,255,.12)'">
 <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-สมัครด้วย Google
+Sign up with Google
 </button>
-<p class="text-center text-muted" style="font-size:.9rem">มีบัญชีอยู่แล้ว? <a href="#" onclick="navigate('login')">เข้าสู่ระบบ</a></p></div></div></div>
+<p class="text-center text-muted" style="font-size:.9rem">Already have an account? <a href="#" onclick="navigate('login')">Sign In</a></p></div></div></div>
+
+<!-- VERIFY OTP -->
+<div class="page" id="page-verify-otp">
+<div class="auth-page">
+<div class="auth-card" style="max-width:420px">
+<div class="text-center">
+<div style="font-size:3rem;margin-bottom:12px">📧</div>
+<h2>Verify Your Email</h2>
+<p class="subtitle" id="otpSubtitle">We've sent a 6-digit OTP code to your email<br><strong id="otpEmailDisplay"></strong></p>
+</div>
+<div style="display:flex;justify-content:center;gap:8px;margin:24px 0" id="otpBoxes">
+<input type="text" maxlength="1" class="form-input otp-box" data-otp="0" inputmode="numeric" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;padding:0;border-radius:10px">
+<input type="text" maxlength="1" class="form-input otp-box" data-otp="1" inputmode="numeric" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;padding:0;border-radius:10px">
+<input type="text" maxlength="1" class="form-input otp-box" data-otp="2" inputmode="numeric" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;padding:0;border-radius:10px">
+<input type="text" maxlength="1" class="form-input otp-box" data-otp="3" inputmode="numeric" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;padding:0;border-radius:10px">
+<input type="text" maxlength="1" class="form-input otp-box" data-otp="4" inputmode="numeric" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;padding:0;border-radius:10px">
+<input type="text" maxlength="1" class="form-input otp-box" data-otp="5" inputmode="numeric" style="width:48px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;padding:0;border-radius:10px">
+</div>
+<button onclick="handleVerifyOtp()" class="btn btn-gold btn-full" id="verifyOtpBtn">Verify OTP</button>
+<div style="text-align:center;margin-top:16px">
+<p class="text-muted" style="font-size:.85rem" id="otpTimer">Resend OTP in <span id="otpCountdown">60</span> seconds</p>
+<button onclick="handleResendOtp()" class="btn" id="resendOtpBtn" style="display:none;background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:.85rem;padding:8px 20px;margin-top:8px;border-radius:8px;cursor:pointer">📩 Resend OTP</button>
+</div>
+<p class="text-center text-muted" style="font-size:.85rem;margin-top:16px">Wrong email? <a href="#" onclick="navigate('register')" style="color:var(--gold)">Go back to register</a></p>
+</div>
+</div>
+</div>
+
 <!-- LOGIN -->
 <div class="page" id="page-login">
 <style>
@@ -1575,13 +1603,122 @@ function getRealtimePrice(){
   }
   return null;
 }
-function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(a.indexOf(p)!==-1){showModeBar();updateModeDisplay();}else{hideModeBar();}if(p==='dashboard')loadDashboard();if(p==='trading'){initTrading();}if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();}
+function navigate(p){var a=['dashboard','trading','wallet','referral','profile','kyc'];if(a.indexOf(p)!==-1&&!currentUser){showToast('กรุณาเข้าสู่ระบบก่อน','error');p='login';}document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});var el=document.getElementById('page-'+p);if(el){el.classList.add('active');currentPage=p;}updateNav();closeMobileMenu();window.scrollTo(0,0);if(a.indexOf(p)!==-1){showModeBar();updateModeDisplay();}else{hideModeBar();}if(p==='dashboard')loadDashboard();if(p==='trading'){initTrading();}if(p==='wallet')loadTransactions();if(p==='referral')loadReferrals();if(p==='profile')loadProfile();if(p==='kyc')loadKycStatus();if(p==='verify-otp')initOtpPage();}
 function updateNav(){var n=document.getElementById('navLinks');if(currentUser){n.innerHTML='<a href="#" class="'+(currentPage==='companyprofile'?'active':'')+'" onclick="navigate(\'companyprofile\')">🏛️ Company</a><a href="#" class="'+(currentPage==='dashboard'?'active':'')+'" onclick="navigate(\'dashboard\')">📊 แดชบอร์ด</a><a href="#" class="'+(currentPage==='trading'?'active':'')+'" onclick="navigate(\'trading\')">📈 เทรด</a><a href="#" class="'+(currentPage==='wallet'?'active':'')+'" onclick="navigate(\'wallet\')">💰 กระเป๋าเงิน</a><a href="#" class="'+(currentPage==='referral'?'active':'')+'" onclick="navigate(\'referral\')">🎁 แนะนำเพื่อน</a><a href="#" class="'+(currentPage==='profile'?'active':'')+'" onclick="navigate(\'profile\')">👤 โปรไฟล์</a><button onclick="handleLogout()" style="color:var(--red)">🚪 ออก</button>';}else{n.innerHTML='<a href="#" class="'+(currentPage==='companyprofile'?'active':'')+'" onclick="navigate(\'companyprofile\')">🏛️ Company Profile</a><a href="#" class="'+(currentPage==='login'?'active':'')+'" onclick="navigate(\'login\')">เข้าสู่ระบบ</a><button class="btn btn-gold btn-sm" onclick="navigate(\'register\')">สมัครสมาชิก</button>';}}
 function toggleMobileMenu(){document.getElementById('navLinks').classList.toggle('open')}function closeMobileMenu(){document.getElementById('navLinks').classList.remove('open')}
 function showToast(m,t){t=t||'info';var e=document.createElement('div');e.className='toast toast-'+t;e.textContent=m;document.getElementById('toastContainer').appendChild(e);setTimeout(function(){e.style.opacity='0';setTimeout(function(){e.remove()},300)},3500);}
 function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
-async function handleRegister(e){e.preventDefault();if(!document.getElementById('agreeTerms').checked){showToast('กรุณายอมรับข้อกำหนดและเงื่อนไขก่อนสมัคร','error');return;}var btn=document.getElementById('regBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var r=await sb.auth.signUp({email:document.getElementById('regEmail').value.trim(),password:document.getElementById('regPassword').value});if(r.error)throw r.error;if(r.data.user){var rc='RO'+r.data.user.id.substring(0,8).toUpperCase();await sb.from('profiles').upsert({id:r.data.user.id,full_name:document.getElementById('regName').value.trim(),email:document.getElementById('regEmail').value.trim(),balance:0,demo_balance:10000,account_mode:'demo',referral_code:rc,referred_by:document.getElementById('regReferral').value.trim()||null,created_at:new Date().toISOString()});}showToast('สมัครสำเร็จ!','success');navigate('login');}catch(err){showToast(err.message||'เกิดข้อผิดพลาด','error');}finally{btn.innerHTML='สมัครสมาชิก';btn.disabled=false;}}
+var _pendingEmail='';var _pendingPassword='';var _otpInterval=null;
+async function handleRegister(e){e.preventDefault();if(!document.getElementById('agreeTerms').checked){showToast('Please accept the Terms and Conditions','error');return;}var btn=document.getElementById('regBtn');btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;try{var email=document.getElementById('regEmail').value.trim();var password=document.getElementById('regPassword').value;var firstName=document.getElementById('regFirstName').value.trim();var lastName=document.getElementById('regLastName').value.trim();var fullName=firstName+' '+lastName;var r=await sb.auth.signUp({email:email,password:password});if(r.error)throw r.error;if(r.data.user){var rc='RO'+r.data.user.id.substring(0,8).toUpperCase();await sb.from('profiles').upsert({id:r.data.user.id,full_name:fullName,first_name:firstName,last_name:lastName,email:email,balance:0,demo_balance:10000,account_mode:'demo',referral_code:rc,referred_by:document.getElementById('regReferral').value.trim()||null,created_at:new Date().toISOString()});}_pendingEmail=email;_pendingPassword=password;showToast('Registration successful! Please verify OTP from your email','success');navigate('verify-otp');}catch(err){showToast(err.message||'An error occurred','error');}finally{btn.innerHTML='Create Account';btn.disabled=false;}}
 /* ===== GOOGLE AUTH ===== */
+
+/* ===== OTP VERIFICATION FUNCTIONS ===== */
+function initOtpPage(){
+  document.getElementById('otpEmailDisplay').textContent=_pendingEmail||'ไม่ทราบ';
+  /* Clear OTP boxes */
+  document.querySelectorAll('.otp-box').forEach(function(b){b.value='';});
+  document.querySelector('.otp-box[data-otp="0"]').focus();
+  /* Start countdown */
+  startOtpCountdown();
+  /* Setup auto-advance for OTP boxes */
+  setupOtpInputs();
+}
+
+function setupOtpInputs(){
+  var boxes=document.querySelectorAll('.otp-box');
+  boxes.forEach(function(box,i){
+    box.addEventListener('input',function(e){
+      this.value=this.value.replace(/[^0-9]/g,'');
+      if(this.value&&i<5)boxes[i+1].focus();
+      /* Auto-submit when all filled */
+      if(i===5&&this.value){
+        var code='';boxes.forEach(function(b){code+=b.value;});
+        if(code.length===6)handleVerifyOtp();
+      }
+    });
+    box.addEventListener('keydown',function(e){
+      if(e.key==='Backspace'&&!this.value&&i>0){boxes[i-1].focus();}
+    });
+    box.addEventListener('paste',function(e){
+      e.preventDefault();
+      var paste=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').substring(0,6);
+      for(var j=0;j<paste.length;j++){if(boxes[j])boxes[j].value=paste[j];}
+      if(paste.length>=6)handleVerifyOtp();
+    });
+  });
+}
+
+function startOtpCountdown(){
+  if(_otpInterval)clearInterval(_otpInterval);
+  var sec=60;
+  var el=document.getElementById('otpCountdown');
+  var timerRow=document.getElementById('otpTimer');
+  var resendBtn=document.getElementById('resendOtpBtn');
+  timerRow.style.display='block';resendBtn.style.display='none';
+  el.textContent=sec;
+  _otpInterval=setInterval(function(){
+    sec--;el.textContent=sec;
+    if(sec<=0){clearInterval(_otpInterval);timerRow.style.display='none';resendBtn.style.display='inline-block';}
+  },1000);
+}
+
+async function handleVerifyOtp(){
+  var code='';
+  document.querySelectorAll('.otp-box').forEach(function(b){code+=b.value;});
+  if(code.length!==6){showToast('Please enter all 6 digits','error');return;}
+  var btn=document.getElementById('verifyOtpBtn');
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  try{
+    /* Use 'email' type for Google OTP, 'signup' type for normal signup */
+    var otpType=_googleOtpPending?'email':'signup';
+    var r=await sb.auth.verifyOtp({email:_pendingEmail,token:code,type:otpType});
+    if(r.error)throw r.error;
+    /* OTP verified — auto login */
+    if(r.data.session&&r.data.user){
+      currentUser=r.data.user;
+      await loadUserProfile();
+      accountMode=currentProfile&&currentProfile.account_mode?currentProfile.account_mode:'demo';
+      switchAccountMode(accountMode);
+      showToast('Email verified successfully! Welcome 🎉','success');
+      _pendingEmail='';_pendingPassword='';_googleOtpPending=false;
+      navigate('dashboard');
+    }else{
+      showToast('Verified successfully! Please sign in','success');
+      _pendingEmail='';_pendingPassword='';_googleOtpPending=false;
+      navigate('login');
+    }
+  }catch(err){
+    showToast(err.message||'Invalid OTP. Please try again','error');
+    document.querySelectorAll('.otp-box').forEach(function(b){b.value='';});
+    document.querySelector('.otp-box[data-otp="0"]').focus();
+  }finally{
+    btn.innerHTML='ยืนยัน OTP';btn.disabled=false;
+  }
+}
+
+async function handleResendOtp(){
+  var btn=document.getElementById('resendOtpBtn');
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  try{
+    if(_googleOtpPending){
+      /* Google login — resend via signInWithOtp */
+      var r=await sb.auth.signInWithOtp({email:_pendingEmail,options:{shouldCreateUser:false}});
+      if(r.error)throw r.error;
+    }else{
+      /* Normal signup — resend signup confirmation */
+      var r=await sb.auth.resend({type:'signup',email:_pendingEmail});
+      if(r.error)throw r.error;
+    }
+    showToast('OTP resent! Please check your email','success');
+    startOtpCountdown();
+  }catch(err){
+    showToast(err.message||'Failed to resend OTP','error');
+  }finally{
+    btn.innerHTML='📩 Resend OTP';btn.disabled=false;
+  }
+}
+/* ===== END OTP ===== */
+
 async function handleGoogleAuth(){
   try{
     var r=await sb.auth.signInWithOAuth({
@@ -1597,6 +1734,7 @@ async function handleGoogleAuth(){
 }
 
 /* Handle OAuth callback — create profile if new user */
+var _googleOtpPending=false;
 async function handleOAuthCallback(){
   var s=await sb.auth.getSession();
   if(s.data.session&&s.data.session.user){
@@ -1618,11 +1756,21 @@ async function handleOAuthCallback(){
         avatar_url:user.user_metadata.avatar_url||null
       });
     }
-    /* Reload to logged-in state */
-    currentUser=user;
-    await loadProfile();
-    navigate('dashboard');
-    showToast('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ '+((currentProfile&&currentProfile.full_name)||user.email),'success');
+    /* ===== OTP VERIFICATION FOR GOOGLE LOGIN ===== */
+    _pendingEmail=user.email;
+    _googleOtpPending=true;
+    /* Sign out so user can't access dashboard yet */
+    await sb.auth.signOut();
+    currentUser=null;currentProfile=null;
+    /* Send OTP to user's email */
+    try{
+      var otpRes=await sb.auth.signInWithOtp({email:_pendingEmail,options:{shouldCreateUser:false}});
+      if(otpRes.error)throw otpRes.error;
+      showToast('Please verify OTP sent to '+_pendingEmail,'info');
+    }catch(otpErr){
+      showToast('Failed to send OTP: '+otpErr.message,'error');
+    }
+    navigate('verify-otp');
   }
 }
 
@@ -2394,7 +2542,6 @@ async function processActiveTrades(cp){
         res=rfData.result;
         pay=rfData.payout||0;
       }else{
-        /* Fallback if edge function fails */
         won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
         res=won?'win':'loss';
         pay=won?t.amount*1.85:0;
@@ -2406,21 +2553,47 @@ async function processActiveTrades(cp){
       pay=won?t.amount*1.85:0;
     }
   }else{
-    /* Trade not saved to DB — resolve locally */
     won=(t.direction==='up'&&cp>t.open_price)||(t.direction==='down'&&cp<t.open_price);
     res=won?'win':'loss';
     pay=won?t.amount*1.85:0;
   }
   
-  /* Reload balance from server (Edge Function already updated it) */
-  await loadUserProfile();
+  /* === ALWAYS update balance in DB after trade result === */
+  var balNow=getActiveBalance();
+  var balNew=won?(balNow+pay):balNow;
+  var balUpdateOk=false;
+  console.log('[TRADE RESOLVE] result:',res,'balNow:',balNow,'pay:',pay,'balNew:',balNew,'mode:',accountMode);
+  if(accountMode==='demo'){
+    currentProfile.demo_balance=balNew;
+    try{
+      var ubr=await sb.from('profiles').update({demo_balance:balNew}).eq('id',currentUser.id).select();
+      console.log('[BALANCE UPDATE] demo response:',JSON.stringify(ubr));
+      if(ubr.error){console.error('[BALANCE UPDATE] BLOCKED:',ubr.error.message);showToast('DB update error: '+ubr.error.message,'error');}
+      else if(!ubr.data||ubr.data.length===0){console.error('[BALANCE UPDATE] RLS BLOCKED — no rows updated');showToast('Balance update blocked by RLS policy','error');}
+      else{balUpdateOk=true;console.log('[BALANCE UPDATE] SUCCESS demo_balance=',balNew);}
+    }catch(e){console.error('[BALANCE UPDATE] exception:',e);}
+  }else{
+    currentProfile.balance=balNew;
+    try{
+      var ubr2=await sb.from('profiles').update({balance:balNew}).eq('id',currentUser.id).select();
+      console.log('[BALANCE UPDATE] live response:',JSON.stringify(ubr2));
+      if(ubr2.error){console.error('[BALANCE UPDATE] BLOCKED:',ubr2.error.message);showToast('DB update error: '+ubr2.error.message,'error');}
+      else if(!ubr2.data||ubr2.data.length===0){console.error('[BALANCE UPDATE] RLS BLOCKED — no rows updated');showToast('Balance update blocked by RLS policy','error');}
+      else{balUpdateOk=true;console.log('[BALANCE UPDATE] SUCCESS balance=',balNew);}
+    }catch(e){console.error('[BALANCE UPDATE] exception:',e);}
+  }
+  /* Update trade result in DB */
+  if(t.dbSaved){try{await sb.from('trades').update({result:res,close_price:cp,payout:pay}).eq('id',t.id);}catch(e){}}
+  
+  /* Only reload from DB if update succeeded, otherwise keep local value */
+  if(balUpdateOk){
+    await loadUserProfile();
+  }
   updateTradingBalance();
   
   /* Remove from active trades BEFORE showing popup */
   activeTrades=activeTrades.filter(function(x){return x.id!==t.id});
   renderOpenTrades();
-  await loadUserProfile();
-  updateTradingBalance();
   
   /* Show result popup ONCE */
   showResultPopup(won,t,cp,pay,dp);
@@ -2759,7 +2932,7 @@ function copyRefLink(){navigator.clipboard.writeText(document.getElementById('my
 function checkReferralFromUrl(){var p=new URLSearchParams(window.location.search),ref=p.get('ref');if(ref){navigate('register');setTimeout(function(){var inp=document.getElementById('regReferral');if(inp)inp.value=ref;},100);}}
 async function init(){try{var r=await sb.auth.getSession();if(r.data.session&&r.data.session.user){currentUser=r.data.session.user;await loadUserProfile();accountMode=currentProfile&&currentProfile.account_mode?currentProfile.account_mode:'demo';switchAccountMode(accountMode);navigate('dashboard');}else{checkReferralFromUrl();}}catch(err){console.error(err);}updateNav();setTimeout(function(){var ls=document.getElementById('loadingScreen');if(ls){ls.classList.add('hidden');setTimeout(function(){ls.remove()},400);}},600);sb.auth.onAuthStateChange(function(ev,session){
 if(ev==='SIGNED_OUT'){currentUser=null;currentProfile=null;accountMode='demo';hideModeBar();navigate('landing');}
-if(ev==='SIGNED_IN'&&session&&session.user){handleOAuthCallback();}
+if(ev==='SIGNED_IN'&&session&&session.user&&!_googleOtpPending){handleOAuthCallback();}
 });}
 /* ===== KYC SYSTEM ===== */
 var kycFile=null;
